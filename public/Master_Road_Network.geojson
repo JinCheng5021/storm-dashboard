@@ -1,0 +1,2627 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_0",
+        "name": "Tuyến THA(MPOP) - HMI",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.832672,
+            19.781576
+          ],
+          [
+            105.780487,
+            19.50802
+          ],
+          [
+            105.720062,
+            19.215211
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_1",
+        "name": "Tuyến THA - CGT",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.726929,
+            19.820322
+          ],
+          [
+            105.630798,
+            19.479546
+          ],
+          [
+            105.571747,
+            19.169808
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_2",
+        "name": "Tuyến BSN - THA",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.8545,
+            20.0797
+          ],
+          [
+            105.726929,
+            19.820322
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_3",
+        "name": "Tuyến NBH - THA(MPOP)",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.98006,
+            20.24618
+          ],
+          [
+            105.924683,
+            19.999174
+          ],
+          [
+            105.832672,
+            19.781576
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_4",
+        "name": "Tuyến NBH - NDH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.98006,
+            20.24618
+          ],
+          [
+            106.052399,
+            20.34076
+          ],
+          [
+            106.16459,
+            20.42027
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_5",
+        "name": "Tuyến HYN - TBH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.06082,
+            20.66299
+          ],
+          [
+            106.34379,
+            20.45328
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_6",
+        "name": "Tuyến TBH - HPG",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.34379,
+            20.45328
+          ],
+          [
+            106.70467,
+            20.8319
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_7",
+        "name": "Tuyến HPG - UBI",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.70467,
+            20.8319
+          ],
+          [
+            106.76193,
+            21.03777
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_8",
+        "name": "Tuyến UBI - HLG",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.76193,
+            21.03777
+          ],
+          [
+            107.08348,
+            20.96427
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_9",
+        "name": "Tuyến HDG - HPG",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.31118,
+            20.93079
+          ],
+          [
+            106.70467,
+            20.8319
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_10",
+        "name": "Tuyến UBI - SDO",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.76193,
+            21.03777
+          ],
+          [
+            106.39441,
+            21.11457
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_11",
+        "name": "Tuyến SDO - KEP",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.39441,
+            21.11457
+          ],
+          [
+            106.293113,
+            21.417315
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_12",
+        "name": "Tuyến BGG - KEP",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.19403,
+            21.28688
+          ],
+          [
+            106.293113,
+            21.417315
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_13",
+        "name": "Tuyến BNH - BGG",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.05674,
+            21.18133
+          ],
+          [
+            106.19403,
+            21.28688
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_14",
+        "name": "Tuyến LSN - TYN",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.76647,
+            21.85909
+          ],
+          [
+            107.374754,
+            21.338065
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_15",
+        "name": "Tuyến LSN - DDG",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.76647,
+            21.85909
+          ],
+          [
+            106.698539,
+            21.943528
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_16",
+        "name": "Tuyến DDG - TKE",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.698539,
+            21.943528
+          ],
+          [
+            106.461875,
+            22.276907
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_17",
+        "name": "Tuyến KEP - LSN",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.293113,
+            21.417315
+          ],
+          [
+            106.76647,
+            21.85909
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_18",
+        "name": "Tuyến DAH - BNH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.88018,
+            21.1359
+          ],
+          [
+            105.959015,
+            21.174159
+          ],
+          [
+            106.05674,
+            21.18133
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_19",
+        "name": "Tuyến HNI - DAH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.78269,
+            21.03063
+          ],
+          [
+            105.813446,
+            21.08578
+          ],
+          [
+            105.88018,
+            21.1359
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_20",
+        "name": "Tuyến DAH - VPC",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.88018,
+            21.1359
+          ],
+          [
+            105.60456,
+            21.3135
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_21",
+        "name": "Tuyến PTO - VPC",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.40071,
+            21.31159
+          ],
+          [
+            105.60456,
+            21.3135
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_22",
+        "name": "Tuyến YBI - PTO",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            104.88677,
+            21.71876
+          ],
+          [
+            105.136414,
+            21.483758
+          ],
+          [
+            105.40071,
+            21.31159
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_23",
+        "name": "Tuyến TQG - VPC",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.20864,
+            21.81672
+          ],
+          [
+            105.449524,
+            21.560396
+          ],
+          [
+            105.60456,
+            21.3135
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_24",
+        "name": "Tuyến BKE - GPU",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            104.738812,
+            21.473827
+          ],
+          [
+            104.433666,
+            21.246272
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_25",
+        "name": "Tuyến YBI - BHA",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            104.88677,
+            21.71876
+          ],
+          [
+            104.354465,
+            22.178848
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_26",
+        "name": "Tuyến HNI - BNH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.78269,
+            21.03063
+          ],
+          [
+            105.946655,
+            21.080671
+          ],
+          [
+            106.05674,
+            21.18133
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_27",
+        "name": "Tuyến BSN - NDH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.8545,
+            20.0797
+          ],
+          [
+            106.064758,
+            20.168169
+          ],
+          [
+            106.16459,
+            20.42027
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_28",
+        "name": "Tuyến NDH(MPOP) - TBH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.1573,
+            20.4129
+          ],
+          [
+            106.261139,
+            20.406436
+          ],
+          [
+            106.34379,
+            20.45328
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_29",
+        "name": "Tuyến HMI - VINH(MPOP)",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.720062,
+            19.215211
+          ],
+          [
+            105.654144,
+            18.946562
+          ],
+          [
+            105.696888,
+            18.69698
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_30",
+        "name": "Tuyến CGT - VINH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.571747,
+            19.169808
+          ],
+          [
+            105.534668,
+            18.925773
+          ],
+          [
+            105.578613,
+            18.678775
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_31",
+        "name": "Tuyến VINH - HPO",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.578613,
+            18.678775
+          ],
+          [
+            105.708048,
+            18.17018
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_32",
+        "name": "Tuyến VINH(MPOP) - HTH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.696888,
+            18.69698
+          ],
+          [
+            105.90168,
+            18.35051
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_33",
+        "name": "Tuyến HTH - KAH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.90168,
+            18.35051
+          ],
+          [
+            106.291483,
+            18.074371
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_34",
+        "name": "Tuyến KAH - DLE",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.291483,
+            18.074371
+          ],
+          [
+            106.023011,
+            17.888632
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_35",
+        "name": "Tuyến HPO - DLE",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.708048,
+            18.17018
+          ],
+          [
+            106.023011,
+            17.888632
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_36",
+        "name": "Tuyến KAH - BDN",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.291483,
+            18.074371
+          ],
+          [
+            106.44465,
+            17.754637
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_37",
+        "name": "Tuyến BDN - DHI(MPOP)",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.44465,
+            17.754637
+          ],
+          [
+            106.609268,
+            17.505248
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_38",
+        "name": "Tuyến DHI - LTY2",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.563263,
+            17.418817
+          ],
+          [
+            106.718445,
+            17.296873
+          ],
+          [
+            106.892853,
+            17.16178
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_39",
+        "name": "Tuyến DHA - LBO",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.155495,
+            16.852496
+          ],
+          [
+            106.795349,
+            16.809759
+          ],
+          [
+            106.599779,
+            16.624003
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_40",
+        "name": "Tuyến TKE - CBG",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.461875,
+            22.276907
+          ],
+          [
+            106.26096,
+            22.66635
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_41",
+        "name": "Tuyến PNI - HDG",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.05673,
+            20.93141
+          ],
+          [
+            106.31118,
+            20.93079
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_42",
+        "name": "Tuyến PNI - HYN",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.05673,
+            20.93141
+          ],
+          [
+            106.06082,
+            20.66299
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_43",
+        "name": "Tuyến DHA - HUE",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.155495,
+            16.852496
+          ],
+          [
+            107.512894,
+            16.3966
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_44",
+        "name": "Tuyến HUE - PLC",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.512894,
+            16.3966
+          ],
+          [
+            107.858399,
+            16.282907
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_45",
+        "name": "Tuyến PLC - DNG",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.858399,
+            16.282907
+          ],
+          [
+            108.208414,
+            16.071204
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_46",
+        "name": "Tuyến HNI - HNM",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.78269,
+            21.03063
+          ],
+          [
+            105.753021,
+            20.815144
+          ],
+          [
+            105.828552,
+            20.635362
+          ],
+          [
+            105.91886,
+            20.5317
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_47",
+        "name": "Tuyến DAH - PTO",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.88018,
+            21.1359
+          ],
+          [
+            105.595093,
+            21.176755
+          ],
+          [
+            105.40071,
+            21.31159
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_48",
+        "name": "Tuyến HNI - PNI",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.78269,
+            21.03063
+          ],
+          [
+            106.05673,
+            20.93141
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_49",
+        "name": "Tuyến HYN - HDG",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.06082,
+            20.66299
+          ],
+          [
+            106.31118,
+            20.93079
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_50",
+        "name": "Tuyến HNI - HYN",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.78269,
+            21.03063
+          ],
+          [
+            106.06082,
+            20.66299
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_51",
+        "name": "Tuyến DHI(MPOP) - LTY",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.609268,
+            17.505248
+          ],
+          [
+            106.684799,
+            17.269392
+          ],
+          [
+            106.684113,
+            17.216873
+          ],
+          [
+            106.739044,
+            17.084416
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_52",
+        "name": "Tuyến LTY2 - DHA",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.892853,
+            17.16178
+          ],
+          [
+            107.155495,
+            16.852496
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_53",
+        "name": "Tuyến HNM - NBH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.91886,
+            20.5317
+          ],
+          [
+            105.98006,
+            20.24618
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_54",
+        "name": "Tuyến HNM - TBH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.91886,
+            20.5317
+          ],
+          [
+            106.049652,
+            20.464346
+          ],
+          [
+            106.34379,
+            20.45328
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_55",
+        "name": "Tuyến HNI - NDH(MPOP)",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.78269,
+            21.03063
+          ],
+          [
+            105.867004,
+            20.772774
+          ],
+          [
+            106.067505,
+            20.572382
+          ],
+          [
+            106.1573,
+            20.4129
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_56",
+        "name": "Tuyến DLE - DHI",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            106.023011,
+            17.888632
+          ],
+          [
+            106.259766,
+            17.594319
+          ],
+          [
+            106.563263,
+            17.418817
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_57",
+        "name": "Tuyến DBN - TGO",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            103.022139,
+            21.398722
+          ],
+          [
+            103.421976,
+            21.590477
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_58",
+        "name": "Tuyến QTI - LTY",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.075157,
+            16.778594
+          ],
+          [
+            106.739044,
+            17.084416
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_59",
+        "name": "Tuyến HUE (MPOP) - QTI",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.623444,
+            16.522979
+          ],
+          [
+            107.075157,
+            16.778594
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_60",
+        "name": "Tuyến MCU - GPU",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            104.644377,
+            20.837606
+          ],
+          [
+            104.433666,
+            21.246272
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_61",
+        "name": "Tuyến GPU - SLA",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            104.433666,
+            21.246272
+          ],
+          [
+            103.909326,
+            21.322451
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_62",
+        "name": "Tuyến MCU - SLA",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            104.644377,
+            20.837606
+          ],
+          [
+            103.909326,
+            21.322451
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_63",
+        "name": "Tuyến TNN - DAH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.831779,
+            21.580936
+          ],
+          [
+            105.88018,
+            21.1359
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_64",
+        "name": "Tuyến TNN - BGG",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.831779,
+            21.580936
+          ],
+          [
+            106.19403,
+            21.28688
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_65",
+        "name": "Tuyến TNN - KEP",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.831779,
+            21.580936
+          ],
+          [
+            106.293113,
+            21.417315
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_66",
+        "name": "Tuyến TQG - TNN",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.20864,
+            21.81672
+          ],
+          [
+            105.529175,
+            21.733968
+          ],
+          [
+            105.831779,
+            21.580936
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_67",
+        "name": "Tuyến SLA - TGO",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            103.909326,
+            21.322451
+          ],
+          [
+            103.421976,
+            21.590477
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_68",
+        "name": "Tuyến STY - PTO",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.488741,
+            21.109029
+          ],
+          [
+            105.40071,
+            21.31159
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_69",
+        "name": "Tuyến STY - HNI",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.488741,
+            21.109029
+          ],
+          [
+            105.78269,
+            21.03063
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_70",
+        "name": "Tuyến BKE - YBI",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            104.738812,
+            21.473827
+          ],
+          [
+            104.88677,
+            21.71876
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_71",
+        "name": "Tuyến YBI - TQG",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            104.88677,
+            21.71876
+          ],
+          [
+            105.20864,
+            21.81672
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_72",
+        "name": "Tuyến MCU - HBH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            104.644377,
+            20.837606
+          ],
+          [
+            105.35391,
+            20.823325
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_73",
+        "name": "Tuyến HBH - HNI",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.35391,
+            20.823325
+          ],
+          [
+            105.78269,
+            21.03063
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_74",
+        "name": "Tuyến HBH - PTO",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.35391,
+            20.823325
+          ],
+          [
+            105.40071,
+            21.31159
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_75",
+        "name": "Tuyến HPO - HTH",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            105.708048,
+            18.17018
+          ],
+          [
+            105.90168,
+            18.35051
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_76",
+        "name": "Tuyến BHA - LCI",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            104.354465,
+            22.178848
+          ],
+          [
+            103.966391,
+            22.491705
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_77",
+        "name": "Tuyến HLG - CPA",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.08348,
+            20.96427
+          ],
+          [
+            107.268258,
+            21.001751
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_78",
+        "name": "Tuyến CPA - TYN",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.268258,
+            21.001751
+          ],
+          [
+            107.374754,
+            21.338065
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_79",
+        "name": "Tuyến TYN - MCI",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.374754,
+            21.338065
+          ],
+          [
+            107.478561,
+            21.334209
+          ],
+          [
+            107.677002,
+            21.456888
+          ],
+          [
+            107.810211,
+            21.53227
+          ],
+          [
+            107.96711,
+            21.52736
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tuyến HUE (MPOP) - DNG",
+        "is_edited": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            107.623444,
+            16.522979
+          ],
+          [
+            107.913208,
+            16.322751
+          ],
+          [
+            108.208414,
+            16.071204
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "NDH"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.16459,
+          20.42027
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "THA"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.72692871093751,
+          19.820322493997853
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "CGT"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.57174682617189,
+          19.169808335745238
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "VINH"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.57861328125001,
+          18.67877518574144
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HMI"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.72006225585938,
+          19.21521088997887
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "KAH"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.291483,
+          18.074371
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MCU"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          104.644377,
+          20.837606
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "GPU"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          104.433666,
+          21.246272
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "TGO"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.421976,
+          21.590477
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "TKE"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.461875,
+          22.276907
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "BKE"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          104.738812,
+          21.473827
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "BHA"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          104.354465,
+          22.178848
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "BSN"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.8545,
+          20.0797
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HPO"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.708048,
+          18.17018
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "DDG"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.698539,
+          21.943528
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "KEP"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.293113,
+          21.417315
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "TYN"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          107.374754,
+          21.338065
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "DLE"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.023011,
+          17.888632
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "DHI"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.56326293945314,
+          17.418816740985477
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "DHA"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          107.15549468994142,
+          16.852496031603128
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HUE"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          107.51289367675783,
+          16.39659973958158
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "DNG"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          108.208414,
+          16.071204
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "BDN"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.44465,
+          17.754637
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "LTY"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.73904418945314,
+          17.084415984579575
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "PLC"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          107.858399,
+          16.282907
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HNI"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.78269,
+          21.03063
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "DAH"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.88018,
+          21.1359
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "BNH"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.05674,
+          21.18133
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "BGG"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.19403,
+          21.28688
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "TQG"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.20864,
+          21.81672
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "VPC"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.60456,
+          21.3135
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "PTO"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.40071,
+          21.31159
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "YBI"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          104.88677,
+          21.71876
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "SDO"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.39441,
+          21.11457
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "UBI"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.76193,
+          21.03777
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HLG"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          107.08348,
+          20.96427
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HDG"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.31118,
+          20.93079
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HPG"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.70467,
+          20.8319
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "NBH"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.98006,
+          20.24618
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "THA(MPOP)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.83267211914064,
+          19.781576190873395
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "VINH(MPOP)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.69688796997072,
+          18.69698030796694
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HNM"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.91886,
+          20.5317
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "TBH"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.34379,
+          20.45328
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HYN"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.06082,
+          20.66299
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "LSN"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.76647,
+          21.85909
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "NDH(MPOP)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.1573,
+          20.4129
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HTH"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.90168,
+          18.35051
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "DHI(MPOP)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.60926818847656,
+          17.505247915635348
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "LTY2"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.89285278320314,
+          17.161779934100792
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "LBO"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.599779,
+          16.624003
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "CBG"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.26096,
+          22.66635
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "PNI"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          106.05673,
+          20.93141
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "DBN"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.022139,
+          21.398722
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "QTI"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          107.07515716552734,
+          16.778594121924833
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HUE (MPOP)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          107.62344360351564,
+          16.522978848063506
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "SLA"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.909326,
+          21.322451
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "TNN"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.831779,
+          21.580936
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "STY"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.488741,
+          21.109029
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "HBH"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.35391,
+          20.823325
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "LCI"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.966391,
+          22.491705
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "CPA"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          107.268258,
+          21.001751
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MCI"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          107.96711,
+          21.52736
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "storm-ops-dashboard",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n API,WEB -c yellow,cyan \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "node --watch backend/src/server.js",
+    "dev:web": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "start": "node backend/src/server.js",
+    "test": "node --test backend/test/*.test.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.4",
+    "express": "^5.1.0",
+    "html-to-image": "^1.11.13",
+    "maplibre-gl": "^5.24.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "undici": "^7.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.6.0",
+    "concurrently": "^9.2.0",
+    "typescript": "~5.0.2",
+    "vite": "^7.0.0"
+  }
+}
