@@ -8,13 +8,14 @@ import { parseGeoJSON } from "./data/geojsonParser";
 import { mapReducer, EMPTY_MAP_STATE, haversine } from "./mapState";
 import { exportMapImage } from "./utils/exportMap";
 import { supabase } from "./lib/supabase";
+import { numberedTaskName, tasksForDate } from "./taskUtils";
 import type { NodeStatus, EdgeStatus, Team, TeamType } from "./types";
 
 const PAGE_SIZE = {
   cable: 4,
   station: 3,
   weather: 99,
-  tasks: 6
+  tasks: 4
 };
 
 const ACCENT_STYLE = {
@@ -26,7 +27,7 @@ const ACCENT_STYLE = {
 function chipClass(status) {
   const lower = String(status || "").toLowerCase();
   if (lower.includes("hoàn thành") || lower.includes("an toàn") || lower.includes("bình thường") || lower.includes("ổn định")) return "chip-green";
-  if (lower.includes("đang xử lý") || lower.includes("mưa") || lower.includes("ảnh hưởng gián tiếp") || lower.includes("theo dõi")) return "chip-orange";
+  if (lower.includes("đang xử lý") || lower.includes("đang thực hiện") || lower.includes("mưa") || lower.includes("ảnh hưởng gián tiếp") || lower.includes("theo dõi")) return "chip-orange";
   if (lower.includes("chưa") || lower.includes("mất") || lower.includes("đứt") || lower.includes("rủi ro") || lower.includes("hạn chế")) return "chip-red";
   return "chip-blue";
 }
@@ -42,6 +43,23 @@ function weatherIcon(weather) {
   if (lower.includes("mây")) return "☁️";
   if (lower.includes("nắng")) return "☀️";
   return "🌦️";
+}
+
+function vietnamDateKey(date = new Date()) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  }).format(date);
+}
+
+function taskStatusMeta(status) {
+  const label = String(status || "Chưa thực hiện").trim();
+  const lower = label.toLocaleLowerCase("vi-VN");
+  if (lower.includes("hoàn thành")) return { label, className: "task-completed", icon: "check_circle" };
+  if (lower.includes("đang thực hiện")) return { label, className: "task-in-progress", icon: "pending" };
+  return { label, className: "task-not-started", icon: "cancel" };
 }
 
 function pageItems(items, page, size) {
@@ -180,27 +198,31 @@ function WeatherPanel({ rows, page, setPage }) {
   );
 }
 
-function TasksPanel({ tasks, page, setPage }) {
-  const current = pageItems(tasks, page, PAGE_SIZE.tasks);
+function TasksPanel({ tasks, page, setPage, today }) {
+  const todayTasks = tasksForDate(tasks, today);
+  const current = pageItems(todayTasks, page, PAGE_SIZE.tasks);
   return (
     <article className="card tasks-card" style={ACCENT_STYLE.orange}>
       <div className="card-header">
-        <h2 className="card-title"><span className="material-symbols-outlined">checklist</span>Công việc trong ngày</h2>
-        <Pager page={current.page} setPage={setPage} total={tasks.length} size={PAGE_SIZE.tasks} />
+        <div className="task-card-heading">
+          <h2 className="card-title"><span className="material-symbols-outlined">checklist</span>Công việc trong ngày</h2>
+          <time className="task-card-date" dateTime={today.split("/").reverse().join("-")}>{today}</time>
+        </div>
+        <Pager page={current.page} setPage={setPage} total={todayTasks.length} size={PAGE_SIZE.tasks} />
       </div>
       <div className="list-box">
-        {!tasks.length ? <div className="empty-state">Chưa có công việc trong tab Công việc.</div> : current.rows.map((task, index) => {
-          const status = task.marker || "Cần theo dõi";
-          const note = task.note || "Theo dõi và cập nhật diễn biến thực tế.";
+        {!todayTasks.length ? <div className="empty-state">Chưa có công việc ngày {today} trong tab Công việc.</div> : current.rows.map((task, index) => {
+          const status = taskStatusMeta(task.status || task.marker);
+          const displayPosition = current.start + index + 1;
           return (
-            <div className="task-row" key={`${task.id}-${current.start + index}`} title={[task.id, task.name, task.marker, task.note].filter(Boolean).join(" | ")}>
-              <div className="task-icon"><span className="material-symbols-outlined text-[15px]">check_circle</span></div>
-              <div className="min-w-0">
-                <span className="line-1">{task.name || "-"}</span>
-                <span className="line-2">CV-{task.id || String(current.start + index + 1)}</span>
-                <span className="line-3">{note}</span>
+            <div className={`task-row ${status.className}`} key={`${task.id}-${current.start + index}`}>
+              <div className="task-icon"><span className="material-symbols-outlined text-[15px]">{status.icon}</span></div>
+              <div className="task-copy">
+                <span className="task-content">{numberedTaskName(task.name, displayPosition)}</span>
+                {task.carriedOver && <span className="task-carried-date">Công việc tồn ngày {task.originalDate}</span>}
+                {task.note && <span className="task-note">{task.note}</span>}
+                <span className="task-status">{status.label}</span>
               </div>
-              <StatusChip status={status} />
             </div>
           );
         })}
@@ -320,6 +342,7 @@ export default function App() {
   const [lastUpdated, setLastUpdated] = useState("Đang tải dữ liệu Google Sheet...");
   const [pages, setPages] = useState({ cable: 0, station: 0, weather: 0, tasks: 0 });
   const [capturing, setCapturing] = useState(false);
+  const [today, setToday] = useState(vietnamDateKey);
 
   // --- Map State ---
   const [mapState, mapDispatch] = useReducer(mapReducer, EMPTY_MAP_STATE);
@@ -509,6 +532,21 @@ export default function App() {
     loadDashboard();
   }, [loadDashboard]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const nextDate = vietnamDateKey();
+      setToday((currentDate) => currentDate === nextDate ? currentDate : nextDate);
+    }, 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const loadedDateRef = useRef(today);
+  useEffect(() => {
+    if (loadedDateRef.current === today) return;
+    loadedDateRef.current = today;
+    loadDashboard();
+  }, [today, loadDashboard]);
+
   const captureReport = async () => {
     if (!mapInstanceRef.current) {
       alert("Bản đồ chưa sẵn sàng!");
@@ -645,7 +683,7 @@ export default function App() {
         <WeatherPanel rows={data.weatherRows} page={pages.weather} setPage={(page) => setPages((old) => ({ ...old, weather: page }))} />
         <section className="content-grid">
           <HiddenIncidentTables data={data} pages={pages} setPages={setPages} />
-          <TasksPanel tasks={data.tasks} page={pages.tasks} setPage={(page) => setPages((old) => ({ ...old, tasks: page }))} />
+          <TasksPanel tasks={data.tasks} page={pages.tasks} setPage={(page) => setPages((old) => ({ ...old, tasks: page }))} today={today} />
           <article className="card rescue-card" style={ACCENT_STYLE.green}>
             <div className="card-header">
               <h2 className="card-title"><span className="material-symbols-outlined">map</span>Thông tin đội ứng cứu khắc phục sự cố</h2>
