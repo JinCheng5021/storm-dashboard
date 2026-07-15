@@ -455,6 +455,11 @@ export default function App() {
     if (session) await supabase.from('teams').update({ name }).eq('id', teamId);
   }, [session]);
 
+  const handleTeamNoteChange = useCallback(async (teamId: string, note: string) => {
+    mapDispatch({ type: 'UPDATE_TEAM', id: teamId, patch: { note } });
+    if (session) await supabase.from('teams').update({ note }).eq('id', teamId);
+  }, [session]);
+
   const handleTeamTypeChange = useCallback(async (teamId: string, type: string) => {
     mapDispatch({ type: 'UPDATE_TEAM', id: teamId, patch: { type: type as TeamType } });
     if (session) await supabase.from('teams').update({ type }).eq('id', teamId);
@@ -684,6 +689,7 @@ export default function App() {
                 onMapReady={(map) => { mapInstanceRef.current = map; }}
                 pendingTeam={pendingTeam}
                 onTeamNameChange={handleTeamNameChange}
+                onTeamNoteChange={handleTeamNoteChange}
                 onTeamTypeChange={handleTeamTypeChange}
                 onConfirmTeam={handleConfirmTeam}
                 onRemoveTeam={handleRemoveTeam}

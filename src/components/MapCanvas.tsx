@@ -21,6 +21,7 @@ interface MapCanvasProps {
   onMapReady?: (map: maplibregl.Map) => void;
   pendingTeam: Team | null;
   onTeamNameChange: (teamId: string, name: string) => void;
+  onTeamNoteChange: (teamId: string, note: string) => void;
   onTeamTypeChange: (teamId: string, type: TeamType) => void;
   onConfirmTeam: (teamId: string) => void;
   onRemoveTeam: (teamId: string) => void;
@@ -113,6 +114,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   onMapReady,
   pendingTeam,
   onTeamNameChange,
+  onTeamNoteChange,
   onTeamTypeChange,
   onConfirmTeam,
   onRemoveTeam,
@@ -435,19 +437,16 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     teams.forEach((team) => {
       const color = TEAM_COLORS[team.type];
 
-      // Dán 3 đoạn mã SVG của bạn vào trong cặp dấu backtick (` `)
       const TEAM_ICONS: Record<TeamType, string> = {
         FPT: `<img src="/fpt.svg" style="width: 32px; height: 32px; vertical-align: middle; background: transparent;" alt="FPT" />`,
         DCV: `<img src="/dcv.svg" style="width: 32px; height: 32px; vertical-align: middle; background: transparent;" alt="DCV" />`,
         FFC: `<img src="/ffc.svg" style="width: 32px; height: 32px; vertical-align: middle; background: transparent;" alt="FFC" />`
       };
 
-
       if (markersRef.current.has(team.id)) {
         const marker = markersRef.current.get(team.id)!;
         marker.setLngLat(team.position);
 
-        // Lấy thẻ con .team-marker bên trong wrapper
         const wrapper = marker.getElement();
         const el = wrapper.querySelector('.team-marker') as HTMLElement;
 
@@ -455,40 +454,37 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           el.style.setProperty('--team-color', color);
           el.title = team.name;
 
-          // Chỉ cập nhật text nếu có sự thay đổi, tránh chớp hình
           const nameEl = el.querySelector('.team-marker__name') as HTMLElement;
           if (nameEl) {
             nameEl.style.display = team.type === 'FPT' ? '' : 'none';
-            if (nameEl.textContent !== team.name) {
-              nameEl.textContent = team.name;
+            const displayText = team.note ? `${team.name}\n(${team.note})` : team.name;
+            if (nameEl.textContent !== displayText) {
+              nameEl.textContent = displayText;
             }
           }
 
-          // Cập nhật icon nếu đổi type
           const iconEl = el.querySelector('.team-marker__icon');
           if (iconEl && iconEl.innerHTML !== TEAM_ICONS[team.type]) {
             iconEl.innerHTML = TEAM_ICONS[team.type];
           }
 
-          // Cập nhật trạng thái nút xóa dựa trên editable
           const closeBtn = el.querySelector('.team-marker__close') as HTMLElement;
           if (closeBtn) {
             closeBtn.style.display = team.editable === false ? 'none' : 'flex';
           }
 
-          // Cập nhật khả năng kéo thả
           marker.setDraggable(team.editable !== false);
         }
         return;
       }
 
-      // Tạo thẻ vỏ bọc vô hình 0x0 để triệt tiêu lỗi offset của MapLibre
       const wrapper = document.createElement('div');
       wrapper.style.width = '0px';
       wrapper.style.height = '0px';
 
       const el = document.createElement('div');
       el.className = 'team-marker';
+      el.setAttribute('data-team-id', team.id);
       el.style.position = 'absolute';
       el.style.transform = 'translate(-50%, -50%)'; // Tự neo tâm bằng CSS
       el.style.setProperty('--team-color', color);
@@ -497,14 +493,21 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         ? `<button class="team-marker__close" title="Xóa đội">✕</button>`
         : '';
 
-      const nameHtml = team.type === 'FPT'
-        ? `<div class="team-marker__name">${team.name}</div>`
-        : `<div class="team-marker__name" style="display: none">${team.name}</div>`;
+      const displayText = team.note ? `${team.name}\n(${team.note})` : team.name;
+      const escapeHtml = (str: string) => str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const escapedText = escapeHtml(displayText);
 
-      el.innerHTML = `<span class="team-marker__icon">${TEAM_ICONS[team.type]}</span>`
+      const nameHtml = team.type === 'FPT'
+        ? `<div class="team-marker__name">${escapedText}</div>`
+        : `<div class="team-marker__name" style="display: none">${escapedText}</div>`;
+
+      const svgHtml = `<svg class="team-leader-line"><line x1="200" y1="200" x2="200" y2="200" stroke="#000" stroke-width="1" stroke-dasharray="4" /></svg>`;
+
+      el.innerHTML = svgHtml 
+        + `<span class="team-marker__icon">${TEAM_ICONS[team.type]}</span>`
         + nameHtml
         + closeBtnHtml;
-      el.title = team.name;
+      el.title = displayText;
 
       wrapper.appendChild(el);
 
@@ -537,6 +540,148 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     });
   }, [teams, mapReady, onTeamDrop, onRemoveTeam]);
 
+  // ── Thêm hàm bố trí nhãn động ────────────────────────────
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !showTeamNames) return;
+    const map = mapRef.current;
+
+    const recalcLabelPositions = () => {
+      // Helper function cho giao cắt đoạn thẳng và hình chữ nhật
+      const lineIntersectsLine = (l1p1: any, l1p2: any, l2p1: any, l2p2: any) => {
+        const q = (l1p1.y - l2p1.y) * (l2p2.x - l2p1.x) - (l1p1.x - l2p1.x) * (l2p2.y - l2p1.y);
+        const d = (l1p2.x - l1p1.x) * (l2p2.y - l2p1.y) - (l1p2.y - l1p1.y) * (l2p2.x - l2p1.x);
+        if (d === 0) return false;
+        const u = q / d;
+        const q2 = (l1p1.y - l2p1.y) * (l1p2.x - l1p1.x) - (l1p1.x - l2p1.x) * (l1p2.y - l1p1.y);
+        const v = q2 / d;
+        return u >= 0 && u <= 1 && v >= 0 && v <= 1;
+      };
+
+      const lineIntersectsBox = (p1: any, p2: any, box: any) => {
+        if (p1.x >= box.left && p1.x <= box.right && p1.y >= box.top && p1.y <= box.bottom) return true;
+        if (p2.x >= box.left && p2.x <= box.right && p2.y >= box.top && p2.y <= box.bottom) return true;
+        const tl = {x: box.left, y: box.top}, tr = {x: box.right, y: box.top};
+        const bl = {x: box.left, y: box.bottom}, br = {x: box.right, y: box.bottom};
+        return lineIntersectsLine(p1, p2, tl, tr) || lineIntersectsLine(p1, p2, tr, br) ||
+               lineIntersectsLine(p1, p2, br, bl) || lineIntersectsLine(p1, p2, bl, tl);
+      };
+
+      // Thu thập tọa độ pixel của các node (giả sử bán kính ~15px)
+      const nodePoints = nodes.map(n => map.project(n.coordinates));
+      const teamPoints = teams.map(t => map.project(t.position));
+      const edgeSegments: {p1: any, p2: any}[] = [];
+      edges.forEach(e => {
+        const proj = e.coordinates.map(c => map.project(c));
+        for (let i = 0; i < proj.length - 1; i++) {
+          edgeSegments.push({p1: proj[i], p2: proj[i+1]});
+        }
+      });
+      const placedLabels: {left: number, right: number, top: number, bottom: number}[] = [];
+      
+      teams.forEach((team, teamIndex) => {
+        const marker = markersRef.current.get(team.id);
+        if (!marker) return;
+        const wrapper = marker.getElement();
+        const el = wrapper.querySelector('.team-marker') as HTMLElement;
+        const nameEl = el?.querySelector('.team-marker__name') as HTMLElement;
+        const lineEl = el?.querySelector('.team-leader-line line') as SVGLineElement;
+        
+        if (!nameEl || !lineEl || nameEl.style.display === 'none') return;
+        
+        const center = map.project(team.position);
+        
+        // Ứng viên: 24 góc x 3 khoảng cách
+        const radii = [40, 60, 80];
+        const angles = Array.from({length: 24}, (_, i) => (i * 15 * Math.PI) / 180);
+        
+        let bestCost = Infinity;
+        let bestCandidate = { dx: 0, dy: 20 }; // mặc định ở dưới nếu chưa tìm thấy
+        
+        // Tính toán các bounding box cơ bản để test va chạm
+        const nameW = nameEl.offsetWidth || 100;
+        const nameH = nameEl.offsetHeight || 30;
+        
+        for (const r of radii) {
+          for (const a of angles) {
+            const dx = Math.cos(a) * r;
+            const dy = Math.sin(a) * r;
+            
+            // Hộp chữ (bounding box) nở ra phía xa tâm
+            // dx >= 0 -> chữ nằm bên phải điểm thả -> left = dx
+            // dx < 0 -> chữ nằm bên trái điểm thả -> right = dx
+            const left = center.x + dx + (dx >= 0 ? 0 : -nameW);
+            const right = center.x + dx + (dx >= 0 ? nameW : 0);
+            const top = center.y + dy + (dy >= 0 ? 0 : -nameH);
+            const bottom = center.y + dy + (dy >= 0 ? nameH : 0);
+            
+            let overlapPenalty = 0;
+            
+            // Check đè lên các nodes 
+            for (const pt of nodePoints) {
+               if (pt.x > left - 15 && pt.x < right + 15 && pt.y > top - 15 && pt.y < bottom + 15) {
+                 overlapPenalty += 1000;
+               }
+            }
+
+            // Check đè lên icon các đội khác
+            for (let i = 0; i < teamPoints.length; i++) {
+               if (i === teamIndex) continue;
+               const pt = teamPoints[i];
+               if (pt.x > left - 16 && pt.x < right + 16 && pt.y > top - 16 && pt.y < bottom + 16) {
+                 overlapPenalty += 1000;
+               }
+            }
+
+            // Check đè lên các nhãn chữ đã xếp trước đó
+            for (const box of placedLabels) {
+               if (box.right > left && box.left < right && box.bottom > top && box.top < bottom) {
+                 overlapPenalty += 1000;
+               }
+            }
+
+            // Check đè lên các tuyến cáp (edges)
+            for (const seg of edgeSegments) {
+               if (lineIntersectsBox(seg.p1, seg.p2, {left, right, top, bottom})) {
+                 overlapPenalty += 500; // Đè lên đường thì bị phạt 500 điểm (ưu tiên đè đường hơn đè trạm nếu bắt buộc)
+               }
+            }
+            
+            const cost = r + overlapPenalty;
+            if (cost < bestCost) {
+              bestCost = cost;
+              bestCandidate = { dx, dy };
+            }
+          }
+        }
+        
+        placedLabels.push({
+           left: center.x + bestCandidate.dx + (bestCandidate.dx >= 0 ? 0 : -nameW) - 5,
+           right: center.x + bestCandidate.dx + (bestCandidate.dx >= 0 ? nameW : 0) + 5,
+           top: center.y + bestCandidate.dy + (bestCandidate.dy >= 0 ? 0 : -nameH) - 5,
+           bottom: center.y + bestCandidate.dy + (bestCandidate.dy >= 0 ? nameH : 0) + 5,
+        });
+
+        // Áp dụng tọa độ (dx, dy) và neo hướng nở ra
+        const tx = bestCandidate.dx >= 0 ? `0%` : `-100%`;
+        const ty = bestCandidate.dy >= 0 ? `0%` : `-100%`;
+        nameEl.style.transform = `translate(calc(${tx} + ${bestCandidate.dx}px), calc(${ty} + ${bestCandidate.dy}px))`;
+        lineEl.setAttribute('x2', String(200 + bestCandidate.dx));
+        lineEl.setAttribute('y2', String(200 + bestCandidate.dy));
+      });
+    };
+
+    recalcLabelPositions();
+
+    const onMoveEnd = () => recalcLabelPositions();
+    map.on('zoomend', onMoveEnd);
+    map.on('moveend', onMoveEnd);
+
+    return () => {
+      map.off('zoomend', onMoveEnd);
+      map.off('moveend', onMoveEnd);
+    };
+  }, [teams, nodes, mapReady, showTeamNames]);
+
   // ── Pending team input popup ─────────────────────────────────
   const pendingPopupRef = useRef<maplibregl.Popup | null>(null);
   const currentPendingIdRef = useRef<string | null>(null);
@@ -562,9 +707,12 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     const popupEl = document.createElement('div');
     popupEl.className = 'team-input-popup glass';
     popupEl.innerHTML = `
-      <div class="tip-header">Đặt tên đội ứng cứu</div>
+      <div class="tip-header">Thông tin đội ứng cứu</div>
       <div class="tip-row">
-        <input id="tip-name-${pendingTeam.id}" class="tip-input" type="text" placeholder="VD: BinhNT89 + BachDX6" value="${pendingTeam.name}" />
+        <textarea id="tip-name-${pendingTeam.id}" class="tip-input" style="color: black; resize: none; width: 100%; box-sizing: border-box;" rows="2" placeholder="Tên đội (VD: BinhNT89 + BachDX6)">${pendingTeam.name}</textarea>
+      </div>
+      <div class="tip-row">
+        <textarea id="tip-note-${pendingTeam.id}" class="tip-input" style="color: black; resize: none; width: 100%; box-sizing: border-box;" rows="2" placeholder="Ghi chú...">${pendingTeam.note || ''}</textarea>
       </div>
       <div class="tip-row">
         <label class="tip-label">Loại đội:</label>
@@ -588,12 +736,16 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
     // Wire events after DOM is mounted
     setTimeout(() => {
-      const nameEl = document.getElementById(`tip-name-${pendingTeam.id}`) as HTMLInputElement | null;
+      const nameEl = document.getElementById(`tip-name-${pendingTeam.id}`) as HTMLTextAreaElement | null;
+      const noteEl = document.getElementById(`tip-note-${pendingTeam.id}`) as HTMLTextAreaElement | null;
       const typeEl = document.getElementById(`tip-type-${pendingTeam.id}`) as HTMLSelectElement | null;
       const btnEl = document.getElementById(`tip-confirm-${pendingTeam.id}`) as HTMLButtonElement | null;
 
       nameEl?.addEventListener('input', (e) => {
-        onTeamNameChange(pendingTeam.id, (e.target as HTMLInputElement).value);
+        onTeamNameChange(pendingTeam.id, (e.target as HTMLTextAreaElement).value);
+      });
+      noteEl?.addEventListener('input', (e) => {
+        onTeamNoteChange(pendingTeam.id, (e.target as HTMLTextAreaElement).value);
       });
       typeEl?.addEventListener('change', (e) => {
         onTeamTypeChange(pendingTeam.id, (e.target as HTMLSelectElement).value as TeamType);
@@ -602,6 +754,31 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         onConfirmTeam(pendingTeam.id);
         popup.remove();
       });
+
+      const handleKeyDown = (e: KeyboardEvent, nextEl: HTMLElement | null) => {
+        if (e.key === 'Enter') {
+          if (e.ctrlKey) {
+            e.preventDefault();
+            const target = e.target as HTMLTextAreaElement;
+            const start = target.selectionStart;
+            const end = target.selectionEnd;
+            target.value = target.value.substring(0, start) + '\n' + target.value.substring(end);
+            target.selectionStart = target.selectionEnd = start + 1;
+            target.dispatchEvent(new Event('input'));
+          } else {
+            e.preventDefault();
+            if (nextEl) {
+              nextEl.focus();
+            } else {
+              btnEl?.click();
+            }
+          }
+        }
+      };
+
+      nameEl?.addEventListener('keydown', (e) => handleKeyDown(e, noteEl));
+      noteEl?.addEventListener('keydown', (e) => handleKeyDown(e, null));
+
       nameEl?.focus();
     }, 50);
 

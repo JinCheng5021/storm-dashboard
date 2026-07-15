@@ -23,6 +23,7 @@ export interface Team {
   position: [number, number]; // [lng, lat]
   assignedNodeId?: string;
   editable?: boolean;
+  note?: string;
 }
 
 export interface ContextMenuState {

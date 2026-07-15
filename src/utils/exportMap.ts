@@ -60,8 +60,8 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
               { color: '#FFD600', dash: false, label: 'Tuyến nguy hiểm' },
               { color: '#FF0000', dash: false, label: 'Tuyến đang gặp sự cố' },
               { color: '#00C853', dash: false, label: 'Tuyến đã khắc phục' },
-              { node: '▲', color: '#000000', label: 'Đài trạm' },
               { node: '⬟', color: '#FF8C00', label: 'MPOP' },
+              { node: '▲', color: '#000000', label: 'Trạm bình thường' },
               { node: '▲', color: '#FF0000', label: 'Trạm mất điện' },
               { node: '⚠️', color: '#FF0000', label: 'Trạm cô lập' },
               { img: fptImg, label: 'Đội FPT' },
@@ -129,7 +129,7 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
                 ctx.setLineDash([]);
               } else if (item.img) {
                 // Team icon
-                ctx.drawImage(item.img, ix - 2, centerY - 9, 18, 18);
+                ctx.drawImage(item.img, ix + 6, centerY - 9, 18, 18);
               } else {
                 // Node symbol
                 ctx.font = '14px sans-serif';
@@ -164,11 +164,68 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
               ctx.drawImage(imgIcon, px - iconW / 2, py - iconH / 2, iconW, iconH);
 
               if (showTeamNames && team.name && team.type === 'FPT') {
-                ctx.font = `600 ${11 * pixelRatioX}px Inter, sans-serif`;
+                let dx = 0, dy = 20; // default (Bottom)
+                const markerEl = document.querySelector(`.team-marker[data-team-id="${team.id}"]`);
+                if (markerEl) {
+                  const lineEl = markerEl.querySelector('.team-leader-line line');
+                  if (lineEl) {
+                    dx = Number(lineEl.getAttribute('x2')) - 200;
+                    dy = Number(lineEl.getAttribute('y2')) - 200;
+                  }
+                }
+
+                // Draw dashed line if not exactly centered at bottom
+                if (dx !== 0 || dy !== 20) {
+                  ctx.beginPath();
+                  ctx.moveTo(px, py);
+                  ctx.lineTo(px + dx * pixelRatioX, py + dy * pixelRatioY);
+                  ctx.strokeStyle = '#000';
+                  ctx.lineWidth = 1 * Math.max(pixelRatioX, 1);
+                  ctx.setLineDash([4 * pixelRatioX, 4 * pixelRatioX]);
+                  ctx.stroke();
+                  ctx.setLineDash([]);
+                }
+
+                const displayText = team.note ? `${team.name}\n(${team.note})` : team.name;
+                const textLines = displayText.split('\n');
+                
+                const fontSize = 11 * pixelRatioX;
+                ctx.font = `600 ${fontSize}px Inter, sans-serif`;
+
+                let maxW = 0;
+                textLines.forEach(line => {
+                  maxW = Math.max(maxW, ctx.measureText(line).width);
+                });
+                
+                const padX = 8 * pixelRatioX;
+                const padY = 2 * pixelRatioY;
+                const lineH = 14 * pixelRatioY;
+                const boxW = maxW + padX * 2;
+                const boxH = textLines.length * lineH + padY * 2;
+                
+                const alignX = dx >= 0 ? 0 : -boxW;
+                const alignY = dy >= 0 ? 0 : -boxH;
+                const boxLeft = px + dx * pixelRatioX + alignX;
+                const boxTop = py + dy * pixelRatioY + alignY;
+                
+                // Draw white background
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(boxLeft, boxTop, boxW, boxH);
+                
+                // Draw border
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 1 * Math.max(pixelRatioX, 1);
+                ctx.strokeRect(boxLeft, boxTop, boxW, boxH);
+                
+                // Draw text
                 ctx.fillStyle = '#ff4444';
-                ctx.textAlign = 'center';
+                ctx.textAlign = 'left';
                 ctx.textBaseline = 'top';
-                ctx.fillText(team.name, px, py + iconH / 2 + 4 * pixelRatioY);
+                textLines.forEach((line, i) => {
+                  const lineW = ctx.measureText(line).width;
+                  // Center text horizontally in the box
+                  ctx.fillText(line, boxLeft + padX + (maxW - lineW) / 2, boxTop + padY + i * lineH);
+                });
               }
             });
             ctx.restore();
