@@ -143,15 +143,18 @@ export function buildDashboardDataFromSheets(sheets) {
   const taskSource = resolveSheet(sheets, "Công việc");
   warnings.push(...taskSource.resolver.warnings);
   const tasks = taskSource.rows
-    .filter((row) => taskSource.resolver.get(row, "id") || taskSource.resolver.get(row, "name"))
-    .map((row, index) => {
+    .filter((row) => taskSource.resolver.get(row, "name"))
+    .flatMap((row, index) => {
       const get = (field) => taskSource.resolver.get(row, field);
-      return {
-        id: get("id") || String(index + 1),
-        name: get("name") || "Chưa đặt tên công việc",
+      const taskLines = get("name").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+      return taskLines.map((name, lineIndex) => ({
+        id: get("id") || `${index + 1}-${lineIndex + 1}`,
+        date: get("date"),
+        name,
         marker: get("marker"),
+        status: get("marker"),
         note: get("note")
-      };
+      }));
     });
 
   return {

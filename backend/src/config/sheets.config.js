@@ -94,9 +94,10 @@ export const SHEET_SCHEMAS = {
     allowPositionalFallback: true,
     minHeaderMatches: 2,
     fields: {
-      id: column(["STT", "TT", "Mã công việc"], { fallbackIndex: 0 }),
+      date: column(["Ngày", "Ngày thực hiện"], { fallbackIndex: 0 }),
+      id: column(["STT", "TT", "Mã công việc"], { required: false, fallbackIndex: 0 }),
       name: column(["Công việc", "Tên công việc", "Nội dung công việc"], { fallbackIndex: 1 }),
-      marker: column(["Trạng thái", "Tình trạng", "Đánh dấu"], { required: false, fallbackIndex: 2 }),
+      marker: column(["Trạng thái", "Tình trạng", "Đánh dấu"], { fallbackIndex: 2 }),
       note: column(["Ghi chú", "Nội dung cập nhật"], { required: false, fallbackIndex: 3 })
     }
   }
