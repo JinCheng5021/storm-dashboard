@@ -24,6 +24,7 @@ export interface Team {
   assignedNodeId?: string;
   editable?: boolean;
   note?: string;
+  labelOffset?: { dx: number; dy: number };
 }
 
 export interface ContextMenuState {

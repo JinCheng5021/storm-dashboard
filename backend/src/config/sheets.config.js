@@ -43,7 +43,9 @@ export const SHEET_SCHEMAS = {
       cause: column(["Nguyên nhân"]),
       status: column(["Tình trạng hiện tại", "Tình trạng", "Trạng thái"]),
       note: column(["Ghi chú", "Ghi chú sự cố"], { required: false }),
-      impact: column(["Ảnh hưởng", "Mức độ ảnh hưởng"], { required: false })
+      impact: column(["Ảnh hưởng", "Mức độ ảnh hưởng"], { required: false }),
+      processingTime: column(["Tổng thời gian xử lý (h)", "Tổng thời gian xử lý", "Tổng thời gian"], { required: false }),
+      acBackup: column(["Năng lực backup điện AC trạm (h)", "Năng lực backup điện AC trạm", "Năng lực backup điện"], { required: false })
     }
   },
   "DS tuyến, trạm ảnh hưởng": {

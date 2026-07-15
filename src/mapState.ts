@@ -32,8 +32,18 @@ export function mapReducer(state: MapViewState, action: Action): MapViewState {
           e.id === action.id ? { ...e, status: action.status } : e
         ),
       };
-    case 'ADD_TEAM':
+    case 'ADD_TEAM': {
+      const exists = state.teams.some(t => t.id === action.team.id);
+      if (exists) {
+        return {
+          ...state,
+          teams: state.teams.map((t) =>
+            t.id === action.team.id ? { ...t, ...action.team } : t
+          ),
+        };
+      }
       return { ...state, teams: [...state.teams, action.team] };
+    }
     case 'UPDATE_TEAM':
       return {
         ...state,

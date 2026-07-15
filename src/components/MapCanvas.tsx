@@ -23,6 +23,7 @@ interface MapCanvasProps {
   onTeamNameChange: (teamId: string, name: string) => void;
   onTeamNoteChange: (teamId: string, note: string) => void;
   onTeamTypeChange: (teamId: string, type: TeamType) => void;
+  onTeamLabelDrop?: (teamId: string, dx: number, dy: number) => void;
   onConfirmTeam: (teamId: string) => void;
   onRemoveTeam: (teamId: string) => void;
   showTeamNames: boolean;
@@ -116,6 +117,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   onTeamNameChange,
   onTeamNoteChange,
   onTeamTypeChange,
+  onTeamLabelDrop,
   onConfirmTeam,
   onRemoveTeam,
   showTeamNames,
@@ -455,12 +457,23 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           el.title = team.name;
 
           const nameEl = el.querySelector('.team-marker__name') as HTMLElement;
-          if (nameEl) {
+          const lineEl = el.querySelector('.team-leader-line line') as SVGLineElement;
+          const svgEl = el.querySelector('.team-leader-line') as SVGSVGElement;
+          
+          if (nameEl && lineEl && svgEl) {
             nameEl.style.display = team.type === 'FPT' ? '' : 'none';
+            svgEl.style.display = team.type === 'FPT' ? '' : 'none';
             const displayText = team.note ? `${team.name}\n(${team.note})` : team.name;
             if (nameEl.textContent !== displayText) {
               nameEl.textContent = displayText;
             }
+            
+            // Update label offset
+            const dx = team.labelOffset?.dx ?? 0;
+            const dy = team.labelOffset?.dy ?? 30;
+            nameEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+            lineEl.setAttribute('x2', String(200 + dx));
+            lineEl.setAttribute('y2', String(200 + dy));
           }
 
           const iconEl = el.querySelector('.team-marker__icon');
@@ -501,7 +514,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         ? `<div class="team-marker__name">${escapedText}</div>`
         : `<div class="team-marker__name" style="display: none">${escapedText}</div>`;
 
-      const svgHtml = `<svg class="team-leader-line"><line x1="200" y1="200" x2="200" y2="200" stroke="#000" stroke-width="1" stroke-dasharray="4" /></svg>`;
+      const svgHtml = team.type === 'FPT'
+        ? `<svg class="team-leader-line"><line x1="200" y1="200" x2="200" y2="200" stroke="#000" stroke-width="1" stroke-dasharray="4" /></svg>`
+        : `<svg class="team-leader-line" style="display: none"><line x1="200" y1="200" x2="200" y2="200" stroke="#000" stroke-width="1" stroke-dasharray="4" /></svg>`;
 
       el.innerHTML = svgHtml 
         + `<span class="team-marker__icon">${TEAM_ICONS[team.type]}</span>`
@@ -510,6 +525,58 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       el.title = displayText;
 
       wrapper.appendChild(el);
+
+      const createdNameEl = el.querySelector('.team-marker__name') as HTMLElement;
+      const createdLineEl = el.querySelector('.team-leader-line line') as SVGLineElement;
+
+      if (createdNameEl && createdLineEl) {
+        const applyOffset = (dx: number, dy: number) => {
+          createdNameEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+          createdLineEl.setAttribute('x2', String(200 + dx));
+          createdLineEl.setAttribute('y2', String(200 + dy));
+        };
+
+        let currentDx = team.labelOffset?.dx ?? 0;
+        let currentDy = team.labelOffset?.dy ?? 30;
+        applyOffset(currentDx, currentDy);
+
+        let isDraggingLabel = false;
+        let startX = 0, startY = 0;
+        let startDx = 0, startDy = 0;
+
+        const stopProp = (e: Event) => e.stopPropagation();
+        createdNameEl.addEventListener('mousedown', stopProp);
+        createdNameEl.addEventListener('touchstart', stopProp);
+
+        createdNameEl.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          isDraggingLabel = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          startDx = currentDx;
+          startDy = currentDy;
+          createdNameEl.setPointerCapture(e.pointerId);
+        });
+
+        createdNameEl.addEventListener('pointermove', (e) => {
+          if (!isDraggingLabel) return;
+          e.stopPropagation();
+          currentDx = startDx + (e.clientX - startX);
+          currentDy = startDy + (e.clientY - startY);
+          applyOffset(currentDx, currentDy);
+        });
+
+        createdNameEl.addEventListener('pointerup', (e) => {
+          if (!isDraggingLabel) return;
+          isDraggingLabel = false;
+          e.stopPropagation();
+          createdNameEl.releasePointerCapture(e.pointerId);
+          if (onTeamLabelDrop) {
+            onTeamLabelDrop(team.id, currentDx, currentDy);
+          }
+        });
+      }
 
       // Gắn wrapper vào MapLibre, vô hiệu hóa draggable nếu editable = false
       const marker = new maplibregl.Marker({
@@ -538,149 +605,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
       markersRef.current.set(team.id, marker);
     });
-  }, [teams, mapReady, onTeamDrop, onRemoveTeam]);
+  }, [teams, mapReady, onTeamDrop, onTeamLabelDrop, onRemoveTeam]);
 
-  // ── Thêm hàm bố trí nhãn động ────────────────────────────
-  useEffect(() => {
-    if (!mapReady || !mapRef.current || !showTeamNames) return;
-    const map = mapRef.current;
-
-    const recalcLabelPositions = () => {
-      // Helper function cho giao cắt đoạn thẳng và hình chữ nhật
-      const lineIntersectsLine = (l1p1: any, l1p2: any, l2p1: any, l2p2: any) => {
-        const q = (l1p1.y - l2p1.y) * (l2p2.x - l2p1.x) - (l1p1.x - l2p1.x) * (l2p2.y - l2p1.y);
-        const d = (l1p2.x - l1p1.x) * (l2p2.y - l2p1.y) - (l1p2.y - l1p1.y) * (l2p2.x - l2p1.x);
-        if (d === 0) return false;
-        const u = q / d;
-        const q2 = (l1p1.y - l2p1.y) * (l1p2.x - l1p1.x) - (l1p1.x - l2p1.x) * (l1p2.y - l1p1.y);
-        const v = q2 / d;
-        return u >= 0 && u <= 1 && v >= 0 && v <= 1;
-      };
-
-      const lineIntersectsBox = (p1: any, p2: any, box: any) => {
-        if (p1.x >= box.left && p1.x <= box.right && p1.y >= box.top && p1.y <= box.bottom) return true;
-        if (p2.x >= box.left && p2.x <= box.right && p2.y >= box.top && p2.y <= box.bottom) return true;
-        const tl = {x: box.left, y: box.top}, tr = {x: box.right, y: box.top};
-        const bl = {x: box.left, y: box.bottom}, br = {x: box.right, y: box.bottom};
-        return lineIntersectsLine(p1, p2, tl, tr) || lineIntersectsLine(p1, p2, tr, br) ||
-               lineIntersectsLine(p1, p2, br, bl) || lineIntersectsLine(p1, p2, bl, tl);
-      };
-
-      // Thu thập tọa độ pixel của các node (giả sử bán kính ~15px)
-      const nodePoints = nodes.map(n => map.project(n.coordinates));
-      const teamPoints = teams.map(t => map.project(t.position));
-      const edgeSegments: {p1: any, p2: any}[] = [];
-      edges.forEach(e => {
-        const proj = e.coordinates.map(c => map.project(c));
-        for (let i = 0; i < proj.length - 1; i++) {
-          edgeSegments.push({p1: proj[i], p2: proj[i+1]});
-        }
-      });
-      const placedLabels: {left: number, right: number, top: number, bottom: number}[] = [];
-      
-      teams.forEach((team, teamIndex) => {
-        const marker = markersRef.current.get(team.id);
-        if (!marker) return;
-        const wrapper = marker.getElement();
-        const el = wrapper.querySelector('.team-marker') as HTMLElement;
-        const nameEl = el?.querySelector('.team-marker__name') as HTMLElement;
-        const lineEl = el?.querySelector('.team-leader-line line') as SVGLineElement;
-        
-        if (!nameEl || !lineEl || nameEl.style.display === 'none') return;
-        
-        const center = map.project(team.position);
-        
-        // Ứng viên: 24 góc x 3 khoảng cách
-        const radii = [40, 60, 80];
-        const angles = Array.from({length: 24}, (_, i) => (i * 15 * Math.PI) / 180);
-        
-        let bestCost = Infinity;
-        let bestCandidate = { dx: 0, dy: 20 }; // mặc định ở dưới nếu chưa tìm thấy
-        
-        // Tính toán các bounding box cơ bản để test va chạm
-        const nameW = nameEl.offsetWidth || 100;
-        const nameH = nameEl.offsetHeight || 30;
-        
-        for (const r of radii) {
-          for (const a of angles) {
-            const dx = Math.cos(a) * r;
-            const dy = Math.sin(a) * r;
-            
-            // Hộp chữ (bounding box) nở ra phía xa tâm
-            // dx >= 0 -> chữ nằm bên phải điểm thả -> left = dx
-            // dx < 0 -> chữ nằm bên trái điểm thả -> right = dx
-            const left = center.x + dx + (dx >= 0 ? 0 : -nameW);
-            const right = center.x + dx + (dx >= 0 ? nameW : 0);
-            const top = center.y + dy + (dy >= 0 ? 0 : -nameH);
-            const bottom = center.y + dy + (dy >= 0 ? nameH : 0);
-            
-            let overlapPenalty = 0;
-            
-            // Check đè lên các nodes 
-            for (const pt of nodePoints) {
-               if (pt.x > left - 15 && pt.x < right + 15 && pt.y > top - 15 && pt.y < bottom + 15) {
-                 overlapPenalty += 1000;
-               }
-            }
-
-            // Check đè lên icon các đội khác
-            for (let i = 0; i < teamPoints.length; i++) {
-               if (i === teamIndex) continue;
-               const pt = teamPoints[i];
-               if (pt.x > left - 16 && pt.x < right + 16 && pt.y > top - 16 && pt.y < bottom + 16) {
-                 overlapPenalty += 1000;
-               }
-            }
-
-            // Check đè lên các nhãn chữ đã xếp trước đó
-            for (const box of placedLabels) {
-               if (box.right > left && box.left < right && box.bottom > top && box.top < bottom) {
-                 overlapPenalty += 1000;
-               }
-            }
-
-            // Check đè lên các tuyến cáp (edges)
-            for (const seg of edgeSegments) {
-               if (lineIntersectsBox(seg.p1, seg.p2, {left, right, top, bottom})) {
-                 overlapPenalty += 500; // Đè lên đường thì bị phạt 500 điểm (ưu tiên đè đường hơn đè trạm nếu bắt buộc)
-               }
-            }
-            
-            const cost = r + overlapPenalty;
-            if (cost < bestCost) {
-              bestCost = cost;
-              bestCandidate = { dx, dy };
-            }
-          }
-        }
-        
-        placedLabels.push({
-           left: center.x + bestCandidate.dx + (bestCandidate.dx >= 0 ? 0 : -nameW) - 5,
-           right: center.x + bestCandidate.dx + (bestCandidate.dx >= 0 ? nameW : 0) + 5,
-           top: center.y + bestCandidate.dy + (bestCandidate.dy >= 0 ? 0 : -nameH) - 5,
-           bottom: center.y + bestCandidate.dy + (bestCandidate.dy >= 0 ? nameH : 0) + 5,
-        });
-
-        // Áp dụng tọa độ (dx, dy) và neo hướng nở ra
-        const tx = bestCandidate.dx >= 0 ? `0%` : `-100%`;
-        const ty = bestCandidate.dy >= 0 ? `0%` : `-100%`;
-        nameEl.style.transform = `translate(calc(${tx} + ${bestCandidate.dx}px), calc(${ty} + ${bestCandidate.dy}px))`;
-        lineEl.setAttribute('x2', String(200 + bestCandidate.dx));
-        lineEl.setAttribute('y2', String(200 + bestCandidate.dy));
-      });
-    };
-
-    recalcLabelPositions();
-
-    const onMoveEnd = () => recalcLabelPositions();
-    map.on('zoomend', onMoveEnd);
-    map.on('moveend', onMoveEnd);
-
-    return () => {
-      map.off('zoomend', onMoveEnd);
-      map.off('moveend', onMoveEnd);
-    };
-  }, [teams, nodes, mapReady, showTeamNames]);
 
   // ── Pending team input popup ─────────────────────────────────
   const pendingPopupRef = useRef<maplibregl.Popup | null>(null);

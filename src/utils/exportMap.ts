@@ -203,8 +203,8 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
                 const boxW = maxW + padX * 2;
                 const boxH = textLines.length * lineH + padY * 2;
                 
-                const alignX = dx >= 0 ? 0 : -boxW;
-                const alignY = dy >= 0 ? 0 : -boxH;
+                const alignX = -boxW / 2;
+                const alignY = -boxH / 2;
                 const boxLeft = px + dx * pixelRatioX + alignX;
                 const boxTop = py + dy * pixelRatioY + alignY;
                 

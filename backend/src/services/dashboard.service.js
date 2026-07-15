@@ -58,6 +58,9 @@ export function buildDashboardDataFromSheets(sheets) {
         startedAt: get("startedAt"),
         area: get("area"),
         status: get("status"),
+        cause: get("cause"),
+        processingTime: get("processingTime"),
+        acBackup: get("acBackup"),
         note: [get("cause"), get("note"), get("impact")].filter(Boolean).join(" | ")
       };
     });

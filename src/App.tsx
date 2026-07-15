@@ -329,6 +329,79 @@ function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
   );
 }
 
+function sumTimes(times: string[]) {
+  let totalMinutes = 0;
+  times.forEach((t) => {
+    if (!t) return;
+    const parts = t.split(':');
+    if (parts.length >= 2) {
+      totalMinutes += parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+    } else {
+      const val = parseFloat(t);
+      if (!isNaN(val)) totalMinutes += val * 60;
+    }
+  });
+  if (totalMinutes === 0) return "-";
+  const h = Math.floor(totalMinutes / 60);
+  const m = Math.floor(totalMinutes % 60);
+  const pad = (num: number) => num.toString().padStart(2, '0');
+  return `${pad(h)}:${pad(m)}:00`;
+}
+
+function GuestNodePopup({ menu, nodes, incidents, onClose }: any) {
+  if (menu.targetType !== 'node') return null;
+  const node = nodes.find((n: any) => n.id == menu.targetId);
+  if (!node || (node.status !== 'power_out' && node.status !== 'isolated')) return null;
+
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    left: menu.x,
+    top: menu.y,
+    transform: 'translate(-50%, 16px)',
+    background: 'white',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    zIndex: 1000,
+    minWidth: '220px',
+    fontSize: '13px',
+    color: '#333'
+  };
+
+  if (style.top && (style.top as number) > window.innerHeight - 150) {
+    style.transform = 'translate(-50%, -100%)';
+    style.marginTop = '-16px';
+  }
+
+  const stationIncidents = incidents.filter((inc: any) => inc.target === node.name);
+  const causes = Array.from(new Set(stationIncidents.map((inc: any) => inc.cause).filter(Boolean)));
+  const times = stationIncidents.map((inc: any) => inc.processingTime).filter(Boolean);
+  const acBackup = stationIncidents.find((inc: any) => inc.acBackup)?.acBackup || '-';
+
+  return (
+    <div style={style} className="guest-incident-popup">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid #eee', paddingBottom: '4px' }}>
+        <strong style={{ fontSize: '14px', color: '#1a1a1a' }}>Trạm {node.name}</strong>
+        <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#888', padding: '0 4px', fontSize: '16px' }}>✕</button>
+      </div>
+
+      <div style={{ marginBottom: '4px' }}>
+        <span style={{ color: '#666' }}>Số lượng sự cố:</span> <b style={{ marginLeft: '4px' }}>{stationIncidents.length}</b>
+      </div>
+      <div style={{ marginBottom: '4px' }}>
+        <span style={{ color: '#666' }}>Nguyên nhân:</span> 
+        <b style={{ marginLeft: '4px' }}>{causes.length > 0 ? causes.join(', ') : '-'}</b>
+      </div>
+      <div style={{ marginBottom: '4px' }}>
+        <span style={{ color: '#666' }}>Tổng TG xử lý:</span> <b style={{ marginLeft: '4px' }}>{sumTimes(times)}</b>
+      </div>
+      <div>
+        <span style={{ color: '#666' }}>Năng lực backup:</span> <b style={{ marginLeft: '4px' }}>{acBackup}</b>
+      </div>
+    </div>
+  );
+}
+
 function EmptyData() {
   return {
     cableIncidents: [], stationIncidents: [], incidents: [], affectedStations: [], affectedRoutes: [], deployments: [], operators: [], weatherRows: [], tasks: []
@@ -396,7 +469,10 @@ export default function App() {
         edges.forEach(e => { if (edgeMap.has(e.id)) e.status = edgeMap.get(e.id); });
 
         mapDispatch({ type: 'INIT_DATA', nodes, edges });
-        dbTeams.forEach(t => mapDispatch({ type: 'ADD_TEAM', team: t }));
+        dbTeams.forEach(t => {
+          if (t.label_offset) t.labelOffset = t.label_offset;
+          mapDispatch({ type: 'ADD_TEAM', team: t });
+        });
 
       } catch (err) {
         console.error('Failed to load map data:', err);
@@ -416,11 +492,10 @@ export default function App() {
         if (payload.eventType === 'DELETE') {
           mapDispatch({ type: 'REMOVE_TEAM', id: payload.old.id });
         } else if (payload.new) {
-          // Both INSERT and UPDATE map to UPDATE_TEAM to merge state. 
-          // If the team doesn't exist locally, we must dispatch ADD_TEAM first.
-          // Wait, our reducer UPDATE_TEAM only updates if exists.
-          mapDispatch({ type: 'ADD_TEAM', team: payload.new as any });
-          mapDispatch({ type: 'UPDATE_TEAM', id: payload.new.id, patch: payload.new as any });
+          const t = payload.new as any;
+          if (t.label_offset) t.labelOffset = t.label_offset;
+          mapDispatch({ type: 'ADD_TEAM', team: t });
+          mapDispatch({ type: 'UPDATE_TEAM', id: t.id, patch: t });
         }
       })
       .subscribe();
@@ -486,6 +561,11 @@ export default function App() {
   const handleTeamTypeChange = useCallback(async (teamId: string, type: string) => {
     mapDispatch({ type: 'UPDATE_TEAM', id: teamId, patch: { type: type as TeamType } });
     if (session) await supabase.from('teams').update({ type }).eq('id', teamId);
+  }, [session]);
+
+  const handleTeamLabelDrop = useCallback(async (teamId: string, dx: number, dy: number) => {
+    mapDispatch({ type: 'UPDATE_TEAM', id: teamId, patch: { labelOffset: { dx, dy } } });
+    if (session) await supabase.from('teams').update({ label_offset: { dx, dy } }).eq('id', teamId);
   }, [session]);
 
   const handleConfirmTeam = useCallback((teamId: string) => {
@@ -729,6 +809,7 @@ export default function App() {
                 onTeamNameChange={handleTeamNameChange}
                 onTeamNoteChange={handleTeamNoteChange}
                 onTeamTypeChange={handleTeamTypeChange}
+                onTeamLabelDrop={handleTeamLabelDrop}
                 onConfirmTeam={handleConfirmTeam}
                 onRemoveTeam={handleRemoveTeam}
               />
@@ -743,12 +824,20 @@ export default function App() {
                 />
               )}
               {mapState.contextMenu?.visible && !session && (
-                <GuestIncidentPopup
-                  menu={mapState.contextMenu}
-                  edges={mapState.edges}
-                  incidents={data.cableIncidents}
-                  onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
-                />
+                <>
+                  <GuestIncidentPopup
+                    menu={mapState.contextMenu}
+                    edges={mapState.edges}
+                    incidents={data.cableIncidents}
+                    onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
+                  />
+                  <GuestNodePopup
+                    menu={mapState.contextMenu}
+                    nodes={mapState.nodes}
+                    incidents={data.stationIncidents}
+                    onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
+                  />
+                </>
               )}
             </div>
           </article>
