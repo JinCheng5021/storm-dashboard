@@ -75,7 +75,7 @@ function Pager({ page, setPage, total, size }) {
   );
 }
 
-function IncidentChart({ type, total, open }) {
+function IncidentChart({ type, total, open, href }) {
   const done = Math.max(total - open, 0);
   const openPercent = total ? (open / total) * 100 : 0;
   const isStation = type === "station";
@@ -88,6 +88,9 @@ function IncidentChart({ type, total, open }) {
 
   return (
     <article className="summary-card chart-card" style={accentStyle}>
+      <a href={href} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
+        <span className="material-symbols-outlined">open_in_new</span>
+      </a>
       <div className="chart-card-header">
         <div className="summary-icon">
           <span className="material-symbols-outlined text-[20px]">{isStation ? "router" : "cable"}</span>
@@ -116,11 +119,16 @@ function SummaryGrid({ data }) {
   const totalPersonnel = data.deployments.reduce((sum, item) => sum + item.count, 0);
   const deploymentCount = data.deployments.length;
 
+  const SHEET_BASE_URL = `https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || "1fTDLSaxfzLU4XZnPwVhLqIdFNX4-1SdSMpdvyO372nk"}/edit#gid=`;
+
   return (
     <section className="summary-grid">
-      <IncidentChart type="station" total={data.stationIncidents.length} open={stationOpen.length} />
-      <IncidentChart type="cable" total={data.cableIncidents.length} open={activeCable.length} />
+      <IncidentChart type="station" total={data.stationIncidents.length} open={stationOpen.length} href={`${SHEET_BASE_URL}2077199790`} />
+      <IncidentChart type="cable" total={data.cableIncidents.length} open={activeCable.length} href={`${SHEET_BASE_URL}2025084488`} />
       <article className="summary-card" style={ACCENT_STYLE.green}>
+        <a href={`${SHEET_BASE_URL}0`} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
+          <span className="material-symbols-outlined">open_in_new</span>
+        </a>
         <div className="summary-icon"><span className="material-symbols-outlined text-[20px]">groups</span></div>
         <div className="min-w-0 flex-1">
           <p className="summary-label">Nhân sự đối tác</p>
@@ -129,6 +137,9 @@ function SummaryGrid({ data }) {
         </div>
       </article>
       <article className="summary-card" style={ACCENT_STYLE.blue}>
+        <a href={`${SHEET_BASE_URL}0`} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
+          <span className="material-symbols-outlined">open_in_new</span>
+        </a>
         <div className="summary-icon"><span className="material-symbols-outlined text-[20px]">support_agent</span></div>
         <div className="min-w-0 flex-1">
           <p className="summary-label">Nhân sự PMB</p>
@@ -452,10 +463,23 @@ export default function App() {
       const dashboardElement = document.querySelector('.dashboard-shell') as HTMLElement;
       if (!dashboardElement) throw new Error("Không tìm thấy dashboard");
 
+      // Lưu lại style cũ và ép kích thước Desktop nếu màn hình đang hẹp
+      const originalWidth = dashboardElement.style.width;
+      const originalTransform = dashboardElement.style.transform;
+      if (dashboardElement.offsetWidth < 1366) {
+        dashboardElement.style.width = '1366px';
+        dashboardElement.style.transform = 'none';
+        await new Promise(res => setTimeout(res, 200)); // Chờ layout cập nhật
+      }
+
       const dataUrl = await htmlToImage.toPng(dashboardElement, {
         backgroundColor: '#f3f7fb',
         pixelRatio: window.devicePixelRatio || 1.5,
       });
+
+      // Trả lại kích thước ban đầu
+      dashboardElement.style.width = originalWidth;
+      dashboardElement.style.transform = originalTransform;
 
       // 4. Download file
       const link = document.createElement("a");

@@ -196,6 +196,32 @@
       padding: 8px 10px;
     }
 
+    .sheet-link {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      color: #94a3b8;
+      background: transparent;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      transition: all 0.2s ease;
+      z-index: 10;
+    }
+
+    .sheet-link .material-symbols-outlined {
+      font-size: 16px;
+    }
+
+    .sheet-link:hover {
+      color: var(--fpt-blue);
+      background: #f1f5f9;
+      transform: translateY(-1px);
+    }
+
     .chart-card-header {
       position: relative;
       z-index: 1;
