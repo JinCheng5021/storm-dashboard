@@ -1,6 +1,6 @@
 import { SHEETS, SHEET_SCHEMAS } from "../config/sheets.config.js";
 import { fetchSheet } from "../adapters/google-sheets.adapter.js";
-import { createHeaderResolver } from "../lib/header-resolver.js";
+import { createHeaderResolver, normalizeHeader } from "../lib/header-resolver.js";
 
 const numberValue = (raw) => Number(String(raw || "").replace(/[^\d.-]/g, "")) || 0;
 
@@ -14,6 +14,20 @@ function resolveSheet(sheets, sheetName) {
   const rows = sheets[sheetName] || [];
   const resolver = createHeaderResolver(sheetName, rows, SHEET_SCHEMAS[sheetName]);
   return { rows: rows.slice(resolver.dataStartIndex), resolver };
+}
+
+function metricValue(rows, labels) {
+  const acceptedLabels = new Set(labels.map(normalizeHeader));
+  for (const row of rows) {
+    const labelIndex = row.findIndex((cell) => acceptedLabels.has(normalizeHeader(cell)));
+    if (labelIndex >= 0) return numberValue(row[labelIndex + 1]);
+  }
+  return 0;
+}
+
+function isDashboardVisible(value) {
+  const marker = normalizeHeader(value);
+  return ["x", "✓", "✔", "true", "1", "có"].includes(marker);
 }
 
 export function buildDashboardDataFromSheets(sheets) {
@@ -98,10 +112,11 @@ export function buildDashboardDataFromSheets(sheets) {
       };
     });
 
+  const peopleRows = sheets["Nhân sự"] || [];
   const peopleSource = resolveSheet(sheets, "Nhân sự");
   warnings.push(...peopleSource.resolver.warnings);
   const deployments = peopleSource.rows
-    .filter((row) => peopleSource.resolver.get(row, "location") && numberValue(peopleSource.resolver.get(row, "count")) > 0)
+    .filter((row) => peopleSource.resolver.get(row, "deploymentStt"))
     .map((row, index) => {
       const get = (field) => peopleSource.resolver.get(row, field);
       return {
@@ -113,7 +128,7 @@ export function buildDashboardDataFromSheets(sheets) {
     });
 
   const operators = peopleSource.rows
-    .filter((row) => peopleSource.resolver.get(row, "name"))
+    .filter((row) => peopleSource.resolver.get(row, "operatorStt"))
     .map((row, index) => {
       const get = (field) => peopleSource.resolver.get(row, field);
       return {
@@ -127,10 +142,17 @@ export function buildDashboardDataFromSheets(sheets) {
       };
     });
 
+  const responseResources = {
+    teams: metricValue(peopleRows, ["Số đội ứng cứu", "SL đội ứng cứu"]),
+    pickupTrucks: metricValue(peopleRows, ["Xe bán tải", "Số xe bán tải"]),
+    measuringDevices: metricValue(peopleRows, ["Máy đo", "Số máy đo"]),
+    weldingMachines: metricValue(peopleRows, ["Máy hàn", "Số máy hàn"])
+  };
+
   const weatherSource = resolveSheet(sheets, "Thời tiết");
   warnings.push(...weatherSource.resolver.warnings);
   const weatherRows = weatherSource.rows
-    .filter((row) => weatherSource.resolver.get(row, "area"))
+    .filter((row) => weatherSource.resolver.get(row, "area") && isDashboardVisible(weatherSource.resolver.get(row, "visible")))
     .map((row, index) => {
       const get = (field) => weatherSource.resolver.get(row, field);
       return {
@@ -139,7 +161,8 @@ export function buildDashboardDataFromSheets(sheets) {
         lat: get("lat"),
         long: get("long"),
         weather: get("weather"),
-        mobility: get("mobility")
+        mobility: get("mobility"),
+        visible: get("visible")
       };
     });
 
@@ -169,6 +192,7 @@ export function buildDashboardDataFromSheets(sheets) {
       affectedRoutes,
       deployments,
       operators,
+      responseResources,
       weatherRows,
       tasks
     },

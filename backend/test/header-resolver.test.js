@@ -6,8 +6,8 @@ import { SHEET_SCHEMAS } from "../src/config/sheets.config.js";
 
 test("đọc đúng dữ liệu khi thứ tự cột thời tiết thay đổi", () => {
   const rows = [
-    ["Khả năng di chuyển", "Thời tiết", "Long", "Khu vực", "STT", "Lat"],
-    ["Bình thường", "Mưa nhỏ", "106.6", "Hải Phòng", "1", "20.8"]
+    ["Khả năng di chuyển", "Thời tiết", "Long", "Khu vực", "STT", "Lat", "Hiển thị dashboard"],
+    ["Bình thường", "Mưa nhỏ", "106.6", "Hải Phòng", "1", "20.8", "x"]
   ];
   const resolver = createHeaderResolver("Thời tiết", rows, SHEET_SCHEMAS["Thời tiết"]);
   const dataRow = rows[resolver.dataStartIndex];
@@ -19,8 +19,8 @@ test("đọc đúng dữ liệu khi thứ tự cột thời tiết thay đổi",
 
 test("chấp nhận alias tiêu đề đã cấu hình", () => {
   const rows = [
-    ["TT", "Địa phương", "Vĩ độ", "Kinh độ", "Tình hình thời tiết", "Di chuyển"],
-    ["1", "Hà Nội", "21", "105", "Có mây", "Bình thường"]
+    ["TT", "Địa phương", "Vĩ độ", "Kinh độ", "Tình hình thời tiết", "Di chuyển", "Hiển thị"],
+    ["1", "Hà Nội", "21", "105", "Có mây", "Bình thường", "x"]
   ];
   const resolver = createHeaderResolver("Thời tiết", rows, SHEET_SCHEMAS["Thời tiết"]);
   assert.equal(resolver.get(rows[1], "area"), "Hà Nội");
@@ -37,7 +37,7 @@ test("phân biệt hai cột STT trùng nhau theo lần xuất hiện", () => {
 });
 
 test("báo lỗi rõ ràng khi tên cột bắt buộc bị gõ sai", () => {
-  const rows = [["STT", "Khu vực", "Lat", "Long", "Thời tiế", "Khả năng di chuyển"]];
+  const rows = [["STT", "Khu vực", "Lat", "Long", "Thời tiế", "Khả năng di chuyển", "Hiển thị"]];
 
   assert.throws(
     () => createHeaderResolver("Thời tiết", rows, SHEET_SCHEMAS["Thời tiết"]),
