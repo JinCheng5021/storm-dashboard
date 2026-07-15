@@ -226,6 +226,87 @@ function HiddenIncidentTables({ data, pages, setPages }) {
   );
 }
 
+function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
+  if (menu.targetType !== 'edge') return null;
+  const edge = edges.find((e: any) => e.id == menu.targetId);
+  if (!edge || (edge.status !== 'incident_external' && edge.status !== 'resolved')) return null;
+
+  const targetName = edge.name.trim();
+
+  const matchIncident = (target: string) => {
+    if (!target) return false;
+    const cleanTarget = target.replace(/\s+/g, '').toLowerCase();
+    const cleanSearchTarget = targetName.replace(/tuyến/i, '').replace(/\s+/g, '').toLowerCase();
+
+    const parts = cleanTarget.split('-');
+    if (parts.length >= 2) {
+      const forward = `${parts[0]}-${parts[1]}`;
+      const backward = `${parts[1]}-${parts[0]}`;
+      return cleanSearchTarget === forward || cleanSearchTarget === backward || cleanTarget.includes(cleanSearchTarget);
+    }
+    return cleanTarget === cleanSearchTarget;
+  };
+
+  const incident = incidents.find((inc: any) => matchIncident(inc.target));
+
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    left: menu.x,
+    top: menu.y,
+    transform: 'translate(-50%, 16px)',
+    background: 'white',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    zIndex: 1000,
+    minWidth: '220px',
+    fontSize: '13px',
+    color: '#333'
+  };
+
+  if (style.top && (style.top as number) > window.innerHeight - 150) {
+    style.transform = 'translate(-50%, -100%)';
+    style.marginTop = '-16px';
+  }
+
+  if (!incident) {
+    return (
+      <div style={style} className="guest-incident-popup">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid #eee', paddingBottom: '4px' }}>
+          <strong style={{ fontSize: '14px', color: '#1a1a1a' }}>{edge.name}</strong>
+          <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#888', padding: '0 4px', fontSize: '16px' }}>✕</button>
+        </div>
+        <div style={{ color: 'red' }}>Đang lấy dữ liệu hoặc không tìm thấy dữ liệu sự cố cho tuyến này trong sheet.</div>
+      </div>
+    );
+  }
+
+  const isResolved = incident.status?.toLowerCase().includes('hoàn thành') || edge.status === 'resolved';
+
+  return (
+    <div style={style} className="guest-incident-popup">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid #eee', paddingBottom: '4px' }}>
+        <strong style={{ fontSize: '14px', color: '#1a1a1a' }}>{edge.name}</strong>
+        <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#888', padding: '0 4px', fontSize: '16px' }}>✕</button>
+      </div>
+
+      <div style={{ marginBottom: '4px' }}>
+        <span style={{ color: '#666' }}>Số vị trí sự cố:</span> <b style={{ marginLeft: '4px' }}>{incident.incidentCount || '-'}</b>
+      </div>
+      <div style={{ marginBottom: '4px' }}>
+        <span style={{ color: '#666' }}>Vị trí:</span> 
+        <b style={{ marginLeft: '4px', whiteSpace: 'pre-line' }}>{incident.location || '-'}</b>
+      </div>
+
+      {isResolved && (
+        <div>
+          <span style={{ color: '#666' }}>Tổng thời gian xử lý:</span> <b style={{ marginLeft: '4px' }}>{incident.processingTime || '-'}</b>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function EmptyData() {
   return {
     cableIncidents: [], stationIncidents: [], incidents: [], affectedStations: [], affectedRoutes: [], deployments: [], operators: [], weatherRows: [], tasks: []
@@ -467,7 +548,7 @@ export default function App() {
       const originalWidth = dashboardElement.style.width;
       const originalHeight = dashboardElement.style.height;
       const originalTransform = dashboardElement.style.transform;
-      
+
       if (dashboardElement.offsetWidth < 1366 || dashboardElement.offsetHeight < 768) {
         dashboardElement.style.width = '1366px';
         dashboardElement.style.height = '768px';
@@ -515,8 +596,8 @@ export default function App() {
         <div className="flex items-center gap-3 min-w-0">
           <div className="brand-logo-frame"><img src="/fpt-telecom-logo.svg" alt="FPT Telecom" /></div>
           <h1 className="truncate">Dashboard Báo Cáo Bão QLVHMB</h1>
-          <a href={`https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || "1fTDLSaxfzLU4XZnPwVhLqIdFNX4-1SdSMpdvyO372nk"}/edit`} target="_blank" rel="noreferrer" title="Mở file Google Sheet" className="text-slate-400 hover:text-[var(--fpt-blue)] transition-colors flex items-center">
-            <span className="material-symbols-outlined text-[20px]">open_in_new</span>
+          <a href={`https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || "1fTDLSaxfzLU4XZnPwVhLqIdFNX4-1SdSMpdvyO372nk"}/edit`} target="_blank" rel="noreferrer" title="Mở file Google Sheet" className="text-slate-400 hover:text-[var(--fpt-blue)] transition-colors flex items-center text-sm underline ml-1">
+            Xem chi tiết
           </a>
         </div>
         {!captureMode && <div className="flex items-center gap-2 no-capture">
@@ -614,6 +695,14 @@ export default function App() {
                   currentEdgeStatus={contextEdgeStatus}
                   onNodeStatusChange={handleNodeStatus}
                   onEdgeStatusChange={handleEdgeStatus}
+                  onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
+                />
+              )}
+              {mapState.contextMenu?.visible && !session && (
+                <GuestIncidentPopup
+                  menu={mapState.contextMenu}
+                  edges={mapState.edges}
+                  incidents={data.cableIncidents}
                   onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
                 />
               )}

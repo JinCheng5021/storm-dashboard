@@ -35,7 +35,10 @@ export function buildDashboardDataFromSheets(sheets) {
         startedAt: get("startedAt"),
         area: get("area"),
         status: get("status"),
-        note: [get("cause"), get("note")].filter(Boolean).join(" | ")
+        note: [get("cause"), get("note")].filter(Boolean).join(" | "),
+        location: get("location"),
+        incidentCount: get("incidentCount"),
+        processingTime: get("processingTime")
       };
     });
 

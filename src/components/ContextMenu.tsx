@@ -14,10 +14,10 @@ interface ContextMenuProps {
 // Icons dynamically assigned below
 
 const EDGE_OPTIONS: { value: EdgeStatus; label: string; icon: string; cls: string }[] = [
-  { value: 'normal',            label: 'Bình thường',        icon: '─', cls: 'status-active' },
-  { value: 'danger_zone',       label: 'Khu vực nguy hiểm', icon: '─', cls: 'status-warning' },
-  { value: 'incident_external', label: 'Sự cố ngoại vi',    icon: '─', cls: 'status-danger' },
-  { value: 'resolved',          label: 'Đã khắc phục',      icon: '✓', cls: 'status-resolved' },
+  { value: 'normal', label: 'Bình thường', icon: '─', cls: 'status-active' },
+  { value: 'danger_zone', label: 'Khu vực nguy hiểm', icon: '─', cls: 'status-warning' },
+  { value: 'incident_external', label: 'Sự cố ngoại vi', icon: '─', cls: 'status-danger' },
+  { value: 'resolved', label: 'Đã khắc phục', icon: '✓', cls: 'status-resolved' },
 ];
 
 const DAI_TRAM = ['TGO', 'MCU', 'GPU', 'BKE', 'BHA', 'TKE', 'DDG', 'KEP', 'TYN', 'NDH', 'BSN', 'THA', 'CGT', 'HMI', 'VINH', 'HPO', 'DLE', 'KAH', 'DHI', 'LTY', 'LTY2', 'DHA', 'LBO', 'HUE', 'PLC'];
@@ -62,11 +62,11 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   const isNode = menu.targetType === 'node';
   const targetName = menu.targetId.replace(/^node_/, '');
   const isDaiTram = isNode && DAI_TRAM.includes(targetName);
-  
+
   const NODE_OPTIONS: { value: NodeStatus; label: string; icon: string; cls: string }[] = [
-    { value: 'active',    label: 'Hoạt động',       icon: isDaiTram ? '▲' : '⬟', cls: 'status-active' },
-    { value: 'power_out', label: 'Mất điện lưới',   icon: '🔺', cls: 'status-warning' },
-    { value: 'isolated',  label: 'Bị cô lập',       icon: '⭕', cls: 'status-danger' },
+    { value: 'active', label: 'Hoạt động', icon: isDaiTram ? '▲' : '⬟', cls: 'status-active' },
+    { value: 'power_out', label: 'Mất điện lưới', icon: '🔺', cls: 'status-warning' },
+    { value: 'isolated', label: 'Bị cô lập', icon: '⚠️', cls: 'status-danger' },
   ];
 
   const options = isNode ? NODE_OPTIONS : EDGE_OPTIONS;
@@ -74,7 +74,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
   const handleSelect = (val: string) => {
     if (isNode) onNodeStatusChange(menu.targetId, val as NodeStatus);
-    else         onEdgeStatusChange(menu.targetId, val as EdgeStatus);
+    else onEdgeStatusChange(menu.targetId, val as EdgeStatus);
     onClose();
   };
 

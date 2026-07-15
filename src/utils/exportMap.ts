@@ -57,14 +57,13 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
             // ── Legend (bottom-right) ─────────────────────────────────
             const legendItems: any[] = [
               { color: '#0066FF', dash: false, label: 'Tuyến bình thường' },
-              { color: '#FFD600', dash: false, label: 'Khu vực nguy hiểm' },
-              { color: '#FF0000', dash: false, label: 'Tuyến sự cố ngoại vi' },
+              { color: '#FFD600', dash: false, label: 'Tuyến nguy hiểm' },
+              { color: '#FF0000', dash: false, label: 'Tuyến đang gặp sự cố' },
               { color: '#00C853', dash: false, label: 'Tuyến đã khắc phục' },
-              { node: '●', color: '#00C2FF', label: 'Trạm bình thường' },
               { node: '▲', color: '#000000', label: 'Đài trạm' },
               { node: '⬟', color: '#FF8C00', label: 'MPOP' },
-              { node: '▲', color: '#FF0000', label: 'Mất điện' },
-              { node: '⭕', color: '#FF0000', label: 'Trạm cô lập' },
+              { node: '▲', color: '#FF0000', label: 'Trạm mất điện' },
+              { node: '⚠️', color: '#FF0000', label: 'Trạm cô lập' },
               { img: fptImg, label: 'Đội FPT' },
               { img: dcvImg, label: 'Đối tác ĐCV' },
               { img: ffcImg, label: 'Đối tác FFC' },
@@ -164,7 +163,7 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
               const iconH = 24 * pixelRatioY;
               ctx.drawImage(imgIcon, px - iconW / 2, py - iconH / 2, iconW, iconH);
 
-              if (showTeamNames && team.name) {
+              if (showTeamNames && team.name && team.type === 'FPT') {
                 ctx.font = `600 ${11 * pixelRatioX}px Inter, sans-serif`;
                 ctx.fillStyle = '#ff4444';
                 ctx.textAlign = 'center';

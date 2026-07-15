@@ -25,7 +25,10 @@ export const SHEET_SCHEMAS = {
       area: column(["Khu vực", "Chi nhánh"]),
       cause: column(["Nguyên nhân"]),
       status: column(["Tình trạng hiện tại", "Tình trạng", "Trạng thái"]),
-      note: column(["Ghi chú", "Ghi chú sự cố"], { required: false })
+      note: column(["Ghi chú", "Ghi chú sự cố"], { required: false }),
+      location: column(["Vị trí", "Vị trí sự cố"], { required: false }),
+      incidentCount: column(["Số vị trí sự cố"], { required: false }),
+      processingTime: column(["Tổng thời gian xử lý (h)", "Tổng thời gian"], { required: false })
     }
   },
   "SC đài trạm": {

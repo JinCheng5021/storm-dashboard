@@ -61,11 +61,19 @@ const TEAM_COLORS: Record<TeamType, string> = {
   FFC: '#FFD600', // Vàng
 };
 
-function createShapeImage(shape: 'triangle' | 'pentagon', size: number, color: string): ImageData {
+function createShapeImage(shape: 'triangle' | 'pentagon' | 'warning', size: number, color: string): ImageData {
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d')!;
+
+  if (shape === 'warning') {
+    ctx.font = `${size * 0.7}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⚠️', size / 2, size / 2 + size * 0.05);
+    return ctx.getImageData(0, 0, size, size);
+  }
 
   ctx.fillStyle = color;
   ctx.beginPath();
@@ -161,6 +169,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       map.addImage('icon-triangle', createShapeImage('triangle', 32, '#000000'));
       map.addImage('icon-triangle-red', createShapeImage('triangle', 32, '#FF0000'));
       map.addImage('icon-pentagon', createShapeImage('pentagon', 32, '#FF8C00'));
+      map.addImage('icon-warning', createShapeImage('warning', 32, '#000000'));
 
       // ── Edge sources & layers ────────────────────────
       map.addSource('edges', {
@@ -224,16 +233,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         paint: {
           'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 5, 10, 9, 14, 14],
           'circle-color': '#00C2FF',
-          'circle-stroke-color': [
-            'case',
-            ['==', ['get', 'status'], 'isolated'], '#FF0000',
-            '#ffffff'
-          ],
-          'circle-stroke-width': [
-            'case',
-            ['==', ['get', 'status'], 'isolated'], 2.5,
-            1.5
-          ],
+          'circle-stroke-color': '#ffffff',
+          'circle-stroke-width': 1.5,
           'circle-opacity': 0.95,
         },
       });
@@ -245,17 +246,20 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         source: 'nodes',
         layout: {
           'icon-image': [
-            'match',
-            ['get', 'name'],
-            DAI_TRAM, [
-              'match',
-              ['get', 'status'],
-              'power_out', 'icon-triangle-red',
-              'icon-triangle'
-            ],
-            'icon-pentagon'
+            'case',
+            ['==', ['get', 'status'], 'isolated'], 'icon-warning',
+            ['match',
+              ['get', 'name'],
+              DAI_TRAM, [
+                'match',
+                ['get', 'status'],
+                'power_out', 'icon-triangle-red',
+                'icon-triangle'
+              ],
+              'icon-pentagon'
+            ]
           ],
-          'icon-size': ['interpolate', ['linear'], ['zoom'], 5, 0.4, 10, 0.6, 14, 0.75],
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 5, 0.45, 10, 0.65, 14, 0.8],
           'icon-allow-overlap': true,
           'icon-ignore-placement': true,
         }
@@ -338,7 +342,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
               ? {
                 active: '▲ Hoạt động',
                 power_out: '🔺 Mất điện lưới',
-                isolated: '⭕ Bị cô lập',
+                isolated: '⚠️ Bị cô lập',
               }[status] || status
               : '⬟ Hoạt động';
 
@@ -446,15 +450,18 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         // Lấy thẻ con .team-marker bên trong wrapper
         const wrapper = marker.getElement();
         const el = wrapper.querySelector('.team-marker') as HTMLElement;
-        
+
         if (el) {
           el.style.setProperty('--team-color', color);
           el.title = team.name;
 
           // Chỉ cập nhật text nếu có sự thay đổi, tránh chớp hình
-          const nameEl = el.querySelector('.team-marker__name');
-          if (nameEl && nameEl.textContent !== team.name) {
-            nameEl.textContent = team.name;
+          const nameEl = el.querySelector('.team-marker__name') as HTMLElement;
+          if (nameEl) {
+            nameEl.style.display = team.type === 'FPT' ? '' : 'none';
+            if (nameEl.textContent !== team.name) {
+              nameEl.textContent = team.name;
+            }
           }
 
           // Cập nhật icon nếu đổi type
@@ -462,13 +469,13 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           if (iconEl && iconEl.innerHTML !== TEAM_ICONS[team.type]) {
             iconEl.innerHTML = TEAM_ICONS[team.type];
           }
-          
+
           // Cập nhật trạng thái nút xóa dựa trên editable
           const closeBtn = el.querySelector('.team-marker__close') as HTMLElement;
           if (closeBtn) {
             closeBtn.style.display = team.editable === false ? 'none' : 'flex';
           }
-          
+
           // Cập nhật khả năng kéo thả
           marker.setDraggable(team.editable !== false);
         }
@@ -485,24 +492,28 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       el.style.position = 'absolute';
       el.style.transform = 'translate(-50%, -50%)'; // Tự neo tâm bằng CSS
       el.style.setProperty('--team-color', color);
-      
-      const closeBtnHtml = team.editable !== false 
-        ? `<button class="team-marker__close" title="Xóa đội">✕</button>` 
+
+      const closeBtnHtml = team.editable !== false
+        ? `<button class="team-marker__close" title="Xóa đội">✕</button>`
         : '';
-        
+
+      const nameHtml = team.type === 'FPT'
+        ? `<div class="team-marker__name">${team.name}</div>`
+        : `<div class="team-marker__name" style="display: none">${team.name}</div>`;
+
       el.innerHTML = `<span class="team-marker__icon">${TEAM_ICONS[team.type]}</span>`
-        + `<div class="team-marker__name">${team.name}</div>`
+        + nameHtml
         + closeBtnHtml;
       el.title = team.name;
-      
+
       wrapper.appendChild(el);
 
       // Gắn wrapper vào MapLibre, vô hiệu hóa draggable nếu editable = false
-      const marker = new maplibregl.Marker({ 
-        element: wrapper, 
-        draggable: team.editable !== false, 
-        anchor: 'center', 
-        offset: [0, 0] 
+      const marker = new maplibregl.Marker({
+        element: wrapper,
+        draggable: team.editable !== false,
+        anchor: 'center',
+        offset: [0, 0]
       })
         .setLngLat(team.position)
         .addTo(map);
