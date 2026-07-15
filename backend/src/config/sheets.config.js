@@ -89,7 +89,8 @@ export const SHEET_SCHEMAS = {
       lat: column(["Lat", "Vĩ độ", "Latitude"]),
       long: column(["Long", "Kinh độ", "Longitude"]),
       weather: column(["Thời tiết", "Tình hình thời tiết"]),
-      mobility: column(["Khả năng di chuyển", "Di chuyển", "Tình trạng di chuyển"])
+      mobility: column(["Khả năng di chuyển", "Di chuyển", "Tình trạng di chuyển"]),
+      visible: column(["Hiển thị (dành cho dashboard)", "Hiển thị dashboard", "Hiển thị"])
     }
   },
   "Công việc": {

@@ -9,6 +9,7 @@ import { mapReducer, EMPTY_MAP_STATE, haversine } from "./mapState";
 import { exportMapImage } from "./utils/exportMap";
 import { supabase } from "./lib/supabase";
 import { numberedTaskName, tasksForDate } from "./taskUtils";
+import { incidentStatusBreakdown } from "./incidentUtils";
 import type { NodeStatus, EdgeStatus, Team, TeamType } from "./types";
 
 const PAGE_SIZE = {
@@ -93,14 +94,17 @@ function Pager({ page, setPage, total, size }) {
   );
 }
 
-function IncidentChart({ type, total, open, href }) {
-  const done = Math.max(total - open, 0);
-  const openPercent = total ? (open / total) * 100 : 0;
+function IncidentChart({ type, incidents, href }) {
+  const breakdown = incidentStatusBreakdown(incidents);
+  const completedEnd = breakdown.total ? (breakdown.completed.count / breakdown.total) * 100 : 0;
+  const unprocessedEnd = breakdown.total
+    ? ((breakdown.completed.count + breakdown.unprocessed.count) / breakdown.total) * 100
+    : 0;
   const isStation = type === "station";
   const accentStyle = isStation ? ACCENT_STYLE.blue : ACCENT_STYLE.orange;
   const chartStyle = {
-    background: total
-      ? `conic-gradient(var(--fpt-orange) 0 ${openPercent}%, var(--fpt-green) ${openPercent}% 100%)`
+    background: breakdown.total
+      ? `conic-gradient(var(--fpt-green) 0 ${completedEnd}%, var(--fpt-orange) ${completedEnd}% ${unprocessedEnd}%, var(--danger) ${unprocessedEnd}% 100%)`
       : "#e2e8f0"
   };
 
@@ -118,12 +122,13 @@ function IncidentChart({ type, total, open, href }) {
       <div className="chart-card-body">
         <div className="pie-wrap">
           <div className="pie-chart" style={chartStyle}></div>
-          <p className="pie-total">{total}</p>
+          <p className="pie-total">{breakdown.total}</p>
         </div>
         <div className="pie-meta">
           <div className="pie-legend">
-            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-orange"></i>Đang xử lý</span><span className="pie-legend-value">{open}</span></div>
-            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-green"></i>Hoàn thành</span><span className="pie-legend-value">{done}</span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-green"></i>Hoàn thành</span><span className="pie-legend-value"><strong>{breakdown.completed.count}</strong><small>{breakdown.completed.percent}</small></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-orange"></i>Chưa xử lý</span><span className="pie-legend-value"><strong>{breakdown.unprocessed.count}</strong><small>{breakdown.unprocessed.percent}</small></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-red"></i>Chưa tiếp cận</span><span className="pie-legend-value"><strong>{breakdown.unreachable.count}</strong><small>{breakdown.unreachable.percent}</small></span></div>
           </div>
         </div>
       </div>
@@ -132,17 +137,16 @@ function IncidentChart({ type, total, open, href }) {
 }
 
 function SummaryGrid({ data }) {
-  const activeCable = data.cableIncidents.filter((item) => !String(item.status || "").toLowerCase().includes("hoàn thành"));
-  const stationOpen = data.stationIncidents.filter((item) => !String(item.status || "").toLowerCase().includes("hoàn thành"));
   const totalPersonnel = data.deployments.reduce((sum, item) => sum + item.count, 0);
   const deploymentCount = data.deployments.length;
+  const resources = data.responseResources || { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 };
 
   const SHEET_BASE_URL = `https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || "1fTDLSaxfzLU4XZnPwVhLqIdFNX4-1SdSMpdvyO372nk"}/edit#gid=`;
 
   return (
     <section className="summary-grid">
-      <IncidentChart type="station" total={data.stationIncidents.length} open={stationOpen.length} href={`${SHEET_BASE_URL}2077199790`} />
-      <IncidentChart type="cable" total={data.cableIncidents.length} open={activeCable.length} href={`${SHEET_BASE_URL}2025084488`} />
+      <IncidentChart type="station" incidents={data.stationIncidents} href={`${SHEET_BASE_URL}2077199790`} />
+      <IncidentChart type="cable" incidents={data.cableIncidents} href={`${SHEET_BASE_URL}2025084488`} />
       <article className="summary-card" style={ACCENT_STYLE.green}>
         <a href={`${SHEET_BASE_URL}0`} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
           <span className="material-symbols-outlined">open_in_new</span>
@@ -151,7 +155,7 @@ function SummaryGrid({ data }) {
         <div className="min-w-0 flex-1">
           <p className="summary-label">Nhân sự đối tác</p>
           <div className="summary-value-row"><p className="summary-value">{totalPersonnel}</p><span className="chip chip-green">{deploymentCount} điểm đồn trú</span></div>
-          <div className="equipment-summary"><span className="material-symbols-outlined">construction</span><span><strong>{deploymentCount}</strong> máy đo</span><span className="equipment-divider">|</span><span><strong>{deploymentCount}</strong> máy hàn cáp</span></div>
+          <div className="equipment-summary"><span className="material-symbols-outlined">construction</span><span><strong>{deploymentCount}</strong> máy đo</span><span className="equipment-divider">|</span><span><strong>{deploymentCount}</strong> máy hàn</span></div>
         </div>
       </article>
       <article className="summary-card" style={ACCENT_STYLE.blue}>
@@ -161,8 +165,8 @@ function SummaryGrid({ data }) {
         <div className="summary-icon"><span className="material-symbols-outlined text-[20px]">support_agent</span></div>
         <div className="min-w-0 flex-1">
           <p className="summary-label">Nhân sự PMB</p>
-          <div className="summary-value-row"><p className="summary-value">{data.operators.length}</p><span className={`chip ${data.operators.length ? "chip-blue" : "chip-gray"}`}>{data.operators.length ? "Sẵn sàng ứng cứu" : "Chưa cập nhật"}</span></div>
-          <div className="equipment-summary pmb-equipment"><span className="material-symbols-outlined">local_shipping</span><span>1 xe bán tải + 1 máy đo + 1 máy hàn</span></div>
+          <div className="summary-value-row"><p className="summary-value">{data.operators.length}</p><span className={`chip ${resources.teams ? "chip-blue" : "chip-gray"}`}>{resources.teams} đội ứng cứu</span></div>
+          <div className="equipment-summary pmb-equipment"><span className="material-symbols-outlined">local_shipping</span><span>{resources.pickupTrucks} xe bán tải + {resources.measuringDevices} máy đo + {resources.weldingMachines} máy hàn</span></div>
         </div>
       </article>
     </section>
@@ -179,13 +183,13 @@ function WeatherPanel({ rows, page, setPage }) {
       </div>
       <div className="table-box">
         <table>
-          <thead><tr><th style={{ width: "10%" }}>STT</th><th style={{ width: "31%" }}>Khu vực</th><th style={{ width: "30%" }}>Thời tiết</th><th style={{ width: "29%" }}>Di chuyển</th></tr></thead>
+          <thead><tr><th style={{ width: "8%" }}>STT</th><th style={{ width: "30%" }}>Khu vực</th><th style={{ width: "35%" }}>Thời tiết</th><th style={{ width: "27%" }}>Di chuyển</th></tr></thead>
           <tbody>
             {!rows.length ? (
               <tr><td colSpan="4"><div className="empty-state">Chưa có dữ liệu trong tab Thời tiết.</div></td></tr>
             ) : current.rows.map((row, index) => (
               <tr key={`${row.stt}-${current.start + index}`} title={[row.area, row.weather, row.mobility].filter(Boolean).join(" | ")}>
-                <td className="strong">{row.stt || String(current.start + index + 1)}</td>
+                <td className="strong">{String(current.start + index + 1)}</td>
                 <td>{row.area || "-"}</td>
                 <td>{weatherIcon(row.weather)} {row.weather || "-"}</td>
                 <td><StatusChip status={row.mobility || "Chưa cập nhật"} /></td>
@@ -404,7 +408,7 @@ function GuestNodePopup({ menu, nodes, incidents, onClose }: any) {
 
 function EmptyData() {
   return {
-    cableIncidents: [], stationIncidents: [], incidents: [], affectedStations: [], affectedRoutes: [], deployments: [], operators: [], weatherRows: [], tasks: []
+    cableIncidents: [], stationIncidents: [], incidents: [], affectedStations: [], affectedRoutes: [], deployments: [], operators: [], responseResources: { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 }, weatherRows: [], tasks: []
   };
 }
 
