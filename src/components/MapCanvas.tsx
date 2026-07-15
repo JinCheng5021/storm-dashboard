@@ -175,7 +175,14 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         source: 'edges',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-width': 2,
+          'line-width': [
+            'match',
+            ['get', 'status'],
+            'incident_external', 3.5,
+            'danger_zone', 3.5,
+            'resolved', 3,
+            2 // normal
+          ],
           'line-color': [
             'match',
             ['get', 'status'],
@@ -184,7 +191,14 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             'resolved', '#00C853',
             '#0066FF' // normal
           ],
-          'line-opacity': 0.9,
+          'line-opacity': [
+            'match',
+            ['get', 'status'],
+            'incident_external', 1,
+            'danger_zone', 1,
+            'resolved', 1,
+            0.7
+          ],
         },
       });
 

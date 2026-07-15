@@ -515,6 +515,9 @@ export default function App() {
         <div className="flex items-center gap-3 min-w-0">
           <div className="brand-logo-frame"><img src="/fpt-telecom-logo.svg" alt="FPT Telecom" /></div>
           <h1 className="truncate">Dashboard Báo Cáo Bão QLVHMB</h1>
+          <a href={`https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || "1fTDLSaxfzLU4XZnPwVhLqIdFNX4-1SdSMpdvyO372nk"}/edit`} target="_blank" rel="noreferrer" title="Mở file Google Sheet" className="text-slate-400 hover:text-[var(--fpt-blue)] transition-colors flex items-center">
+            <span className="material-symbols-outlined text-[20px]">open_in_new</span>
+          </a>
         </div>
         {!captureMode && <div className="flex items-center gap-2 no-capture">
           <div className="update-badge"><span className="material-symbols-outlined text-[15px]">update</span><span>{lastUpdated}</span></div>
