@@ -654,8 +654,14 @@ export default function App() {
       if (mapCanvasWrap && imageSlot) {
         mapCanvasWrap.style.display = 'none';
         tempImg = document.createElement('img');
-        tempImg.src = mapDataURL as string;
         tempImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+        
+        await new Promise((resolve, reject) => {
+          tempImg!.onload = resolve;
+          tempImg!.onerror = reject;
+          tempImg!.src = mapDataURL as string;
+        });
+
         imageSlot.insertBefore(tempImg, mapCanvasWrap);
       }
 
@@ -671,10 +677,12 @@ export default function App() {
       const originalWidth = dashboardElement.style.width;
       const originalHeight = dashboardElement.style.height;
       const originalTransform = dashboardElement.style.transform;
+      const originalOverflow = dashboardElement.style.overflow;
 
       if (dashboardElement.offsetWidth < 1366 || dashboardElement.offsetHeight < 768) {
         dashboardElement.style.width = '1366px';
-        dashboardElement.style.height = '768px';
+        dashboardElement.style.height = 'auto';
+        dashboardElement.style.overflow = 'visible';
         dashboardElement.style.transform = 'none';
         await new Promise(res => setTimeout(res, 200)); // Chờ layout cập nhật
       }
@@ -688,6 +696,7 @@ export default function App() {
       dashboardElement.style.width = originalWidth;
       dashboardElement.style.height = originalHeight;
       dashboardElement.style.transform = originalTransform;
+      dashboardElement.style.overflow = originalOverflow;
 
       // 4. Download file
       const link = document.createElement("a");
