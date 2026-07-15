@@ -463,11 +463,14 @@ export default function App() {
       const dashboardElement = document.querySelector('.dashboard-shell') as HTMLElement;
       if (!dashboardElement) throw new Error("Không tìm thấy dashboard");
 
-      // Lưu lại style cũ và ép kích thước Desktop nếu màn hình đang hẹp
+      // Lưu lại style cũ và ép kích thước Desktop nếu màn hình đang hẹp hoặc lùn
       const originalWidth = dashboardElement.style.width;
+      const originalHeight = dashboardElement.style.height;
       const originalTransform = dashboardElement.style.transform;
-      if (dashboardElement.offsetWidth < 1366) {
+      
+      if (dashboardElement.offsetWidth < 1366 || dashboardElement.offsetHeight < 768) {
         dashboardElement.style.width = '1366px';
+        dashboardElement.style.height = '768px';
         dashboardElement.style.transform = 'none';
         await new Promise(res => setTimeout(res, 200)); // Chờ layout cập nhật
       }
@@ -479,6 +482,7 @@ export default function App() {
 
       // Trả lại kích thước ban đầu
       dashboardElement.style.width = originalWidth;
+      dashboardElement.style.height = originalHeight;
       dashboardElement.style.transform = originalTransform;
 
       // 4. Download file
