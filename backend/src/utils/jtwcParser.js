@@ -1,4 +1,10 @@
 export function parseJtwcText(rawText) {
+  function degreesToDirection(deg) {
+    const directions = ["Bắc", "Đông Bắc", "Đông", "Đông Nam", "Nam", "Tây Nam", "Tây", "Tây Bắc"];
+    const val = Math.floor((deg / 45) + 0.5);
+    return directions[(val % 8)];
+  }
+
   const result = {
     name: '',
     position: '',
@@ -29,7 +35,8 @@ export function parseJtwcText(rawText) {
   // 4. Hướng & Tốc độ
   const moveMatch = rawText.match(/MOVEMENT PAST SIX HOURS\s+-\s+([0-9]+)\s+DEGREES\s+AT\s+([0-9]+)\s+KTS/);
   if (moveMatch) {
-    result.direction = moveMatch[1] + "°";
+    const deg = parseInt(moveMatch[1]);
+    result.direction = `${degreesToDirection(deg)} (${deg}°)`;
     result.speedKmH = Math.round(parseInt(moveMatch[2]) * 1.852);
   }
 

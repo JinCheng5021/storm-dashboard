@@ -331,16 +331,40 @@ function SummaryGrid({ data, mode }: any) {
   );
 }
 
-function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, toggleStormGeoJSON }: any) {
+function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, toggleStormGeoJSON, session, onSyncStorms }: any) {
   const current = pageItems(rows, page, PAGE_SIZE.weather);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    await onSyncStorms();
+    setIsSyncing(false);
+  };
+
   return (
     <article className="card weather-card" style={ACCENT_STYLE.blue}>
       <div className="card-header">
-        <h2 className="card-title"><span className="material-symbols-outlined">thunderstorm</span>{mode === 'truoc_bao' ? 'Thông tin bão' : 'Thời tiết'}</h2>
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+          <h2 className="card-title" style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+            <span className="material-symbols-outlined">thunderstorm</span>
+            {mode === 'truoc_bao' ? 'Thông tin bão' : 'Thời tiết'}
+          </h2>
+          {mode === 'truoc_bao' && session && (
+            <button onClick={handleSync} disabled={isSyncing} className="icon-btn" title="Đồng bộ bão mới nhất" style={{ background: 'transparent', padding: '4px' }}>
+              <span className={`material-symbols-outlined ${isSyncing ? 'spin' : ''}`} style={{ fontSize: '20px', color: 'var(--fpt-blue)' }}>sync</span>
+            </button>
+          )}
+        </div>
         {mode === 'trong_bao' && <Pager page={current.page} setPage={setPage} total={rows.length} size={PAGE_SIZE.weather} />}
       </div>
       <div className="table-box">
-        {mode === 'truoc_bao' ? (
+        {isSyncing ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0', minHeight: '250px' }}>
+            <style>{`@keyframes spin-sync { 100% { transform: rotate(360deg); } }`}</style>
+            <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--fpt-blue)', animation: 'spin-sync 1s linear infinite' }}>sync</span>
+            <p style={{ marginTop: '16px', color: '#555', fontWeight: 500 }}>Đang đồng bộ dữ liệu bão từ JTWC...</p>
+          </div>
+        ) : mode === 'truoc_bao' ? (
           <div className="storm-list" style={{ padding: "0 16px 16px", maxHeight: "400px", overflowY: "auto" }}>
             {(!storms || storms.length === 0) ? (
               <div className="empty-state py-8">Hiện không có bão hoặc áp thấp nhiệt đới trên Biển Đông.</div>
@@ -404,20 +428,27 @@ function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, 
   );
 }
 
-function TasksPanel({ tasks, page, setPage, today }) {
+function TasksPanel({ tasks, page, setPage, today, mode }: any) {
   const todayTasks = tasksForDate(tasks, today);
   const current = pageItems(todayTasks, page, PAGE_SIZE.tasks);
   return (
     <article className="card tasks-card" style={ACCENT_STYLE.orange}>
       <div className="card-header">
         <div className="task-card-heading">
-          <h2 className="card-title"><span className="material-symbols-outlined">checklist</span>Công việc trong ngày</h2>
-          <time className="task-card-date" dateTime={today.split("/").reverse().join("-")}>{today}</time>
+          <h2 className="card-title">
+            <span className="material-symbols-outlined">checklist</span>
+            {mode === 'truoc_bao' ? 'Công việc cần làm' : 'Công việc trong ngày'}
+          </h2>
+          {mode !== 'truoc_bao' && <time className="task-card-date" dateTime={today.split("/").reverse().join("-")}>{today}</time>}
         </div>
         <Pager page={current.page} setPage={setPage} total={todayTasks.length} size={PAGE_SIZE.tasks} />
       </div>
       <div className="list-box">
-        {!todayTasks.length ? <div className="empty-state">Chưa có công việc ngày {today} trong tab Công việc.</div> : current.rows.map((task, index) => {
+        {!todayTasks.length ? (
+          <div className="empty-state">
+            {mode === 'truoc_bao' ? 'Chưa có công việc cần làm.' : `Chưa có công việc ngày ${today} trong tab Công việc.`}
+          </div>
+        ) : current.rows.map((task: any, index: number) => {
           const status = taskStatusMeta(task.status || task.marker);
           const displayPosition = current.start + index + 1;
           return (
@@ -638,20 +669,34 @@ export default function App() {
     });
   }, []);
 
-  useEffect(() => {
-    async function fetchStorms() {
-      try {
-        const res = await fetch("/api/storms");
-        const json = await res.json();
-        if (json.success) {
-          setStorms(json.data);
-        }
-      } catch (err) {
-        console.error("Error fetching storms:", err);
-      }
+  const fetchStorms = useCallback(async () => {
+    try {
+      const res = await fetch("/api/storms");
+      const json = await res.json();
+      if (json.success) setStorms(json.data);
+    } catch (e) {
+      console.error("Error fetching storms", e);
     }
-    fetchStorms();
   }, []);
+
+  useEffect(() => {
+    fetchStorms();
+  }, [fetchStorms]);
+
+  const handleSyncStorms = useCallback(async () => {
+    try {
+      const res = await fetch("/api/jtwc-sync", { method: 'POST' });
+      const json = await res.json();
+      if (json.success) {
+        alert("Đã cập nhật bão thành công!");
+        fetchStorms();
+      } else {
+        alert("Lỗi đồng bộ: " + json.message);
+      }
+    } catch (e) {
+      alert("Lỗi kết nối khi đồng bộ bão.");
+    }
+  }, [fetchStorms]);
 
   // --- Map State ---
   const [mapState, mapDispatch] = useReducer(mapReducer, EMPTY_MAP_STATE);
@@ -1039,10 +1084,12 @@ export default function App() {
           storms={storms}
           activeStormGeoJSONs={activeStormGeoJSONs}
           toggleStormGeoJSON={toggleStormGeoJSON}
+          session={session}
+          onSyncStorms={handleSyncStorms}
         />
         <section className="content-grid">
           <HiddenIncidentTables data={data} pages={pages} setPages={setPages} />
-          <TasksPanel tasks={data.tasks} page={pages.tasks} setPage={(page) => setPages((old) => ({ ...old, tasks: page }))} today={today} />
+          <TasksPanel tasks={data.tasks} page={pages.tasks} setPage={(page: number) => setPages((old) => ({ ...old, tasks: page }))} today={today} mode={dashboardMode} />
           <article className="card rescue-card" style={ACCENT_STYLE.green}>
             <div className="card-header">
               <h2 className="card-title"><span className="material-symbols-outlined">map</span>Thông tin đội ứng cứu khắc phục sự cố</h2>
