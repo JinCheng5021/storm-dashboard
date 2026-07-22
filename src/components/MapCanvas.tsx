@@ -7,6 +7,7 @@ import type {
   Team,
   ContextMenuState,
   TeamType,
+  DashboardMode,
 } from '../types';
 import './MapCanvas.css';
 
@@ -15,6 +16,7 @@ interface MapCanvasProps {
   nodes: NodeFeature[];
   teams: Team[];
   sidebarCollapsed: boolean;
+  mode: DashboardMode;
   onContextMenu: (state: ContextMenuState) => void;
   onCloseContextMenu: () => void;
   onTeamDrop: (teamId: string, lngLat: [number, number]) => void;
@@ -28,6 +30,7 @@ interface MapCanvasProps {
   onRemoveTeam: (teamId: string) => void;
   showTeamNames: boolean;
   onToggleTeamNames: () => void;
+  activeStormGeoJSONs?: Record<string, any>;
 }
 
 // Map bounds for Vietnam (north)
@@ -35,12 +38,16 @@ const INIT_CENTER: [number, number] = [105.8, 20.5];
 const INIT_ZOOM = 6.5;
 
 // Derive GeoJSON FeatureCollections from state
-function edgesGeoJSON(edges: EdgeFeature[]) {
+function edgesGeoJSON(edges: EdgeFeature[], mode: DashboardMode) {
   return {
     type: 'FeatureCollection' as const,
     features: edges.map((e) => ({
       type: 'Feature' as const,
-      properties: { id: e.id, name: e.name, status: e.status },
+      properties: {
+        id: e.id,
+        name: e.name,
+        status: mode === 'truoc_bao' ? (e.statusBeforeTyphoon || 'normal') : e.status
+      },
       geometry: { type: 'LineString' as const, coordinates: e.coordinates },
     })),
   };
@@ -109,6 +116,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   nodes,
   teams,
   sidebarCollapsed,
+  mode,
   onContextMenu,
   onCloseContextMenu,
   onTeamDrop,
@@ -122,6 +130,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   onRemoveTeam,
   showTeamNames,
   onToggleTeamNames,
+  activeStormGeoJSONs = {},
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -140,7 +149,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
       center: INIT_CENTER,
       zoom: INIT_ZOOM,
-      maxBounds: [[95, 7], [115, 24]] as [[number, number], [number, number]],
+      // maxBounds: [[95, 7], [115, 24]] as [[number, number], [number, number]],
       preserveDrawingBuffer: true, // Required for map.getCanvas().toDataURL()
     } as maplibregl.MapOptions);
 
@@ -178,7 +187,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       // ── Edge sources & layers ────────────────────────
       map.addSource('edges', {
         type: 'geojson',
-        data: edgesGeoJSON(edges),
+        data: edgesGeoJSON(edges, mode),
       });
 
       // Base edges (all states)
@@ -192,25 +201,31 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             'match',
             ['get', 'status'],
             'incident_external', 3.5,
+            'unsafe', 3.5,
             'danger_zone', 3.5,
+            'risky', 3.5,
             'resolved', 3,
-            2 // normal
+            2 // normal / safe
           ],
           'line-color': [
             'match',
             ['get', 'status'],
             'incident_external', '#FF0000',
+            'unsafe', '#FF0000',
             'danger_zone', '#FFD600',
+            'risky', '#FFD600',
             'resolved', '#00C853',
-            '#0066FF' // normal
+            '#0066FF' // normal / safe
           ],
           'line-opacity': [
             'match',
             ['get', 'status'],
             'incident_external', 1,
+            'unsafe', 1,
             'danger_zone', 1,
+            'risky', 1,
             'resolved', 1,
-            0.7
+            0.7 // normal / safe
           ],
         },
       });
@@ -361,6 +376,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
               incident_external: '⚠ Sự cố ngoại vi',
               danger_zone: '⚠ Khu vực nguy hiểm',
               resolved: '✓ Đã khắc phục',
+              safe: '✓ An toàn',
+              unsafe: '⚠ Mất an toàn',
+              risky: '⚠ Có nguy cơ',
             };
             tooltipRef.current
               ?.setLngLat(e.lngLat)
@@ -409,8 +427,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     if (!mapReady || !mapRef.current) return;
     const map = mapRef.current;
     const src = map.getSource('edges') as maplibregl.GeoJSONSource | undefined;
-    src?.setData(edgesGeoJSON(edges));
-  }, [edges, mapReady]);
+    src?.setData(edgesGeoJSON(edges, mode));
+  }, [edges, mapReady, mode]);
 
   // ── Sync node data ───────────────────────────────────────────
   useEffect(() => {
@@ -419,6 +437,83 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     const src = map.getSource('nodes') as maplibregl.GeoJSONSource | undefined;
     src?.setData(nodesGeoJSON(nodes));
   }, [nodes, mapReady]);
+
+  // ── Sync JTWC Storm GeoJSON layers ───────────────────────────
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const map = mapRef.current;
+    const currentActiveIds = Object.keys(activeStormGeoJSONs);
+
+    // Remove inactive layers
+    const style = map.getStyle();
+    if (!style) return;
+
+    const allLayers = style.layers || [];
+    const stormLayerIds = allLayers.filter(l => l.id.startsWith('storm-')).map(l => l.id);
+
+    for (const layerId of stormLayerIds) {
+      const stormId = layerId.split('-')[1];
+      if (!currentActiveIds.includes(stormId)) {
+        if (map.getLayer(layerId)) map.removeLayer(layerId);
+      }
+    }
+
+    // Remove inactive sources
+    const sources = style.sources || {};
+    const stormSourceIds = Object.keys(sources).filter(s => s.startsWith('storm-'));
+    for (const sourceId of stormSourceIds) {
+      const stormId = sourceId.split('-')[1];
+      if (!currentActiveIds.includes(stormId)) {
+        if (map.getSource(sourceId)) map.removeSource(sourceId);
+      }
+    }
+
+    // Add or update active layers
+    currentActiveIds.forEach(stormId => {
+      const sourceId = `storm-${stormId}`;
+      const fillLayerId = `storm-${stormId}-fill`;
+      const lineLayerId = `storm-${stormId}-line`;
+      const geojson = activeStormGeoJSONs[stormId];
+
+      if (!geojson) return;
+
+      if (!map.getSource(sourceId)) {
+        map.addSource(sourceId, { type: 'geojson', data: geojson });
+      } else {
+        (map.getSource(sourceId) as maplibregl.GeoJSONSource).setData(geojson);
+      }
+
+      if (!map.getLayer(fillLayerId)) {
+        map.addLayer({
+          id: fillLayerId,
+          type: 'fill',
+          source: sourceId,
+          paint: {
+            'fill-color': '#F47C20', // orange
+            'fill-opacity': 0.15
+          },
+          filter: ['==', ['geometry-type'], 'Polygon']
+        }, 'node-labels');
+      }
+
+      if (!map.getLayer(lineLayerId)) {
+        map.addLayer({
+          id: lineLayerId,
+          type: 'line',
+          source: sourceId,
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#EF4444', // red
+            'line-width': 2
+          },
+          filter: ['any', ['==', ['geometry-type'], 'LineString'], ['==', ['geometry-type'], 'MultiLineString']]
+        }, 'node-labels');
+      }
+    });
+  }, [activeStormGeoJSONs, mapReady]);
 
   // ── Team markers ─────────────────────────────────────────────
   useEffect(() => {
@@ -459,7 +554,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           const nameEl = el.querySelector('.team-marker__name') as HTMLElement;
           const lineEl = el.querySelector('.team-leader-line line') as SVGLineElement;
           const svgEl = el.querySelector('.team-leader-line') as SVGSVGElement;
-          
+
           if (nameEl && lineEl && svgEl) {
             nameEl.style.display = team.type === 'FPT' ? '' : 'none';
             svgEl.style.display = team.type === 'FPT' ? '' : 'none';
@@ -467,7 +562,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             if (nameEl.textContent !== displayText) {
               nameEl.textContent = displayText;
             }
-            
+
             // Update label offset
             const dx = team.labelOffset?.dx ?? 0;
             const dy = team.labelOffset?.dy ?? 30;
@@ -518,7 +613,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         ? `<svg class="team-leader-line"><line x1="200" y1="200" x2="200" y2="200" stroke="#000" stroke-width="1" stroke-dasharray="4" /></svg>`
         : `<svg class="team-leader-line" style="display: none"><line x1="200" y1="200" x2="200" y2="200" stroke="#000" stroke-width="1" stroke-dasharray="4" /></svg>`;
 
-      el.innerHTML = svgHtml 
+      el.innerHTML = svgHtml
         + `<span class="team-marker__icon">${TEAM_ICONS[team.type]}</span>`
         + nameHtml
         + closeBtnHtml;

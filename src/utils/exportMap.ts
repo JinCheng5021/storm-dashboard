@@ -1,5 +1,5 @@
 import type maplibregl from 'maplibre-gl';
-import type { EdgeFeature, NodeFeature, Team } from '../types';
+import type { EdgeFeature, NodeFeature, Team, DashboardMode } from '../types';
 
 interface ExportOptions {
   map: maplibregl.Map;
@@ -8,6 +8,7 @@ interface ExportOptions {
   nodes: NodeFeature[];
   teams: Team[];
   showTeamNames: boolean;
+  mode?: DashboardMode;
   returnUrl?: boolean;
 }
 
@@ -29,7 +30,7 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
   ]);
 
   return new Promise((resolve, reject) => {
-    const { map, operatorName, edges, nodes, teams, showTeamNames } = opts;
+    const { map, operatorName, edges, nodes, teams, showTeamNames, mode } = opts;
 
     try {
 
@@ -55,11 +56,24 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
             ctx.drawImage(img, 0, 0);
 
             // ── Legend (bottom-right) ─────────────────────────────────
+            let edgeLegendItems = [];
+            if (mode === 'truoc_bao') {
+              edgeLegendItems = [
+                { color: '#0066FF', dash: false, label: 'Tuyến an toàn' },
+                { color: '#FFD600', dash: false, label: 'Tuyến có nguy cơ' },
+                { color: '#FF0000', dash: false, label: 'Tuyến mất an toàn' },
+              ];
+            } else {
+              edgeLegendItems = [
+                { color: '#0066FF', dash: false, label: 'Tuyến bình thường' },
+                { color: '#FFD600', dash: false, label: 'Tuyến nguy hiểm' },
+                { color: '#FF0000', dash: false, label: 'Tuyến đang gặp sự cố' },
+                { color: '#00C853', dash: false, label: 'Tuyến đã khắc phục' },
+              ];
+            }
+
             const legendItems: any[] = [
-              { color: '#0066FF', dash: false, label: 'Tuyến bình thường' },
-              { color: '#FFD600', dash: false, label: 'Tuyến nguy hiểm' },
-              { color: '#FF0000', dash: false, label: 'Tuyến đang gặp sự cố' },
-              { color: '#00C853', dash: false, label: 'Tuyến đã khắc phục' },
+              ...edgeLegendItems,
               { node: '⬟', color: '#FF8C00', label: 'MPOP' },
               { node: '▲', color: '#000000', label: 'Trạm bình thường' },
               { node: '▲', color: '#FF0000', label: 'Trạm mất điện' },

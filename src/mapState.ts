@@ -3,7 +3,7 @@ import { parseGeoJSON } from './data/geojsonParser';
 
 export type Action =
   | { type: 'SET_NODE_STATUS';  id: string; status: NodeStatus }
-  | { type: 'SET_EDGE_STATUS';  id: string; status: EdgeStatus }
+  | { type: 'SET_EDGE_STATUS';  id: string; status?: EdgeStatus; statusBeforeTyphoon?: EdgeStatus }
   | { type: 'ADD_TEAM';         team: Team }
   | { type: 'UPDATE_TEAM';      id: string; patch: Partial<Team> }
   | { type: 'REMOVE_TEAM';      id: string }
@@ -28,9 +28,13 @@ export function mapReducer(state: MapViewState, action: Action): MapViewState {
     case 'SET_EDGE_STATUS':
       return {
         ...state,
-        edges: state.edges.map((e) =>
-          e.id === action.id ? { ...e, status: action.status } : e
-        ),
+        edges: state.edges.map((e) => {
+          if (e.id !== action.id) return e;
+          const updates: Partial<typeof e> = {};
+          if (action.status) updates.status = action.status;
+          if (action.statusBeforeTyphoon) updates.statusBeforeTyphoon = action.statusBeforeTyphoon;
+          return { ...e, ...updates };
+        }),
       };
     case 'ADD_TEAM': {
       const exists = state.teams.some(t => t.id === action.team.id);

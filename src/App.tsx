@@ -10,7 +10,7 @@ import { exportMapImage } from "./utils/exportMap";
 import { supabase } from "./lib/supabase";
 import { numberedTaskName, tasksForDate } from "./taskUtils";
 import { incidentStatusBreakdown } from "./incidentUtils";
-import type { NodeStatus, EdgeStatus, Team, TeamType } from "./types";
+import type { NodeStatus, EdgeStatus, Team, TeamType, DashboardMode } from "./types";
 
 const PAGE_SIZE = {
   cable: 4,
@@ -19,10 +19,11 @@ const PAGE_SIZE = {
   tasks: 4
 };
 
-const ACCENT_STYLE = {
+const ACCENT_STYLE: any = {
   blue: { "--accent": "var(--fpt-blue)", "--accent-rgb": "0, 91, 172" },
   orange: { "--accent": "var(--fpt-orange)", "--accent-rgb": "244, 124, 32" },
-  green: { "--accent": "var(--fpt-green)", "--accent-rgb": "109, 179, 63" }
+  green: { "--accent": "var(--fpt-green)", "--accent-rgb": "109, 179, 63" },
+  red: { "--accent": "var(--danger)", "--accent-rgb": "239, 68, 68" }
 };
 
 function chipClass(status) {
@@ -136,17 +137,174 @@ function IncidentChart({ type, incidents, href }) {
   );
 }
 
-function SummaryGrid({ data }) {
-  const totalPersonnel = data.deployments.reduce((sum, item) => sum + item.count, 0);
+function PreStormImpactChart({ data, isLoading }: any) {
+  const SHEET_BASE_URL = `https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || "1fTDLSaxfzLU4XZnPwVhLqIdFNX4-1SdSMpdvyO372nk"}/edit#gid=763532233`;
+
+  if (isLoading || !data) {
+    return (
+      <article className="summary-card chart-card flex items-center justify-center" style={ACCENT_STYLE.red}>
+        <a href={SHEET_BASE_URL} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
+          <span className="material-symbols-outlined">open_in_new</span>
+        </a>
+        <p className="summary-label text-center">SL POP ảnh hưởng<br/><span className="text-sm font-normal text-slate-400">(Đang tải dữ liệu...)</span></p>
+      </article>
+    );
+  }
+
+  const { directCount, directLength, indirectCount, indirectLength, totalPop } = data;
+  const totalCount = directCount + indirectCount;
+  const directEnd = totalCount ? (directCount / totalCount) * 100 : 0;
+
+  const chartStyle = {
+    background: totalCount
+      ? `conic-gradient(var(--fpt-orange) 0 ${directEnd}%, var(--fpt-green) ${directEnd}% 100%)`
+      : "#e2e8f0"
+  };
+
+  return (
+    <article className="summary-card chart-card" style={ACCENT_STYLE.red}>
+      <a href={SHEET_BASE_URL} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
+        <span className="material-symbols-outlined">open_in_new</span>
+      </a>
+      <div className="chart-card-header">
+        <div className="summary-icon">
+          <span className="material-symbols-outlined text-[20px]">router</span>
+        </div>
+        <p className="summary-label">SL POP ảnh hưởng</p>
+      </div>
+      <div className="chart-card-body">
+        <div className="pie-wrap">
+          <div className="pie-chart" style={chartStyle}></div>
+          <p className="pie-total">{totalPop}</p>
+        </div>
+        <div className="pie-meta">
+          <div className="pie-legend">
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-orange"></i>Trực tiếp</span><span className="pie-legend-value"><strong>{directCount}</strong><small>{directLength.toFixed(1)} km</small></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-green"></i>Gián tiếp</span><span className="pie-legend-value"><strong>{indirectCount}</strong><small>{indirectLength.toFixed(1)} km</small></span></div>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function PreStormStationChart({ data, isLoading }: any) {
+  const SHEET_BASE_URL = `https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || "1fTDLSaxfzLU4XZnPwVhLqIdFNX4-1SdSMpdvyO372nk"}/edit#gid=763532233`;
+
+  if (isLoading || !data) {
+    return (
+      <article className="summary-card chart-card flex items-center justify-center" style={ACCENT_STYLE.orange}>
+        <a href={SHEET_BASE_URL} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
+          <span className="material-symbols-outlined">open_in_new</span>
+        </a>
+        <p className="summary-label text-center">SL trạm ảnh hưởng<br/><span className="text-sm font-normal text-slate-400">(Đang tải dữ liệu...)</span></p>
+      </article>
+    );
+  }
+
+  const { directCount, indirectCount, totalCount } = data;
+  const total = directCount + indirectCount;
+  const directEnd = total ? (directCount / total) * 100 : 0;
+
+  const chartStyle = {
+    background: total
+      ? `conic-gradient(var(--fpt-orange) 0 ${directEnd}%, var(--fpt-green) ${directEnd}% 100%)`
+      : "#e2e8f0"
+  };
+
+  return (
+    <article className="summary-card chart-card" style={ACCENT_STYLE.orange}>
+      <a href={SHEET_BASE_URL} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
+        <span className="material-symbols-outlined">open_in_new</span>
+      </a>
+      <div className="chart-card-header">
+        <div className="summary-icon">
+          <span className="material-symbols-outlined text-[20px]">router</span>
+        </div>
+        <p className="summary-label">SL trạm ảnh hưởng</p>
+      </div>
+      <div className="chart-card-body">
+        <div className="pie-wrap">
+          <div className="pie-chart" style={chartStyle}></div>
+          <p className="pie-total">{totalCount}</p>
+        </div>
+        <div className="pie-meta">
+          <div className="pie-legend">
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-orange"></i>Trực tiếp</span><span className="pie-legend-value"><strong>{directCount}</strong></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-green"></i>Gián tiếp</span><span className="pie-legend-value"><strong>{indirectCount}</strong></span></div>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function SummaryGrid({ data, mode }: any) {
+  const totalPersonnel = data.deployments.reduce((sum: any, item: any) => sum + item.count, 0);
   const deploymentCount = data.deployments.length;
   const resources = data.responseResources || { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 };
+  
+  let directCount = 0;
+  let directLength = 0;
+  let indirectCount = 0;
+  let indirectLength = 0;
+  let totalPop = 0;
+
+  if (data?.affectedRoutes) {
+    data.affectedRoutes.forEach((route: any) => {
+      const type = (route.impact || "").toLowerCase();
+      const len = parseFloat(route.length) || 0;
+      const pop = parseInt(route.pops) || 0;
+
+      if (type.includes("trực tiếp")) {
+        directCount++;
+        directLength += len;
+      } else if (type.includes("gián tiếp")) {
+        indirectCount++;
+        indirectLength += len;
+      }
+      totalPop += pop;
+    });
+  }
+  
+  const preStormData = { directCount, directLength, indirectCount, indirectLength, totalPop };
+  
+  let stationDirectCount = 0;
+  let stationIndirectCount = 0;
+  let stationTotalCount = 0;
+
+  if (data?.affectedStations) {
+    stationTotalCount = data.affectedStations.length;
+    data.affectedStations.forEach((station: any) => {
+      const type = (station.impact || "").toLowerCase();
+      if (type.includes("trực tiếp")) {
+        stationDirectCount++;
+      } else if (type.includes("gián tiếp")) {
+        stationIndirectCount++;
+      }
+    });
+  }
+
+  const preStormStationData = { directCount: stationDirectCount, indirectCount: stationIndirectCount, totalCount: stationTotalCount };
+
+  // Check if data is completely empty (initial EmptyData state where arrays are empty)
+  const isLoading = data.affectedRoutes.length === 0 && data.deployments.length === 0;
 
   const SHEET_BASE_URL = `https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || "1fTDLSaxfzLU4XZnPwVhLqIdFNX4-1SdSMpdvyO372nk"}/edit#gid=`;
 
   return (
     <section className="summary-grid">
-      <IncidentChart type="station" incidents={data.stationIncidents} href={`${SHEET_BASE_URL}2077199790`} />
-      <IncidentChart type="cable" incidents={data.cableIncidents} href={`${SHEET_BASE_URL}2025084488`} />
+      {mode === 'truoc_bao' ? (
+        <>
+          <PreStormImpactChart data={preStormData} isLoading={isLoading} />
+          <PreStormStationChart data={preStormStationData} isLoading={isLoading} />
+        </>
+      ) : (
+        <>
+          <IncidentChart type="station" incidents={data.stationIncidents} href={`${SHEET_BASE_URL}2077199790`} />
+          <IncidentChart type="cable" incidents={data.cableIncidents} href={`${SHEET_BASE_URL}2025084488`} />
+        </>
+      )}
       <article className="summary-card" style={ACCENT_STYLE.green}>
         <a href={`${SHEET_BASE_URL}0`} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
           <span className="material-symbols-outlined">open_in_new</span>
@@ -173,30 +331,74 @@ function SummaryGrid({ data }) {
   );
 }
 
-function WeatherPanel({ rows, page, setPage }) {
+function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, toggleStormGeoJSON }: any) {
   const current = pageItems(rows, page, PAGE_SIZE.weather);
   return (
     <article className="card weather-card" style={ACCENT_STYLE.blue}>
       <div className="card-header">
-        <h2 className="card-title"><span className="material-symbols-outlined">thunderstorm</span>Thời tiết</h2>
-        <Pager page={current.page} setPage={setPage} total={rows.length} size={PAGE_SIZE.weather} />
+        <h2 className="card-title"><span className="material-symbols-outlined">thunderstorm</span>{mode === 'truoc_bao' ? 'Thông tin bão' : 'Thời tiết'}</h2>
+        {mode === 'trong_bao' && <Pager page={current.page} setPage={setPage} total={rows.length} size={PAGE_SIZE.weather} />}
       </div>
       <div className="table-box">
-        <table>
-          <thead><tr><th style={{ width: "8%" }}>STT</th><th style={{ width: "30%" }}>Khu vực</th><th style={{ width: "35%" }}>Thời tiết</th><th style={{ width: "27%" }}>Di chuyển</th></tr></thead>
-          <tbody>
-            {!rows.length ? (
-              <tr><td colSpan="4"><div className="empty-state">Chưa có dữ liệu trong tab Thời tiết.</div></td></tr>
-            ) : current.rows.map((row, index) => (
-              <tr key={`${row.stt}-${current.start + index}`} title={[row.area, row.weather, row.mobility].filter(Boolean).join(" | ")}>
-                <td className="strong">{String(current.start + index + 1)}</td>
-                <td>{row.area || "-"}</td>
-                <td>{weatherIcon(row.weather)} {row.weather || "-"}</td>
-                <td><StatusChip status={row.mobility || "Chưa cập nhật"} /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {mode === 'truoc_bao' ? (
+          <div className="storm-list" style={{ padding: "0 16px 16px", maxHeight: "400px", overflowY: "auto" }}>
+            {(!storms || storms.length === 0) ? (
+              <div className="empty-state py-8">Hiện không có bão hoặc áp thấp nhiệt đới trên Biển Đông.</div>
+            ) : (
+              storms.map((storm: any) => {
+                const isActive = !!activeStormGeoJSONs?.[storm.storm_id];
+                const meta = storm.metadata;
+
+                return (
+                  <div key={storm.storm_id} className="storm-item" style={{ marginBottom: "24px", borderBottom: "1px solid #eee", paddingBottom: "16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                      <h4 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "#333", flex: 1, paddingRight: "8px", display: "flex", alignItems: "center", gap: "8px" }}>
+                        {storm.name || storm.storm_id?.toUpperCase()}
+                        {storm.geojson && (
+                          <button 
+                            title={isActive ? "Tắt bản đồ" : "Bật bản đồ"}
+                            onClick={() => toggleStormGeoJSON(storm)}
+                            className="icon-btn"
+                            style={{ padding: "2px", color: isActive ? "var(--fpt-blue)" : "var(--text-secondary)" }}
+                          >
+                            <span className="material-symbols-outlined text-[20px]">{isActive ? "visibility" : "visibility_off"}</span>
+                          </button>
+                        )}
+                      </h4>
+                    </div>
+                    {meta ? (
+                      <ul style={{ fontSize: "13px", color: "#555", margin: "0 0 12px 0", lineHeight: "1.6", paddingLeft: "20px" }}>
+                        {meta.position && <li><strong>Vị trí:</strong> {meta.position}</li>}
+                        {meta.maxSustainedWindsKmH && <li><strong>Sức gió lớn nhất:</strong> {meta.maxSustainedWindsKmH} km/h</li>}
+                        {meta.gustsKmH && <li><strong>Gió giật:</strong> {meta.gustsKmH} km/h</li>}
+                        {meta.pressureMb && <li><strong>Áp suất tâm bão:</strong> {meta.pressureMb} hPa</li>}
+                        {(meta.direction || meta.speedKmH) && <li><strong>Di chuyển:</strong> Hướng {meta.direction || '-'}, tốc độ {meta.speedKmH || '-'} km/h</li>}
+                      </ul>
+                    ) : (
+                      <p style={{ fontSize: "13px", color: "#555", margin: "0 0 12px 0", lineHeight: "1.5" }}>Chưa có thông số chi tiết.</p>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        ) : (
+          <table>
+            <thead><tr><th style={{ width: "8%" }}>STT</th><th style={{ width: "30%" }}>Khu vực</th><th style={{ width: "35%" }}>Thời tiết</th><th style={{ width: "27%" }}>Di chuyển</th></tr></thead>
+            <tbody>
+              {!rows.length ? (
+                <tr><td colSpan={4}><div className="empty-state">Chưa có dữ liệu trong tab Thời tiết.</div></td></tr>
+              ) : current.rows.map((row: any, index: number) => (
+                <tr key={`${row.stt}-${current.start + index}`} title={[row.area, row.weather, row.mobility].filter(Boolean).join(" | ")}>
+                  <td className="strong">{String(current.start + index + 1)}</td>
+                  <td>{row.area || "-"}</td>
+                  <td>{weatherIcon(row.weather)} {row.weather || "-"}</td>
+                  <td><StatusChip status={row.mobility || "Chưa cập nhật"} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </article>
   );
@@ -420,6 +622,36 @@ export default function App() {
   const [pages, setPages] = useState({ cable: 0, station: 0, weather: 0, tasks: 0 });
   const [capturing, setCapturing] = useState(false);
   const [today, setToday] = useState(vietnamDateKey);
+  const [dashboardMode, setDashboardMode] = useState<DashboardMode>('trong_bao');
+  const [storms, setStorms] = useState<any[]>([]);
+  const [activeStormGeoJSONs, setActiveStormGeoJSONs] = useState<Record<string, any>>({});
+
+  const toggleStormGeoJSON = useCallback((storm: any) => {
+    setActiveStormGeoJSONs(prev => {
+      const next = { ...prev };
+      if (next[storm.storm_id]) {
+        delete next[storm.storm_id];
+      } else {
+        next[storm.storm_id] = storm.geojson;
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    async function fetchStorms() {
+      try {
+        const res = await fetch("/api/storms");
+        const json = await res.json();
+        if (json.success) {
+          setStorms(json.data);
+        }
+      } catch (err) {
+        console.error("Error fetching storms:", err);
+      }
+    }
+    fetchStorms();
+  }, []);
 
   // --- Map State ---
   const [mapState, mapDispatch] = useReducer(mapReducer, EMPTY_MAP_STATE);
@@ -467,10 +699,16 @@ export default function App() {
 
         // Merge state
         const nodeMap = new Map(dbNodes.map(n => [n.id, n.status]));
-        const edgeMap = new Map(dbEdges.map(e => [e.id, e.status]));
+        const edgeMap = new Map(dbEdges.map(e => [e.id, { status: e.status, statusBeforeTyphoon: e.statusbeforetyphoon || e.statusBeforeTyphoon }]));
 
         nodes.forEach(n => { if (nodeMap.has(n.id)) n.status = nodeMap.get(n.id); });
-        edges.forEach(e => { if (edgeMap.has(e.id)) e.status = edgeMap.get(e.id); });
+        edges.forEach(e => {
+          if (edgeMap.has(e.id)) {
+            const mapped = edgeMap.get(e.id)!;
+            e.status = mapped.status;
+            if (mapped.statusBeforeTyphoon) e.statusBeforeTyphoon = mapped.statusBeforeTyphoon;
+          }
+        });
 
         mapDispatch({ type: 'INIT_DATA', nodes, edges });
         dbTeams.forEach(t => {
@@ -490,7 +728,14 @@ export default function App() {
         if (payload.new && payload.new.id) mapDispatch({ type: 'SET_NODE_STATUS', id: payload.new.id, status: payload.new.status });
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'edges_status' }, (payload) => {
-        if (payload.new && payload.new.id) mapDispatch({ type: 'SET_EDGE_STATUS', id: payload.new.id, status: payload.new.status });
+        if (payload.new && payload.new.id) {
+          mapDispatch({ 
+            type: 'SET_EDGE_STATUS', 
+            id: payload.new.id, 
+            status: payload.new.status,
+            statusBeforeTyphoon: payload.new.statusbeforetyphoon || payload.new.statusBeforeTyphoon 
+          });
+        }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, (payload) => {
         if (payload.eventType === 'DELETE') {
@@ -515,9 +760,14 @@ export default function App() {
 
   const handleEdgeStatus = useCallback(async (id: string, status: string) => {
     if (!session) return;
-    mapDispatch({ type: 'SET_EDGE_STATUS', id, status }); // Optimistic local
-    await supabase.from('edges_status').upsert({ id, status });
-  }, [session]);
+    if (dashboardMode === 'truoc_bao') {
+      mapDispatch({ type: 'SET_EDGE_STATUS', id, statusBeforeTyphoon: status as EdgeStatus }); // Optimistic local
+      await supabase.from('edges_status').update({ statusbeforetyphoon: status }).eq('id', id);
+    } else {
+      mapDispatch({ type: 'SET_EDGE_STATUS', id, status: status as EdgeStatus }); // Optimistic local
+      await supabase.from('edges_status').update({ status }).eq('id', id);
+    }
+  }, [session, dashboardMode]);
 
   const handleAddTeam = useCallback(async () => {
     if (!mapInstanceRef.current || !session) return;
@@ -647,6 +897,7 @@ export default function App() {
         nodes: mapState.nodes,
         teams: mapState.teams,
         showTeamNames: mapState.showTeamNames,
+        mode: dashboardMode,
         returnUrl: true,
       });
 
@@ -731,7 +982,14 @@ export default function App() {
       <header className="topbar">
         <div className="flex items-center gap-3 min-w-0">
           <div className="brand-logo-frame"><img src="/fpt-telecom-logo.svg" alt="FPT Telecom" /></div>
-          <h1 className="truncate">Dashboard Báo Cáo Bão QLVHMB</h1>
+          <h1 
+            className="truncate cursor-pointer hover:text-[var(--fpt-blue)] flex items-center gap-2 transition-colors"
+            onClick={() => setDashboardMode(prev => prev === 'trong_bao' ? 'truoc_bao' : 'trong_bao')}
+            title="Nhấn để chuyển đổi chế độ Trước Bão / Trong Bão"
+          >
+            {dashboardMode === 'trong_bao' ? 'Dashboard Báo Cáo Bão QLVHMB' : 'Dashboard Báo Cáo Trước Bão QLVHMB'}
+            <span className="material-symbols-outlined text-[20px]">swap_horiz</span>
+          </h1>
           <a href={`https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || "1fTDLSaxfzLU4XZnPwVhLqIdFNX4-1SdSMpdvyO372nk"}/edit`} target="_blank" rel="noreferrer" title="Mở file Google Sheet" className="text-slate-400 hover:text-[var(--fpt-blue)] transition-colors flex items-center text-sm underline ml-1">
             Xem chi tiết
           </a>
@@ -772,8 +1030,16 @@ export default function App() {
       </header>
 
       <div className="dashboard-body">
-        <SummaryGrid data={data} />
-        <WeatherPanel rows={data.weatherRows} page={pages.weather} setPage={(page) => setPages((old) => ({ ...old, weather: page }))} />
+        <SummaryGrid data={data} mode={dashboardMode} />
+        <WeatherPanel 
+          rows={data.weatherRows} 
+          page={pages.weather} 
+          setPage={(p: number) => setPages(pgs => ({...pgs, weather: p}))} 
+          mode={dashboardMode}
+          storms={storms}
+          activeStormGeoJSONs={activeStormGeoJSONs}
+          toggleStormGeoJSON={toggleStormGeoJSON}
+        />
         <section className="content-grid">
           <HiddenIncidentTables data={data} pages={pages} setPages={setPages} />
           <TasksPanel tasks={data.tasks} page={pages.tasks} setPage={(page) => setPages((old) => ({ ...old, tasks: page }))} today={today} />
@@ -792,6 +1058,7 @@ export default function App() {
                           nodes: mapState.nodes,
                           teams: mapState.teams,
                           showTeamNames: mapState.showTeamNames,
+                          mode: dashboardMode,
                         });
                       }
                     }} style={{ padding: "4px 8px", background: "var(--color-warning)" }}>
@@ -813,6 +1080,8 @@ export default function App() {
                 teams={mapState.teams}
                 sidebarCollapsed={false}
                 showTeamNames={mapState.showTeamNames}
+                mode={dashboardMode}
+                activeStormGeoJSONs={activeStormGeoJSONs}
                 onToggleTeamNames={() => mapDispatch({ type: 'TOGGLE_TEAM_NAMES' })}
                 onContextMenu={(menu) => mapDispatch({ type: 'OPEN_CONTEXT', menu })}
                 onCloseContextMenu={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
@@ -834,6 +1103,7 @@ export default function App() {
                   onNodeStatusChange={handleNodeStatus}
                   onEdgeStatusChange={handleEdgeStatus}
                   onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
+                  mode={dashboardMode}
                 />
               )}
               {mapState.contextMenu?.visible && !session && (

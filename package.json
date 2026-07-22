@@ -13,8 +13,13 @@
     "test": "node --test backend/test/*.test.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.110.4",
+    "@supabase/supabase-js": "^2.110.8",
+    "@tmcw/togeojson": "^7.1.2",
+    "@xmldom/xmldom": "^0.9.10",
+    "adm-zip": "^0.6.0",
+    "dotenv": "^17.4.2",
     "express": "^5.1.0",
+    "fast-xml-parser": "^5.10.1",
     "html-to-image": "^1.11.13",
     "maplibre-gl": "^5.24.0",
     "react": "^19.1.0",

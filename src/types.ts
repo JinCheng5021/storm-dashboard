@@ -1,6 +1,7 @@
 export type NodeStatus = 'active' | 'power_out' | 'isolated';
-export type EdgeStatus = 'normal' | 'incident_external' | 'danger_zone' | 'resolved';
+export type EdgeStatus = 'normal' | 'incident_external' | 'danger_zone' | 'resolved' | 'safe' | 'unsafe' | 'risky';
 export type TeamType = 'FPT' | 'DCV' | 'FFC';
+export type DashboardMode = 'trong_bao' | 'truoc_bao';
 
 export interface NodeFeature {
   id: string;
@@ -14,6 +15,7 @@ export interface EdgeFeature {
   name: string;
   coordinates: [number, number][]; // array of [lng, lat]
   status: EdgeStatus;
+  statusBeforeTyphoon?: EdgeStatus;
 }
 
 export interface Team {

@@ -1,11 +1,12 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { NodeStatus, EdgeStatus, ContextMenuState } from '../types';
+import type { NodeStatus, EdgeStatus, ContextMenuState, DashboardMode } from '../types';
 import './ContextMenu.css';
 
 interface ContextMenuProps {
   menu: ContextMenuState;
   currentNodeStatus?: NodeStatus;
   currentEdgeStatus?: EdgeStatus;
+  mode: DashboardMode;
   onNodeStatusChange: (id: string, status: NodeStatus) => void;
   onEdgeStatusChange: (id: string, status: EdgeStatus) => void;
   onClose: () => void;
@@ -20,6 +21,13 @@ const EDGE_OPTIONS: { value: EdgeStatus; label: string; icon: string; cls: strin
   { value: 'resolved', label: 'Đã khắc phục', icon: '✓', cls: 'status-resolved' },
 ];
 
+// For Truoc Bao mode, we use these statuses
+const EDGE_OPTIONS_TRUOC_BAO: { value: EdgeStatus; label: string; icon: string; cls: string }[] = [
+  { value: 'safe', label: 'An toàn', icon: '─', cls: 'status-active' }, 
+  { value: 'risky', label: 'Có nguy cơ', icon: '⚠️', cls: 'status-warning' }, 
+  { value: 'unsafe', label: 'Mất an toàn', icon: '✕', cls: 'status-danger' }, 
+];
+
 const DAI_TRAM = ['TGO', 'MCU', 'GPU', 'BKE', 'BHA', 'TKE', 'DDG', 'KEP', 'TYN', 'NDH', 'BSN', 'THA', 'CGT', 'HMI', 'VINH', 'HPO', 'DLE', 'KAH', 'DHI', 'LTY', 'LTY2', 'DHA', 'LBO', 'HUE', 'PLC'];
 
 const VIEWPORT_MARGIN = 16;
@@ -28,6 +36,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   menu,
   currentNodeStatus,
   currentEdgeStatus,
+  mode,
   onNodeStatusChange,
   onEdgeStatusChange,
   onClose,
@@ -69,7 +78,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
     { value: 'isolated', label: 'Bị cô lập', icon: '⚠️', cls: 'status-danger' },
   ];
 
-  const options = isNode ? NODE_OPTIONS : EDGE_OPTIONS;
+  const options = isNode ? NODE_OPTIONS : (mode === 'truoc_bao' ? EDGE_OPTIONS_TRUOC_BAO : EDGE_OPTIONS);
   const currentVal = isNode ? currentNodeStatus : currentEdgeStatus;
 
   const handleSelect = (val: string) => {
