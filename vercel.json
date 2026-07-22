@@ -8,11 +8,5 @@
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/jtwc-sync",
-      "schedule": "0 */2 * * *"
-    }
   ]
 }
