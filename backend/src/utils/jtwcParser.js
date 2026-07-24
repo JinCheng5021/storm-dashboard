@@ -22,7 +22,7 @@ export function parseJtwcText(rawText) {
   if (nameMatch) result.name = nameMatch[1].trim();
 
   // 2. Vị trí
-  const posMatch = rawText.match(/NEAR\s+([0-9.]+N\s+[0-9.]+W)/);
+  const posMatch = rawText.match(/NEAR\s+([0-9.]+[NS]\s+[0-9.]+[EW])/i);
   if (posMatch) result.position = posMatch[1].trim();
 
   // 3. Sức gió & Gió giật (Convert Knot -> km/h: 1 kt = 1.852 km/h)
