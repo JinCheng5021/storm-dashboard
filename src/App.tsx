@@ -1024,6 +1024,17 @@ export default function App() {
 
   return (
     <main id="report-page" className="dashboard-shell" ref={reportRef}>
+      {captureMode && (
+        <style>{`
+          .storm-list::-webkit-scrollbar, .list-box::-webkit-scrollbar {
+            display: none !important;
+          }
+          .storm-list, .list-box {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+          }
+        `}</style>
+      )}
       <header className="topbar">
         <div className="flex items-center gap-3 min-w-0">
           <div className="brand-logo-frame"><img src="/fpt-telecom-logo.svg" alt="FPT Telecom" /></div>
