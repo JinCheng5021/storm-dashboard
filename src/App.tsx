@@ -188,6 +188,56 @@ function PreStormImpactChart({ data, isLoading }: any) {
   );
 }
 
+function PreStormRouteChart({ data, isLoading }: any) {
+  const SHEET_BASE_URL = `https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || "1fTDLSaxfzLU4XZnPwVhLqIdFNX4-1SdSMpdvyO372nk"}/edit#gid=763532233`;
+
+  if (isLoading || !data) {
+    return (
+      <article className="summary-card chart-card flex items-center justify-center" style={{ "--accent": "#9b51d0", "--accent-rgb": "155, 81, 208" } as any}>
+        <a href={SHEET_BASE_URL} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
+          <span className="material-symbols-outlined">open_in_new</span>
+        </a>
+        <p className="summary-label text-center">SL tuyến ảnh hưởng<br/><span className="text-sm font-normal text-slate-400">(Đang tải dữ liệu...)</span></p>
+      </article>
+    );
+  }
+
+  const { directCount, indirectCount } = data;
+  const totalCount = directCount + indirectCount;
+  const directEnd = totalCount ? (directCount / totalCount) * 100 : 0;
+  const chartStyle = {
+    background: totalCount
+      ? `conic-gradient(var(--fpt-orange) 0 ${directEnd}%, var(--fpt-green) ${directEnd}% 100%)`
+      : "#e2e8f0"
+  };
+
+  return (
+    <article className="summary-card chart-card" style={{ "--accent": "#9b51d0", "--accent-rgb": "155, 81, 208" } as any}>
+      <a href={SHEET_BASE_URL} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
+        <span className="material-symbols-outlined">open_in_new</span>
+      </a>
+      <div className="chart-card-header">
+        <div className="summary-icon">
+          <span className="material-symbols-outlined text-[20px]">cable</span>
+        </div>
+        <p className="summary-label">SL tuyến ảnh hưởng</p>
+      </div>
+      <div className="chart-card-body">
+        <div className="pie-wrap">
+          <div className="pie-chart" style={chartStyle}></div>
+          <p className="pie-total">{totalCount}</p>
+        </div>
+        <div className="pie-meta">
+          <div className="pie-legend">
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-orange"></i>Trực tiếp</span><span className="pie-legend-value"><strong>{directCount}</strong></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-green"></i>Gián tiếp</span><span className="pie-legend-value"><strong>{indirectCount}</strong></span></div>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function PreStormStationChart({ data, isLoading }: any) {
   const SHEET_BASE_URL = `https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || "1fTDLSaxfzLU4XZnPwVhLqIdFNX4-1SdSMpdvyO372nk"}/edit#gid=763532233`;
 
@@ -268,6 +318,7 @@ function SummaryGrid({ data, mode }: any) {
   }
   
   const preStormData = { directCount, directLength, indirectCount, indirectLength, totalPop };
+  const preStormRouteData = { directCount, indirectCount };
   
   let stationDirectCount = 0;
   let stationIndirectCount = 0;
@@ -296,6 +347,7 @@ function SummaryGrid({ data, mode }: any) {
     <section className="summary-grid">
       {mode === 'truoc_bao' ? (
         <>
+          <PreStormRouteChart data={preStormRouteData} isLoading={isLoading} />
           <PreStormImpactChart data={preStormData} isLoading={isLoading} />
           <PreStormStationChart data={preStormStationData} isLoading={isLoading} />
         </>
@@ -1023,7 +1075,7 @@ export default function App() {
 
 
   return (
-    <main id="report-page" className="dashboard-shell" ref={reportRef}>
+    <main id="report-page" className={`dashboard-shell dashboard-mode-${dashboardMode}`} ref={reportRef}>
       {captureMode && (
         <style>{`
           .storm-list::-webkit-scrollbar, .list-box::-webkit-scrollbar {

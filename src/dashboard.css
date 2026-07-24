@@ -175,6 +175,24 @@
       overflow: hidden;
     }
 
+    .dashboard-mode-truoc_bao .dashboard-body {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-rows: 116px minmax(0, 1fr);
+      grid-template-areas:
+        "summary summary summary summary summary"
+        "tasks rescue rescue rescue weather";
+    }
+
+    .dashboard-mode-truoc_bao .summary-grid {
+      height: 116px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .dashboard-mode-truoc_bao .content-grid {
+      display: contents;
+    }
+
     .summary-card {
       position: relative;
       display: flex;
@@ -536,6 +554,65 @@
       font-size: 8px;
       overflow: visible;
       text-overflow: clip;
+    }
+
+    .dashboard-mode-truoc_bao .tasks-card,
+    .dashboard-mode-truoc_bao .rescue-card,
+    .dashboard-mode-truoc_bao .weather-card {
+      border-radius: 16px;
+    }
+
+    .dashboard-mode-truoc_bao .weather-card {
+      padding: 10px;
+    }
+
+    .dashboard-mode-truoc_bao .weather-card .table-box {
+      border: 0;
+      background: transparent;
+    }
+
+    .dashboard-mode-truoc_bao .storm-list {
+      height: 100%;
+      max-height: none !important;
+      padding: 0 2px 0 0 !important;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .dashboard-mode-truoc_bao .storm-item {
+      margin: 0 !important;
+      padding: 12px 14px !important;
+      border: 1px solid var(--soft-line) !important;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 5px 16px rgba(23, 50, 77, 0.04);
+    }
+
+    .dashboard-mode-truoc_bao .storm-item h4 {
+      font-size: 15px !important;
+      line-height: 1.35;
+      color: var(--ink) !important;
+    }
+
+    .dashboard-mode-truoc_bao .storm-item ul {
+      margin-bottom: 0 !important;
+      color: #334155 !important;
+      line-height: 1.55 !important;
+    }
+
+    .dashboard-mode-truoc_bao .summary-card {
+      min-width: 0;
+    }
+
+    .dashboard-mode-truoc_bao .summary-card:not(.chart-card) {
+      justify-content: center;
+    }
+
+    .dashboard-mode-truoc_bao .summary-card .equipment-summary {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .image-slot {
@@ -1162,5 +1239,13 @@
       .pie-chart::after { width: 32px; height: 32px; }
       .pie-total { font-size: 15px; }
       .content-grid { grid-template-columns: calc((100% - 18px) / 4) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+      .dashboard-mode-truoc_bao .dashboard-body {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-rows: 110px minmax(0, 1fr);
+      }
+      .dashboard-mode-truoc_bao .summary-grid {
+        height: 110px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
     }
   
