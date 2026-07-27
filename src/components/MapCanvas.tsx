@@ -15,6 +15,7 @@ interface MapCanvasProps {
   edges: EdgeFeature[];
   nodes: NodeFeature[];
   teams: Team[];
+  routeInformation: RouteInformation[];
   sidebarCollapsed: boolean;
   mode: DashboardMode;
   onContextMenu: (state: ContextMenuState) => void;
@@ -33,23 +34,86 @@ interface MapCanvasProps {
   activeStormGeoJSONs?: Record<string, any>;
 }
 
+interface RouteInformation {
+  route: string;
+  length: string;
+  pops: string;
+  availability: string;
+  incidentFrequency: string;
+}
+
 // Map bounds for Vietnam (north)
 const INIT_CENTER: [number, number] = [105.8, 20.5];
 const INIT_ZOOM = 6.5;
 
+function normalizeRouteKey(value: unknown) {
+  return String(value || '')
+    .normalize('NFKC')
+    .replace(/^tuyến\s+/i, '')
+    .split(/\s*[-–—]\s*/)
+    .map((endpoint) => endpoint
+      .replace(/\(\s*MPOP\s*\)/gi, '')
+      .replace(/\b\d+\s*FO\b/gi, '')
+      .replace(/\s+/g, '')
+      .toLocaleUpperCase('vi-VN'))
+    .filter(Boolean)
+    .join('-');
+}
+
+function routeLookupKeys(value: unknown) {
+  const key = normalizeRouteKey(value);
+  const endpoints = key.split('-');
+  return endpoints.length === 2
+    ? [key, `${endpoints[1]}-${endpoints[0]}`]
+    : [key];
+}
+
+function escapeTooltipHtml(value: unknown) {
+  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  })[character] as string);
+}
+
+function metricText(value: unknown) {
+  const text = String(value ?? '').trim();
+  return text || '-';
+}
+
+function lengthText(value: unknown) {
+  const text = metricText(value);
+  if (text === '-' || /\bkm\s*$/i.test(text)) return text;
+  return `${text} km`;
+}
+
 // Derive GeoJSON FeatureCollections from state
-function edgesGeoJSON(edges: EdgeFeature[], mode: DashboardMode) {
+function edgesGeoJSON(edges: EdgeFeature[], mode: DashboardMode, routeInformation: RouteInformation[]) {
+  const routeInformationByKey = new Map<string, RouteInformation>();
+  routeInformation.forEach((route) => {
+    routeLookupKeys(route.route).forEach((key) => routeInformationByKey.set(key, route));
+  });
+
   return {
     type: 'FeatureCollection' as const,
-    features: edges.map((e) => ({
-      type: 'Feature' as const,
-      properties: {
-        id: e.id,
-        name: e.name,
-        status: mode === 'truoc_bao' ? (e.statusBeforeTyphoon || 'normal') : e.status
-      },
-      geometry: { type: 'LineString' as const, coordinates: e.coordinates },
-    })),
+    features: edges.map((e) => {
+      const route = routeInformationByKey.get(normalizeRouteKey(e.name));
+      return {
+        type: 'Feature' as const,
+        properties: {
+          id: e.id,
+          name: e.name,
+          status: mode === 'truoc_bao' ? (e.statusBeforeTyphoon || 'normal') : e.status,
+          routeLength: route?.length || '',
+          routePops: route?.pops || '',
+          routeAvailability: route?.availability || '',
+          routeIncidentFrequency: route?.incidentFrequency || '',
+        },
+        geometry: { type: 'LineString' as const, coordinates: e.coordinates },
+      };
+    }),
   };
 }
 
@@ -115,6 +179,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   edges,
   nodes,
   teams,
+  routeInformation,
   sidebarCollapsed,
   mode,
   onContextMenu,
@@ -187,7 +252,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       // ── Edge sources & layers ────────────────────────
       map.addSource('edges', {
         type: 'geojson',
-        data: edgesGeoJSON(edges, mode),
+        data: edgesGeoJSON(edges, mode, routeInformation),
       });
 
       // Base edges (all states)
@@ -367,22 +432,35 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
             tooltipRef.current
               ?.setLngLat(e.lngLat)
-              .setHTML(`<div class="map-tooltip"><b>${name}</b><br/><span>${statusLabel}</span></div>`)
+              .setHTML(`<div class="map-tooltip"><b>${escapeTooltipHtml(name)}</b><span class="map-tooltip__status">${escapeTooltipHtml(statusLabel)}</span></div>`)
               .addTo(map);
           } else {
-            const { name, status } = topFeature.properties as { name: string; status: string };
-            const statusMap: Record<string, string> = {
-              normal: '● Bình thường',
-              incident_external: '⚠ Sự cố ngoại vi',
-              danger_zone: '⚠ Khu vực nguy hiểm',
-              resolved: '✓ Đã khắc phục',
-              safe: '✓ An toàn',
-              unsafe: '⚠ Mất an toàn',
-              risky: '⚠ Có nguy cơ',
+            const {
+              name,
+              routeLength,
+              routePops,
+              routeAvailability,
+              routeIncidentFrequency,
+            } = topFeature.properties as {
+              name: string;
+              routeLength: string;
+              routePops: string;
+              routeAvailability: string;
+              routeIncidentFrequency: string;
             };
             tooltipRef.current
               ?.setLngLat(e.lngLat)
-              .setHTML(`<div class="map-tooltip"><b>${name}</b><br/><span>${statusMap[status] ?? status}</span></div>`)
+              .setHTML(`
+                <div class="map-tooltip map-tooltip--route">
+                  <b>${escapeTooltipHtml(name)}</b>
+                  <div class="map-tooltip__details">
+                    <div><span>Chiều dài</span><strong>${escapeTooltipHtml(lengthText(routeLength))}</strong></div>
+                    <div><span>Số lượng POP</span><strong>${escapeTooltipHtml(metricText(routePops))}</strong></div>
+                    <div><span>ĐKD</span><strong>${escapeTooltipHtml(metricText(routeAvailability))}</strong></div>
+                    <div><span>Tần suất SC</span><strong>${escapeTooltipHtml(metricText(routeIncidentFrequency))}</strong></div>
+                  </div>
+                </div>
+              `)
               .addTo(map);
           }
         } else {
@@ -395,6 +473,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         const features = map.queryRenderedFeatures(e.point, { layers: hitLayers });
         if (features.length > 0) {
           e.preventDefault();
+          tooltipRef.current?.remove();
           const topFeature = features.find((f) => f.layer.id === 'nodes-hitbox') || features[0];
           const targetType = topFeature.layer.id === 'nodes-hitbox' ? 'node' : 'edge';
 
@@ -427,8 +506,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     if (!mapReady || !mapRef.current) return;
     const map = mapRef.current;
     const src = map.getSource('edges') as maplibregl.GeoJSONSource | undefined;
-    src?.setData(edgesGeoJSON(edges, mode));
-  }, [edges, mapReady, mode]);
+    src?.setData(edgesGeoJSON(edges, mode, routeInformation));
+  }, [edges, mapReady, mode, routeInformation]);
 
   // ── Sync node data ───────────────────────────────────────────
   useEffect(() => {

@@ -19,6 +19,8 @@ const PAGE_SIZE = {
   tasks: 4
 };
 
+const DASHBOARD_AUTO_REFRESH_MS = 60_000;
+
 const ACCENT_STYLE: any = {
   blue: { "--accent": "var(--fpt-blue)", "--accent-rgb": "0, 91, 172" },
   orange: { "--accent": "var(--fpt-orange)", "--accent-rgb": "244, 124, 32" },
@@ -151,7 +153,7 @@ function PreStormImpactChart({ data, isLoading }: any) {
     );
   }
 
-  const { directCount, directLength, indirectCount, indirectLength, totalPop } = data;
+  const { directCount, indirectCount, totalPop } = data;
   const totalCount = directCount + indirectCount;
   const directEnd = totalCount ? (directCount / totalCount) * 100 : 0;
 
@@ -179,8 +181,8 @@ function PreStormImpactChart({ data, isLoading }: any) {
         </div>
         <div className="pie-meta">
           <div className="pie-legend">
-            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-orange"></i>Trực tiếp</span><span className="pie-legend-value"><strong>{directCount}</strong><small>{directLength.toFixed(1)} km</small></span></div>
-            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-green"></i>Gián tiếp</span><span className="pie-legend-value"><strong>{indirectCount}</strong><small>{indirectLength.toFixed(1)} km</small></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-orange"></i>Trực tiếp</span><span className="pie-legend-value"><strong>{directCount}</strong></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-green"></i>Gián tiếp</span><span className="pie-legend-value"><strong>{indirectCount}</strong></span></div>
           </div>
         </div>
       </div>
@@ -202,7 +204,7 @@ function PreStormRouteChart({ data, isLoading }: any) {
     );
   }
 
-  const { directCount, indirectCount } = data;
+  const { directCount, directLength, indirectCount, indirectLength } = data;
   const totalCount = directCount + indirectCount;
   const directEnd = totalCount ? (directCount / totalCount) * 100 : 0;
   const chartStyle = {
@@ -229,8 +231,8 @@ function PreStormRouteChart({ data, isLoading }: any) {
         </div>
         <div className="pie-meta">
           <div className="pie-legend">
-            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-orange"></i>Trực tiếp</span><span className="pie-legend-value"><strong>{directCount}</strong></span></div>
-            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-green"></i>Gián tiếp</span><span className="pie-legend-value"><strong>{indirectCount}</strong></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-orange"></i>Trực tiếp</span><span className="pie-legend-value"><strong>{directCount}</strong><small>{directLength.toFixed(1)} km</small></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-green"></i>Gián tiếp</span><span className="pie-legend-value"><strong>{indirectCount}</strong><small>{indirectLength.toFixed(1)} km</small></span></div>
           </div>
         </div>
       </div>
@@ -294,31 +296,44 @@ function SummaryGrid({ data, mode }: any) {
   const deploymentCount = data.deployments.length;
   const resources = data.responseResources || { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 };
   
-  let directCount = 0;
+  let directRouteCount = 0;
   let directLength = 0;
-  let indirectCount = 0;
+  let indirectRouteCount = 0;
   let indirectLength = 0;
-  let totalPop = 0;
+  let directPopCount = 0;
+  let indirectPopCount = 0;
+  let totalPopCount = 0;
 
   if (data?.affectedRoutes) {
     data.affectedRoutes.forEach((route: any) => {
       const type = (route.impact || "").toLowerCase();
       const len = parseFloat(route.length) || 0;
       const pop = parseInt(route.pops) || 0;
+      totalPopCount += pop;
 
       if (type.includes("trực tiếp")) {
-        directCount++;
+        directRouteCount++;
         directLength += len;
+        directPopCount += pop;
       } else if (type.includes("gián tiếp")) {
-        indirectCount++;
+        indirectRouteCount++;
         indirectLength += len;
+        indirectPopCount += pop;
       }
-      totalPop += pop;
     });
   }
   
-  const preStormData = { directCount, directLength, indirectCount, indirectLength, totalPop };
-  const preStormRouteData = { directCount, indirectCount };
+  const preStormData = {
+    directCount: directPopCount,
+    indirectCount: indirectPopCount,
+    totalPop: totalPopCount
+  };
+  const preStormRouteData = {
+    directCount: directRouteCount,
+    directLength,
+    indirectCount: indirectRouteCount,
+    indirectLength
+  };
   
   let stationDirectCount = 0;
   let stationIndirectCount = 0;
@@ -481,8 +496,8 @@ function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, 
 }
 
 function TasksPanel({ tasks, page, setPage, today, mode }: any) {
-  const todayTasks = tasksForDate(tasks, today);
-  const current = pageItems(todayTasks, page, PAGE_SIZE.tasks);
+  const visibleTasks = mode === 'truoc_bao' ? tasks : tasksForDate(tasks, today);
+  const current = pageItems(visibleTasks, page, PAGE_SIZE.tasks);
   return (
     <article className="card tasks-card" style={ACCENT_STYLE.orange}>
       <div className="card-header">
@@ -493,10 +508,10 @@ function TasksPanel({ tasks, page, setPage, today, mode }: any) {
           </h2>
           {mode !== 'truoc_bao' && <time className="task-card-date" dateTime={today.split("/").reverse().join("-")}>{today}</time>}
         </div>
-        <Pager page={current.page} setPage={setPage} total={todayTasks.length} size={PAGE_SIZE.tasks} />
+        <Pager page={current.page} setPage={setPage} total={visibleTasks.length} size={PAGE_SIZE.tasks} />
       </div>
       <div className="list-box">
-        {!todayTasks.length ? (
+        {!visibleTasks.length ? (
           <div className="empty-state">
             {mode === 'truoc_bao' ? 'Chưa có công việc cần làm.' : `Chưa có công việc ngày ${today} trong tab Công việc.`}
           </div>
@@ -640,21 +655,23 @@ function sumTimes(times: string[]) {
 function GuestNodePopup({ menu, nodes, incidents, onClose }: any) {
   if (menu.targetType !== 'node') return null;
   const node = nodes.find((n: any) => n.id == menu.targetId);
-  if (!node || (node.status !== 'power_out' && node.status !== 'isolated')) return null;
+  if (!node) return null;
 
   const style: React.CSSProperties = {
     position: 'absolute',
     left: menu.x,
     top: menu.y,
     transform: 'translate(-50%, 16px)',
-    background: 'white',
+    background: 'rgba(6, 10, 20, 0.94)',
     padding: '12px 16px',
     borderRadius: '8px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    border: '1px solid rgba(0, 102, 255, 0.35)',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
     zIndex: 1000,
-    minWidth: '220px',
+    minWidth: '240px',
+    maxWidth: '320px',
     fontSize: '13px',
-    color: '#333'
+    color: '#ffffff'
   };
 
   if (style.top && (style.top as number) > window.innerHeight - 150) {
@@ -668,32 +685,38 @@ function GuestNodePopup({ menu, nodes, incidents, onClose }: any) {
   const acBackup = stationIncidents.find((inc: any) => inc.acBackup)?.acBackup || '-';
 
   return (
-    <div style={style} className="guest-incident-popup">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid #eee', paddingBottom: '4px' }}>
-        <strong style={{ fontSize: '14px', color: '#1a1a1a' }}>Trạm {node.name}</strong>
-        <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#888', padding: '0 4px', fontSize: '16px' }}>✕</button>
+    <div style={style} className="guest-incident-popup guest-node-popup">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '9px', borderBottom: '1px solid rgba(148, 163, 184, 0.22)', paddingBottom: '7px' }}>
+        <strong style={{ fontSize: '14px', color: '#ffffff' }}>Trạm {node.name}</strong>
+        <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8', padding: '0 4px', fontSize: '16px' }}>✕</button>
       </div>
 
-      <div style={{ marginBottom: '4px' }}>
-        <span style={{ color: '#666' }}>Số lượng sự cố:</span> <b style={{ marginLeft: '4px' }}>{stationIncidents.length}</b>
-      </div>
-      <div style={{ marginBottom: '4px' }}>
-        <span style={{ color: '#666' }}>Nguyên nhân:</span> 
-        <b style={{ marginLeft: '4px' }}>{causes.length > 0 ? causes.join(', ') : '-'}</b>
-      </div>
-      <div style={{ marginBottom: '4px' }}>
-        <span style={{ color: '#666' }}>Tổng TG xử lý:</span> <b style={{ marginLeft: '4px' }}>{sumTimes(times)}</b>
-      </div>
-      <div>
-        <span style={{ color: '#666' }}>Năng lực backup:</span> <b style={{ marginLeft: '4px' }}>{acBackup}</b>
-      </div>
+      {!stationIncidents.length ? (
+        <div style={{ color: '#94a3b8', lineHeight: 1.45 }}>Chưa có dữ liệu sự cố của trạm này trên Google Sheet.</div>
+      ) : (
+        <>
+          <div style={{ marginBottom: '5px' }}>
+            <span style={{ color: '#94a3b8' }}>Số lượng sự cố:</span> <b style={{ marginLeft: '4px', color: '#ffffff' }}>{stationIncidents.length}</b>
+          </div>
+          <div style={{ marginBottom: '5px' }}>
+            <span style={{ color: '#94a3b8' }}>Nguyên nhân:</span>
+            <b style={{ marginLeft: '4px', color: '#ffffff' }}>{causes.length > 0 ? causes.join(', ') : '-'}</b>
+          </div>
+          <div style={{ marginBottom: '5px' }}>
+            <span style={{ color: '#94a3b8' }}>Tổng TG xử lý:</span> <b style={{ marginLeft: '4px', color: '#ffffff' }}>{sumTimes(times)}</b>
+          </div>
+          <div>
+            <span style={{ color: '#94a3b8' }}>Năng lực backup:</span> <b style={{ marginLeft: '4px', color: '#ffffff' }}>{acBackup}</b>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
 function EmptyData() {
   return {
-    cableIncidents: [], stationIncidents: [], incidents: [], affectedStations: [], affectedRoutes: [], deployments: [], operators: [], responseResources: { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 }, weatherRows: [], tasks: []
+    cableIncidents: [], stationIncidents: [], incidents: [], affectedStations: [], affectedRoutes: [], routeInformation: [], deployments: [], operators: [], responseResources: { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 }, weatherRows: [], preStormTasks: [], inStormTasks: [], tasks: []
   };
 }
 
@@ -943,12 +966,12 @@ export default function App() {
     ? mapState.teams.find((t) => t.id === pendingTeamIdRef.current) ?? null
     : null;
 
-  const loadDashboard = useCallback(async () => {
-    setLastUpdated("Đang tải dữ liệu Google Sheet...");
+  const loadDashboard = useCallback(async ({ resetPages = true, showLoading = true } = {}) => {
+    if (showLoading) setLastUpdated("Đang tải dữ liệu Google Sheet...");
     try {
       const nextData = await loadDashboardData();
       setData(nextData);
-      setPages({ cable: 0, station: 0, weather: 0, tasks: 0 });
+      if (resetPages) setPages({ cable: 0, station: 0, weather: 0, tasks: 0 });
       const timestamp = new Intl.DateTimeFormat("vi-VN", {
         hour: "2-digit", minute: "2-digit", second: "2-digit", day: "2-digit", month: "2-digit", year: "numeric"
       }).format(new Date());
@@ -961,6 +984,15 @@ export default function App() {
 
   useEffect(() => {
     loadDashboard();
+  }, [loadDashboard]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        loadDashboard({ resetPages: false, showLoading: false });
+      }
+    }, DASHBOARD_AUTO_REFRESH_MS);
+    return () => window.clearInterval(timer);
   }, [loadDashboard]);
 
   useEffect(() => {
@@ -1107,7 +1139,7 @@ export default function App() {
           <button className="capture-button" title="Chụp dashboard thành ảnh PNG" onClick={captureReport} disabled={capturing}>
             <span className="material-symbols-outlined text-[17px]">{capturing ? "hourglass_top" : "photo_camera"}</span><span>{capturing ? "Đang chụp..." : "Chụp"}</span>
           </button>
-          <button className="icon-btn" title="Tải lại dữ liệu" onClick={loadDashboard}><span className="material-symbols-outlined text-[18px]">refresh</span></button>
+          <button className="icon-btn" title="Tải lại dữ liệu" onClick={() => loadDashboard()}><span className="material-symbols-outlined text-[18px]">refresh</span></button>
 
           {/* Nút Đăng nhập/Đăng xuất */}
           <div style={{ position: 'relative' }}>
@@ -1152,7 +1184,13 @@ export default function App() {
         />
         <section className="content-grid">
           <HiddenIncidentTables data={data} pages={pages} setPages={setPages} />
-          <TasksPanel tasks={data.tasks} page={pages.tasks} setPage={(page: number) => setPages((old) => ({ ...old, tasks: page }))} today={today} mode={dashboardMode} />
+          <TasksPanel
+            tasks={dashboardMode === 'truoc_bao' ? data.preStormTasks : data.inStormTasks}
+            page={pages.tasks}
+            setPage={(page: number) => setPages((old) => ({ ...old, tasks: page }))}
+            today={today}
+            mode={dashboardMode}
+          />
           <article className="card rescue-card" style={ACCENT_STYLE.green}>
             <div className="card-header">
               <h2 className="card-title"><span className="material-symbols-outlined">map</span>Thông tin đội ứng cứu khắc phục sự cố</h2>
@@ -1188,6 +1226,7 @@ export default function App() {
                 edges={mapState.edges}
                 nodes={mapState.nodes}
                 teams={mapState.teams}
+                routeInformation={data.routeInformation}
                 sidebarCollapsed={false}
                 showTeamNames={mapState.showTeamNames}
                 mode={dashboardMode}

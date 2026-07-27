@@ -30,6 +30,28 @@ function isDashboardVisible(value) {
   return ["x", "✓", "✔", "true", "1", "có"].includes(marker);
 }
 
+function normalizeRouteKey(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .replace(/^tuyến\s+/i, "")
+    .split(/\s*[-–—]\s*/)
+    .map((endpoint) => endpoint
+      .replace(/\(\s*MPOP\s*\)/gi, "")
+      .replace(/\b\d+\s*FO\b/gi, "")
+      .replace(/\s+/g, "")
+      .toLocaleUpperCase("vi-VN"))
+    .filter(Boolean)
+    .join("-");
+}
+
+function routeLookupKeys(value) {
+  const key = normalizeRouteKey(value);
+  const endpoints = key.split("-");
+  return endpoints.length === 2
+    ? [key, `${endpoints[1]}-${endpoints[0]}`]
+    : [key];
+}
+
 export function buildDashboardDataFromSheets(sheets) {
   const warnings = [];
 
@@ -108,9 +130,47 @@ export function buildDashboardDataFromSheets(sheets) {
         route: get("route"),
         length: get("length"),
         impact: get("routeImpact"),
-        pops: get("pops")
+        pops: get("pops"),
+        availability: get("availability"),
+        incidentFrequency: get("incidentFrequency")
       };
     });
+
+  const routeInformationSource = resolveSheet(sheets, "Thông tin tuyến");
+  warnings.push(...routeInformationSource.resolver.warnings);
+  const affectedRouteByKey = new Map();
+  affectedRoutes.forEach((route) => {
+    routeLookupKeys(route.route).forEach((key) => affectedRouteByKey.set(key, route));
+  });
+
+  const matchedAffectedRouteKeys = new Set();
+  const routeInformation = routeInformationSource.rows
+    .filter((row) => routeInformationSource.resolver.get(row, "route"))
+    .map((row) => {
+      const get = (field) => routeInformationSource.resolver.get(row, field);
+      const route = get("route");
+      const affectedRoute = affectedRouteByKey.get(normalizeRouteKey(route));
+      if (affectedRoute) matchedAffectedRouteKeys.add(normalizeRouteKey(affectedRoute.route));
+
+      return {
+        route,
+        length: affectedRoute?.length || "",
+        pops: affectedRoute?.pops || "",
+        availability: get("availability") || affectedRoute?.availability || "",
+        incidentFrequency: get("incidentFrequency") || affectedRoute?.incidentFrequency || ""
+      };
+    });
+
+  affectedRoutes.forEach((route) => {
+    if (matchedAffectedRouteKeys.has(normalizeRouteKey(route.route))) return;
+    routeInformation.push({
+      route: route.route,
+      length: route.length,
+      pops: route.pops,
+      availability: route.availability,
+      incidentFrequency: route.incidentFrequency
+    });
+  });
 
   const peopleRows = sheets["Nhân sự"] || [];
   const peopleSource = resolveSheet(sheets, "Nhân sự");
@@ -168,18 +228,34 @@ export function buildDashboardDataFromSheets(sheets) {
 
   const taskSource = resolveSheet(sheets, "Công việc");
   warnings.push(...taskSource.resolver.warnings);
-  const tasks = taskSource.rows
-    .filter((row) => taskSource.resolver.get(row, "name"))
+  const preStormTasks = taskSource.rows
+    .filter((row) => taskSource.resolver.get(row, "preStormName"))
     .flatMap((row, index) => {
       const get = (field) => taskSource.resolver.get(row, field);
-      const taskLines = get("name").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+      const taskLines = get("preStormName").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
       return taskLines.map((name, lineIndex) => ({
-        id: get("id") || `${index + 1}-${lineIndex + 1}`,
-        date: get("date"),
+        id: `pre-${get("preStormId") || index + 1}-${lineIndex + 1}`,
         name,
-        marker: get("marker"),
-        status: get("marker"),
-        note: get("note")
+        marker: get("preStormMarker"),
+        status: get("preStormMarker"),
+        note: get("preStormNote"),
+        mode: "truoc_bao"
+      }));
+    });
+
+  const inStormTasks = taskSource.rows
+    .filter((row) => taskSource.resolver.get(row, "inStormName"))
+    .flatMap((row, index) => {
+      const get = (field) => taskSource.resolver.get(row, field);
+      const taskLines = get("inStormName").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+      return taskLines.map((name, lineIndex) => ({
+        id: `in-${get("inStormDate") || "no-date"}-${index + 1}-${lineIndex + 1}`,
+        date: get("inStormDate"),
+        name,
+        marker: get("inStormMarker"),
+        status: get("inStormMarker"),
+        note: get("inStormNote"),
+        mode: "trong_bao"
       }));
     });
 
@@ -190,11 +266,14 @@ export function buildDashboardDataFromSheets(sheets) {
       incidents: [...cableIncidents, ...stationIncidents],
       affectedStations,
       affectedRoutes,
+      routeInformation,
       deployments,
       operators,
       responseResources,
       weatherRows,
-      tasks
+      preStormTasks,
+      inStormTasks,
+      tasks: inStormTasks
     },
     warnings
   };

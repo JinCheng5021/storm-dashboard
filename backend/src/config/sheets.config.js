@@ -8,7 +8,8 @@ export const SHEETS = [
   { name: "DS tuyến, trạm ảnh hưởng", gid: "763532233" },
   { name: "Nhân sự", gid: "0" },
   { name: "Thời tiết", gid: "2045494709" },
-  { name: "Công việc", gid: "1363793260" }
+  { name: "Công việc", gid: "1363793260" },
+  { name: "Thông tin tuyến", gid: "1037430799" }
 ];
 
 const column = (headers, options = {}) => ({ headers, ...options });
@@ -64,7 +65,9 @@ export const SHEET_SCHEMAS = {
       route: column(["Tuyến", "Tuyến cáp"]),
       length: column(["Chiều dài", "Chiều dài tuyến"]),
       routeImpact: column(["Ảnh hưởng tuyến cáp", "Ảnh hưởng"]),
-      pops: column(["SL POP ảnh hưởng", "Số POP ảnh hưởng"], { required: false })
+      pops: column(["SL POP ảnh hưởng", "Số POP ảnh hưởng"], { required: false }),
+      availability: column(["Độ khả dụng", "ĐKD"], { required: false }),
+      incidentFrequency: column(["Tần suất SC/100km", "Tần suất SC"], { required: false })
     }
   },
   "Nhân sự": {
@@ -95,13 +98,27 @@ export const SHEET_SCHEMAS = {
   },
   "Công việc": {
     allowPositionalFallback: true,
-    minHeaderMatches: 2,
+    minHeaderMatches: 5,
     fields: {
-      date: column(["Ngày", "Ngày thực hiện"], { fallbackIndex: 0 }),
-      id: column(["STT", "TT", "Mã công việc"], { required: false, fallbackIndex: 0 }),
-      name: column(["Công việc", "Tên công việc", "Nội dung công việc"], { fallbackIndex: 1 }),
-      marker: column(["Trạng thái", "Tình trạng", "Đánh dấu"], { fallbackIndex: 2 }),
-      note: column(["Ghi chú", "Nội dung cập nhật"], { required: false, fallbackIndex: 3 })
+      preStormId: column(["STT", "TT", "Mã công việc"], { fallbackIndex: 0 }),
+      preStormName: column(["Công việc", "Tên công việc", "Nội dung công việc"], { occurrence: 1, fallbackIndex: 1 }),
+      preStormMarker: column(["Trạng thái", "Tình trạng", "Đánh dấu"], { occurrence: 1, fallbackIndex: 2 }),
+      preStormNote: column(["Ghi chú", "Nội dung cập nhật"], { required: false, occurrence: 1, fallbackIndex: 3 }),
+      inStormDate: column(["Ngày", "Ngày thực hiện"], { fallbackIndex: 5 }),
+      inStormName: column(["Công việc", "Tên công việc", "Nội dung công việc"], { occurrence: 2, fallbackIndex: 6 }),
+      inStormMarker: column(["Trạng thái", "Tình trạng", "Đánh dấu"], { occurrence: 2, fallbackIndex: 7 }),
+      inStormNote: column(["Ghi chú", "Nội dung cập nhật"], { required: false, occurrence: 2, fallbackIndex: 8 })
+    }
+  },
+  "Thông tin tuyến": {
+    fields: {
+      stt: column(["STT", "TT"], { required: false }),
+      route: column(["Tuyến", "Tuyến cáp"]),
+      availability: column(["Độ khả dụng", "ĐKD"]),
+      incidentFrequency: column(["Tần suất SC", "Tần suất SC/100km"]),
+      weakPointCount: column(["SL điểm xung yếu", "Số điểm xung yếu"], { required: false }),
+      weakPointLocation: column(["Vị trí xung yếu"], { required: false }),
+      assessment: column(["Đánh giá", "Mức độ"], { required: false })
     }
   }
 };

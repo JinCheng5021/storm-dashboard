@@ -38,6 +38,91 @@
   font-size: 11px;
 }
 
+.map-tooltip--route {
+  min-width: 180px;
+  padding: 8px 10px;
+  background: rgba(8, 17, 32, 0.97);
+  border-color: rgba(56, 189, 248, 0.55);
+  white-space: normal;
+}
+
+.map-tooltip--route > b {
+  margin-bottom: 6px;
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.map-tooltip__status {
+  display: block;
+  margin-top: 4px;
+}
+
+.map-tooltip__details {
+  display: grid;
+  gap: 4px;
+  margin-top: 0;
+  padding-top: 6px;
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.map-tooltip__details > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 6px;
+  border-left: 2px solid #e879f9;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.065);
+}
+
+.map-tooltip__details span {
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.map-tooltip__details strong {
+  color: #2693ff;
+  font-size: 11px;
+  font-weight: 750;
+  text-align: right;
+}
+
+.map-tooltip__details > div:first-child {
+  border-left-color: #1677ff;
+  background: rgba(22, 119, 255, 0.12);
+}
+
+.map-tooltip__details > div:first-child strong {
+  color: #2693ff;
+  text-shadow: 0 0 7px rgba(38, 147, 255, 0.3);
+}
+
+.map-tooltip__details > div:nth-child(2) {
+  border-left-color: #4ade80;
+}
+
+.map-tooltip__details > div:nth-child(2) strong {
+  color: #86efac;
+}
+
+.map-tooltip__details > div:nth-child(3) {
+  border-left-color: #fb923c;
+}
+
+.map-tooltip__details > div:nth-child(3) strong {
+  color: #fdba74;
+}
+
+.map-tooltip__details > div:nth-child(4) {
+  border-left-color: #facc15;
+}
+
+.map-tooltip__details > div:nth-child(4) strong {
+  color: #fde047;
+}
+
 /* ── Team Marker ────────────────────────────────────────────── */
 .team-marker {
   position: relative;

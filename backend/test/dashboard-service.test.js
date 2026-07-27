@@ -24,7 +24,8 @@ test("giữ nguyên cấu trúc dữ liệu dashboard khi các cột được s�
       ["Bình thường", "Có mây", "106", "Hải Phòng", "1", "20", "x"],
       ["Bình thường", "Có mây", "105", "Hà Nội", "2", "21", ""]
     ],
-    "Công việc": [["", "", ""], ["1", "đo kiểm", "i"]]
+    "Công việc": [["", "", ""], ["1", "đo kiểm", "i"]],
+    "Thông tin tuyến": [["STT", "Tuyến", "Độ khả dụng", "Tần suất SC", "SL điểm xung yếu", "Vị trí xung yếu", "Đánh giá"]]
   };
 
   const result = buildDashboardDataFromSheets(sheets);
@@ -39,11 +40,12 @@ test("giữ nguyên cấu trúc dữ liệu dashboard khi các cột được s�
   assert.deepEqual(result.data.responseResources, { teams: 3, pickupTrucks: 1, measuringDevices: 2, weldingMachines: 2 });
   assert.equal(result.data.weatherRows[0].area, "Hải Phòng");
   assert.equal(result.data.weatherRows.length, 1);
-  assert.equal(result.data.tasks[0].name, "đo kiểm");
+  assert.equal(result.data.preStormTasks[0].name, "đo kiểm");
+  assert.equal(result.data.inStormTasks.length, 0);
   assert.match(result.warnings[0], /Công việc/);
 });
 
-test("đọc công việc theo ngày, tách từng dòng nội dung và giữ nguyên trạng thái", () => {
+test("tách độc lập bảng công việc Trước bão và Trong bão, không trộn dữ liệu cùng hàng", () => {
   const baseSheets = {
     "SC ngoại vi": [["Ngày", "Mã SC", "Mạch", "Tuyến", "TG phát sinh", "Khu vực", "Nguyên nhân", "Tình trạng"]],
     "SC đài trạm": [["Ngày", "Mã SC", "Mạch", "Trạm", "TG phát sinh", "Chi nhánh", "Nguyên nhân", "Tình trạng"]],
@@ -51,22 +53,62 @@ test("đọc công việc theo ngày, tách từng dòng nội dung và giữ ng
     "Nhân sự": [["STT", "Đồn trú", "Đối tác", "SL nhân sự tại đồn trú", "", "STT", "Họ và tên", "Số điện thoại", "Email", "Chức vụ", "Vị trí lưu trú"]],
     "Thời tiết": [["STT", "Khu vực", "Lat", "Long", "Thời tiết", "Khả năng di chuyển", "Hiển thị (dành cho dashboard)"]],
     "Công việc": [
-      ["Ngày", "Nội dung công việc", "Trạng thái"],
-      ["15/07/2026", "1. Đo kiểm tuyến\n2. Tuần tra tuyến", "Hoàn thành"],
-      ["15/07/2026", "3. Khắc phục sự cố", "Đang thực hiện"],
-      ["15/07/2026", "", "Chưa thực hiện"]
-    ]
+      ["TRƯỚC BÃO", "", "", "", "", "TRONG BÃO", "", ""],
+      ["STT", "Nội dung công việc", "Trạng thái", "", "", "Ngày", "Nội dung công việc", "Trạng thái"],
+      ["1", "Chuẩn bị vật tư", "Chưa thực hiện", "", "", "15/07/2026", "1. Đo kiểm tuyến\n2. Tuần tra tuyến", "Hoàn thành"],
+      ["2", "Kiểm tra nguồn điện", "Hoàn thành", "", "", "15/07/2026", "3. Khắc phục sự cố", "Đang thực hiện"]
+    ],
+    "Thông tin tuyến": [["STT", "Tuyến", "Độ khả dụng", "Tần suất SC", "SL điểm xung yếu", "Vị trí xung yếu", "Đánh giá"]]
   };
 
   const result = buildDashboardDataFromSheets(baseSheets);
 
-  assert.equal(result.data.tasks.length, 3);
   assert.deepEqual(
-    result.data.tasks.map(({ date, name, status }) => ({ date, name, status })),
+    result.data.preStormTasks.map(({ name, status, mode }) => ({ name, status, mode })),
     [
-      { date: "15/07/2026", name: "1. Đo kiểm tuyến", status: "Hoàn thành" },
-      { date: "15/07/2026", name: "2. Tuần tra tuyến", status: "Hoàn thành" },
-      { date: "15/07/2026", name: "3. Khắc phục sự cố", status: "Đang thực hiện" }
+      { name: "Chuẩn bị vật tư", status: "Chưa thực hiện", mode: "truoc_bao" },
+      { name: "Kiểm tra nguồn điện", status: "Hoàn thành", mode: "truoc_bao" }
     ]
   );
+  assert.equal(result.data.inStormTasks.length, 3);
+  assert.deepEqual(
+    result.data.inStormTasks.map(({ date, name, status, mode }) => ({ date, name, status, mode })),
+    [
+      { date: "15/07/2026", name: "1. Đo kiểm tuyến", status: "Hoàn thành", mode: "trong_bao" },
+      { date: "15/07/2026", name: "2. Tuần tra tuyến", status: "Hoàn thành", mode: "trong_bao" },
+      { date: "15/07/2026", name: "3. Khắc phục sự cố", status: "Đang thực hiện", mode: "trong_bao" }
+    ]
+  );
+  assert.deepEqual(result.data.tasks, result.data.inStormTasks);
+});
+
+test("ghép thông tin tuyến từ đúng hai tab Google Sheet và ưu tiên số liệu tab Thông tin tuyến", () => {
+  const sheets = {
+    "SC ngoại vi": [["Ngày", "Mã SC", "Mạch", "Tuyến", "TG phát sinh", "Khu vực", "Nguyên nhân", "Tình trạng"]],
+    "SC đài trạm": [["Ngày", "Mã SC", "Mạch", "Trạm", "TG phát sinh", "Chi nhánh", "Nguyên nhân", "Tình trạng"]],
+    "DS tuyến, trạm ảnh hưởng": [
+      ["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài", "Ảnh hưởng tuyến cáp", "SL POP ảnh hưởng", "Độ khả dụng", "Tần suất SC/100km"],
+      ["", "", "", "", "", "", "", "", "", "", "1", "DBB", "THA - CGT 48FO", "93.2", "Trực tiếp", "3", "56%", "2.15"]
+    ],
+    "Nhân sự": [["STT", "Đồn trú", "Đối tác", "SL nhân sự tại đồn trú", "", "STT", "Họ và tên", "Số điện thoại", "Email", "Chức vụ", "Vị trí lưu trú"]],
+    "Thời tiết": [["STT", "Khu vực", "Lat", "Long", "Thời tiết", "Khả năng di chuyển", "Hiển thị (dành cho dashboard)"]],
+    "Công việc": [
+      ["TRƯỚC BÃO", "", "", "", "", "TRONG BÃO", "", ""],
+      ["STT", "Nội dung công việc", "Trạng thái", "", "", "Ngày", "Nội dung công việc", "Trạng thái"]
+    ],
+    "Thông tin tuyến": [
+      ["STT", "Tuyến", "Độ khả dụng", "Tần suất SC", "SL điểm xung yếu", "Vị trí xung yếu", "Đánh giá"],
+      ["1", "CGT - THA", "40%", "7.5", "1", "Km 10", "Mất an toàn"]
+    ]
+  };
+
+  const result = buildDashboardDataFromSheets(sheets);
+
+  assert.deepEqual(result.data.routeInformation, [{
+    route: "CGT - THA",
+    length: "93.2",
+    pops: "3",
+    availability: "40%",
+    incidentFrequency: "7.5"
+  }]);
 });

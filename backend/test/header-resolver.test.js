@@ -55,6 +55,23 @@ test("tab Công việc chưa có tiêu đề vẫn chạy bằng fallback có c�
   const resolver = createHeaderResolver("Công việc", rows, SHEET_SCHEMAS["Công việc"]);
 
   assert.equal(resolver.headerRowIndex, -1);
-  assert.equal(resolver.get(rows[1], "name"), "đo kiểm");
+  assert.equal(resolver.get(rows[1], "preStormName"), "đo kiểm");
+  assert.equal(resolver.get(rows[1], "inStormName"), "");
   assert.equal(resolver.warnings.length, 1);
+});
+
+test("phân biệt hai bảng Trước bão và Trong bão trong cùng tab Công việc", () => {
+  const rows = [
+    ["TRƯỚC BÃO", "", "", "", "", "TRONG BÃO", "", ""],
+    ["STT", "Nội dung công việc", "Trạng thái", "", "", "Ngày", "Nội dung công việc", "Trạng thái"],
+    ["1", "Chuẩn bị vật tư", "Hoàn thành", "", "", "14/07/2026", "Tuần tra tuyến", "Đang thực hiện"]
+  ];
+  const resolver = createHeaderResolver("Công việc", rows, SHEET_SCHEMAS["Công việc"]);
+
+  assert.equal(resolver.headerRowIndex, 1);
+  assert.equal(resolver.get(rows[2], "preStormName"), "Chuẩn bị vật tư");
+  assert.equal(resolver.get(rows[2], "preStormMarker"), "Hoàn thành");
+  assert.equal(resolver.get(rows[2], "inStormDate"), "14/07/2026");
+  assert.equal(resolver.get(rows[2], "inStormName"), "Tuần tra tuyến");
+  assert.equal(resolver.get(rows[2], "inStormMarker"), "Đang thực hiện");
 });
