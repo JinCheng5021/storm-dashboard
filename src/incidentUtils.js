@@ -1,4 +1,4 @@
-function normalizedStatus(value) {
+export function normalizeIncidentText(value) {
   return String(value || "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -17,7 +17,7 @@ export function incidentStatusBreakdown(incidents) {
   const counts = incidents.reduce((result, incident) => {
     if (!String(incident.code || "").trim()) return result;
 
-    const status = normalizedStatus(incident.status);
+    const status = normalizeIncidentText(incident.status);
     if (status.includes("hoan thanh")) {
       result.completed += 1;
       result.total += 1;

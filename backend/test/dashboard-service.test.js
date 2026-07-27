@@ -14,10 +14,10 @@ test("giữ nguyên cấu trúc dữ liệu dashboard khi các cột được s�
     ],
     "DS tuyến, trạm ảnh hưởng": [["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài tuyến", "Ảnh hưởng tuyến cáp", "SL KHG FTI"]],
     "Nhân sự": [
-      ["STT", "Điểm đồn trú", "Đối tác", "Số lượng nhân sự", "", "STT", "Tên nhân sự", "Điện thoại", "E-mail", "Vai trò", "Nơi lưu trú", "Ghi chú", "", "Số đội ứng cứu", "3"],
-      ["1", "Hải Phòng", "FFC", "4", "", "1", "Nguyễn Văn A", "0900", "a@example.com", "VHMB", "Hải Phòng", "", "", "Xe bán tải", "1"],
-      ["2", "", "FFC", "0", "", "2", "", "", "", "", "", "", "", "Máy đo", "2"],
-      ["", "", "", "", "", "3", "", "", "", "", "", "", "", "Máy hàn", "2"]
+      ["STT", "Điểm đồn trú", "Đối tác", "Số lượng nhân sự", "Hiển thị dashboard", "", "STT", "Tên nhân sự", "Điện thoại", "E-mail", "Vai trò", "Nơi lưu trú", "Ghi chú", "", "Số đội ứng cứu", "3"],
+      ["1", "Hải Phòng", "FFC", "4", "x", "", "1", "Nguyễn Văn A", "0900", "a@example.com", "VHMB", "Hải Phòng", "", "", "Xe bán tải", "1"],
+      ["2", "Hà Nội", "FFC", "6", "", "", "2", "", "", "", "", "", "", "", "Máy đo", "2"],
+      ["", "", "", "", "", "", "3", "", "", "", "", "", "", "", "Máy hàn", "2"]
     ],
     "Thời tiết": [
       ["Di chuyển", "Tình hình thời tiết", "Kinh độ", "Địa phương", "TT", "Vĩ độ", "Hiển thị (dành cho dashboard)"],
@@ -34,7 +34,7 @@ test("giữ nguyên cấu trúc dữ liệu dashboard khi các cột được s�
   assert.equal(result.data.cableIncidents[0].status, "Đang xử lý");
   assert.equal(result.data.stationIncidents[0].target, "MCI");
   assert.equal(result.data.deployments[0].count, 4);
-  assert.equal(result.data.deployments.length, 2);
+  assert.equal(result.data.deployments.length, 1);
   assert.equal(result.data.operators[0].name, "Nguyễn Văn A");
   assert.equal(result.data.operators.length, 3);
   assert.deepEqual(result.data.responseResources, { teams: 3, pickupTrucks: 1, measuringDevices: 2, weldingMachines: 2 });
@@ -50,7 +50,7 @@ test("tách độc lập bảng công việc Trước bão và Trong bão, khôn
     "SC ngoại vi": [["Ngày", "Mã SC", "Mạch", "Tuyến", "TG phát sinh", "Khu vực", "Nguyên nhân", "Tình trạng"]],
     "SC đài trạm": [["Ngày", "Mã SC", "Mạch", "Trạm", "TG phát sinh", "Chi nhánh", "Nguyên nhân", "Tình trạng"]],
     "DS tuyến, trạm ảnh hưởng": [["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài tuyến", "Ảnh hưởng tuyến cáp", "SL KHG FTI"]],
-    "Nhân sự": [["STT", "Đồn trú", "Đối tác", "SL nhân sự tại đồn trú", "", "STT", "Họ và tên", "Số điện thoại", "Email", "Chức vụ", "Vị trí lưu trú"]],
+    "Nhân sự": [["STT", "Đồn trú", "Đối tác", "SL nhân sự tại đồn trú", "Hiển thị", "", "STT", "Họ và tên", "Số điện thoại", "Email", "Chức vụ", "Vị trí lưu trú"]],
     "Thời tiết": [["STT", "Khu vực", "Lat", "Long", "Thời tiết", "Khả năng di chuyển", "Hiển thị (dành cho dashboard)"]],
     "Công việc": [
       ["TRƯỚC BÃO", "", "", "", "", "TRONG BÃO", "", ""],
@@ -90,7 +90,7 @@ test("ghép thông tin tuyến từ đúng hai tab Google Sheet và ưu tiên s�
       ["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài", "Ảnh hưởng tuyến cáp", "SL POP ảnh hưởng", "SL KHG FTI", "Độ khả dụng", "Tần suất SC/100km"],
       ["", "", "", "", "", "", "", "", "", "", "1", "DBB", "THA - CGT 48FO", "93.2", "Trực tiếp", "3", "2", "56%", "2.15"]
     ],
-    "Nhân sự": [["STT", "Đồn trú", "Đối tác", "SL nhân sự tại đồn trú", "", "STT", "Họ và tên", "Số điện thoại", "Email", "Chức vụ", "Vị trí lưu trú"]],
+    "Nhân sự": [["STT", "Đồn trú", "Đối tác", "SL nhân sự tại đồn trú", "Hiển thị", "", "STT", "Họ và tên", "Số điện thoại", "Email", "Chức vụ", "Vị trí lưu trú"]],
     "Thời tiết": [["STT", "Khu vực", "Lat", "Long", "Thời tiết", "Khả năng di chuyển", "Hiển thị (dành cho dashboard)"]],
     "Công việc": [
       ["TRƯỚC BÃO", "", "", "", "", "TRONG BÃO", "", ""],

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, useReducer } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useReducer } from "react";
 import maplibregl from "maplibre-gl";
 import * as htmlToImage from "html-to-image";
 import { loadDashboardData } from "./dashboardData";
@@ -10,6 +10,7 @@ import { exportMapImage } from "./utils/exportMap";
 import { supabase } from "./lib/supabase";
 import { numberedTaskName, tasksForDate } from "./taskUtils";
 import { incidentStatusBreakdown } from "./incidentUtils";
+import { canonicalRouteKey, deriveIncidentMapFeatures, edgeStatusFromIncident, stationKey } from "./incidentMapStatus";
 import type { NodeStatus, EdgeStatus, Team, TeamType, DashboardMode } from "./types";
 
 const PAGE_SIZE = {
@@ -591,25 +592,12 @@ function HiddenIncidentTables({ data, pages, setPages }) {
 function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
   if (menu.targetType !== 'edge') return null;
   const edge = edges.find((e: any) => e.id == menu.targetId);
-  if (!edge || (edge.status !== 'incident_external' && edge.status !== 'resolved')) return null;
+  if (!edge || !['incident_external', 'danger_zone', 'resolved'].includes(edge.status)) return null;
 
-  const targetName = edge.name.trim();
-
-  const matchIncident = (target: string) => {
-    if (!target) return false;
-    const cleanTarget = target.replace(/\s+/g, '').toLowerCase();
-    const cleanSearchTarget = targetName.replace(/tuyến/i, '').replace(/\s+/g, '').toLowerCase();
-
-    const parts = cleanTarget.split('-');
-    if (parts.length >= 2) {
-      const forward = `${parts[0]}-${parts[1]}`;
-      const backward = `${parts[1]}-${parts[0]}`;
-      return cleanSearchTarget === forward || cleanSearchTarget === backward || cleanTarget.includes(cleanSearchTarget);
-    }
-    return cleanTarget === cleanSearchTarget;
-  };
-
-  const incident = incidents.find((inc: any) => matchIncident(inc.target));
+  const edgeKey = canonicalRouteKey(edge.name);
+  const matchingIncidents = incidents.filter((inc: any) => canonicalRouteKey(inc.target) === edgeKey);
+  const incident = matchingIncidents.find((inc: any) => edgeStatusFromIncident(inc.status) === edge.status)
+    || matchingIncidents[0];
 
   const style: React.CSSProperties = {
     position: 'absolute',
@@ -643,7 +631,7 @@ function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
     );
   }
 
-  const isResolved = incident.status?.toLowerCase().includes('hoàn thành') || edge.status === 'resolved';
+  const isResolved = edge.status === 'resolved';
 
   return (
     <div style={style} className="guest-incident-popup">
@@ -715,7 +703,8 @@ function GuestNodePopup({ menu, nodes, incidents, onClose }: any) {
     style.marginTop = '-16px';
   }
 
-  const stationIncidents = incidents.filter((inc: any) => inc.target === node.name);
+  const nodeKey = stationKey(node.name);
+  const stationIncidents = incidents.filter((inc: any) => stationKey(inc.target) === nodeKey);
   const causes = Array.from(new Set(stationIncidents.map((inc: any) => inc.cause).filter(Boolean)));
   const times = stationIncidents.map((inc: any) => inc.processingTime).filter(Boolean);
   const acBackup = stationIncidents.find((inc: any) => inc.acBackup)?.acBackup || '-';
@@ -811,6 +800,13 @@ export default function App() {
 
   // --- Map State ---
   const [mapState, mapDispatch] = useReducer(mapReducer, EMPTY_MAP_STATE);
+  const incidentMapState = useMemo(() => deriveIncidentMapFeatures({
+    mode: dashboardMode,
+    edges: mapState.edges,
+    nodes: mapState.nodes,
+    cableIncidents: data.cableIncidents,
+    stationIncidents: data.stationIncidents
+  }), [dashboardMode, mapState.edges, mapState.nodes, data.cableIncidents, data.stationIncidents]);
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   const pendingTeamIdRef = useRef<string | null>(null);
 
@@ -944,7 +940,7 @@ export default function App() {
     const SNAP_RADIUS_KM = 2;
     let nearest = null;
     let minDist = Infinity;
-    for (const node of mapState.nodes) {
+    for (const node of incidentMapState.nodes) {
       if (node.status === 'isolated' || node.status === 'power_out') {
         const d = haversine(lngLat, node.coordinates);
         if (d < minDist && d <= SNAP_RADIUS_KM) {
@@ -956,7 +952,7 @@ export default function App() {
     const finalPosition = nearest ? nearest.coordinates : lngLat;
     mapDispatch({ type: 'UPDATE_TEAM', id: teamId, patch: { position: finalPosition } });
     await supabase.from('teams').update({ position: finalPosition }).eq('id', teamId);
-  }, [mapState.nodes, session]);
+  }, [incidentMapState.nodes, session]);
 
   const handleTeamNameChange = useCallback(async (teamId: string, name: string) => {
     mapDispatch({ type: 'UPDATE_TEAM', id: teamId, patch: { name } });
@@ -992,10 +988,10 @@ export default function App() {
   }, [session]);
 
   const contextNodeStatus = mapState.contextMenu?.targetType === 'node'
-    ? mapState.nodes.find((n) => n.id === mapState.contextMenu?.targetId)?.status
+    ? incidentMapState.nodes.find((n) => n.id === mapState.contextMenu?.targetId)?.status
     : undefined;
   const contextEdgeStatus = mapState.contextMenu?.targetType === 'edge'
-    ? mapState.edges.find((e) => e.id === mapState.contextMenu?.targetId)?.status
+    ? incidentMapState.edges.find((e) => e.id === mapState.contextMenu?.targetId)?.status
     : undefined;
 
   const pendingTeam = pendingTeamIdRef.current
@@ -1058,8 +1054,8 @@ export default function App() {
       const mapDataURL = await exportMapImage({
         map: mapInstanceRef.current,
         operatorName: mapState.operatorName,
-        edges: mapState.edges,
-        nodes: mapState.nodes,
+        edges: incidentMapState.edges,
+        nodes: incidentMapState.nodes,
         teams: mapState.teams,
         showTeamNames: mapState.showTeamNames,
         mode: dashboardMode,
@@ -1163,7 +1159,7 @@ export default function App() {
             onClick={() => setDashboardMode(prev => prev === 'trong_bao' ? 'truoc_bao' : 'trong_bao')}
             title="Nhấn để chuyển đổi chế độ Trước Bão / Trong Bão"
           >
-            {dashboardMode === 'trong_bao' ? 'Dashboard Báo Cáo Bão QLVHMB' : 'Dashboard Báo Cáo Trước Bão QLVHMB'}
+            {dashboardMode === 'trong_bao' ? 'Dashboard Báo Cáo Bão QLVHMB' : 'Công tác chuẩn bị trước bão của QLVHMB'}
             <span className="material-symbols-outlined text-[20px]">swap_horiz</span>
           </h1>
           <a href={`https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || "1fTDLSaxfzLU4XZnPwVhLqIdFNX4-1SdSMpdvyO372nk"}/edit`} target="_blank" rel="noreferrer" title="Mở file Google Sheet" className="text-slate-400 hover:text-[var(--fpt-blue)] transition-colors flex items-center text-sm underline ml-1">
@@ -1238,8 +1234,8 @@ export default function App() {
                         exportMapImage({
                           map: mapInstanceRef.current,
                           operatorName: mapState.operatorName,
-                          edges: mapState.edges,
-                          nodes: mapState.nodes,
+                          edges: incidentMapState.edges,
+                          nodes: incidentMapState.nodes,
                           teams: mapState.teams,
                           showTeamNames: mapState.showTeamNames,
                           mode: dashboardMode,
@@ -1259,8 +1255,8 @@ export default function App() {
             </div>
             <div className="image-slot" style={{ padding: 0 }}>
               <MapCanvas
-                edges={mapState.edges}
-                nodes={mapState.nodes}
+                edges={incidentMapState.edges}
+                nodes={incidentMapState.nodes}
                 teams={mapState.teams}
                 routeInformation={data.routeInformation}
                 sidebarCollapsed={false}
@@ -1280,7 +1276,7 @@ export default function App() {
                 onConfirmTeam={handleConfirmTeam}
                 onRemoveTeam={handleRemoveTeam}
               />
-              {mapState.contextMenu?.visible && session && (
+              {mapState.contextMenu?.visible && session && dashboardMode === 'truoc_bao' && (
                 <ContextMenu
                   menu={mapState.contextMenu}
                   currentNodeStatus={contextNodeStatus}
@@ -1291,17 +1287,17 @@ export default function App() {
                   mode={dashboardMode}
                 />
               )}
-              {mapState.contextMenu?.visible && !session && (
+              {mapState.contextMenu?.visible && (!session || dashboardMode === 'trong_bao') && (
                 <>
                   <GuestIncidentPopup
                     menu={mapState.contextMenu}
-                    edges={mapState.edges}
+                    edges={incidentMapState.edges}
                     incidents={data.cableIncidents}
                     onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
                   />
                   <GuestNodePopup
                     menu={mapState.contextMenu}
-                    nodes={mapState.nodes}
+                    nodes={incidentMapState.nodes}
                     incidents={data.stationIncidents}
                     onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
                   />

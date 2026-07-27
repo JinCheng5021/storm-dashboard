@@ -182,7 +182,10 @@ export function buildDashboardDataFromSheets(sheets) {
   const peopleSource = resolveSheet(sheets, "Nhân sự");
   warnings.push(...peopleSource.resolver.warnings);
   const deployments = peopleSource.rows
-    .filter((row) => peopleSource.resolver.get(row, "deploymentStt"))
+    .filter((row) => (
+      peopleSource.resolver.get(row, "deploymentStt")
+      && isDashboardVisible(peopleSource.resolver.get(row, "visible"))
+    ))
     .map((row, index) => {
       const get = (field) => peopleSource.resolver.get(row, field);
       return {

@@ -28,8 +28,8 @@ test("chấp nhận alias tiêu đề đã cấu hình", () => {
 });
 
 test("phân biệt hai cột STT trùng nhau theo lần xuất hiện", () => {
-  const headers = ["STT", "Đồn trú", "Đối tác", "SL nhân sự tại đồn trú", "", "STT", "Họ và tên", "Số điện thoại", "Email", "Chức vụ", "Vị trí lưu trú", "Ghi chú"];
-  const row = ["7", "Hải Phòng", "FFC", "3", "", "2", "Nguyễn Văn A", "0900", "a@example.com", "VHMB", "Hà Nội", ""];
+  const headers = ["STT", "Đồn trú", "Đối tác", "SL nhân sự tại đồn trú", "Hiển thị", "", "STT", "Họ và tên", "Số điện thoại", "Email", "Chức vụ", "Vị trí lưu trú", "Ghi chú"];
+  const row = ["7", "Hải Phòng", "FFC", "3", "x", "", "2", "Nguyễn Văn A", "0900", "a@example.com", "VHMB", "Hà Nội", ""];
   const resolver = createHeaderResolver("Nhân sự", [headers, row], SHEET_SCHEMAS["Nhân sự"]);
 
   assert.equal(resolver.get(row, "deploymentStt"), "7");

@@ -77,6 +77,7 @@ export const SHEET_SCHEMAS = {
       location: column(["Đồn trú", "Điểm đồn trú", "Vị trí đồn trú"]),
       partner: column(["Đối tác", "Đơn vị đối tác"]),
       count: column(["SL nhân sự tại đồn trú", "Số lượng nhân sự", "SL nhân sự"]),
+      visible: column(["Hiển thị (dành cho dashboard)", "Hiển thị dashboard", "Hiển thị"]),
       operatorStt: column(["STT", "TT"], { occurrence: 2 }),
       name: column(["Họ và tên", "Tên nhân sự"]),
       phone: column(["Số điện thoại", "Điện thoại"]),
