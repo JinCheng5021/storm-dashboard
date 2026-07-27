@@ -25,7 +25,9 @@ const ACCENT_STYLE: any = {
   blue: { "--accent": "var(--fpt-blue)", "--accent-rgb": "0, 91, 172" },
   orange: { "--accent": "var(--fpt-orange)", "--accent-rgb": "244, 124, 32" },
   green: { "--accent": "var(--fpt-green)", "--accent-rgb": "109, 179, 63" },
-  red: { "--accent": "var(--danger)", "--accent-rgb": "239, 68, 68" }
+  red: { "--accent": "var(--danger)", "--accent-rgb": "239, 68, 68" },
+  purple: { "--accent": "#7c3aed", "--accent-rgb": "124, 58, 237" },
+  teal: { "--accent": "#0f9f8f", "--accent-rgb": "15, 159, 143" }
 };
 
 function chipClass(status) {
@@ -291,6 +293,22 @@ function PreStormStationChart({ data, isLoading }: any) {
   );
 }
 
+function StormImpactTotalCard({ label, value, icon, accentStyle, href }: any) {
+  return (
+    <article className="summary-card storm-impact-total-card" style={accentStyle}>
+      <a href={href} target="_blank" rel="noreferrer" className="sheet-link" title="Mở tab DS tuyến, trạm ảnh hưởng">
+        <span className="material-symbols-outlined">open_in_new</span>
+      </a>
+      <div className="summary-icon"><span className="material-symbols-outlined text-[20px]">{icon}</span></div>
+      <div className="min-w-0 flex-1">
+        <p className="summary-label">{label}</p>
+        <div className="summary-value-row"><p className="summary-value">{value}</p></div>
+        <p className="summary-total-label">Tổng</p>
+      </div>
+    </article>
+  );
+}
+
 function SummaryGrid({ data, mode }: any) {
   const totalPersonnel = data.deployments.reduce((sum: any, item: any) => sum + item.count, 0);
   const deploymentCount = data.deployments.length;
@@ -394,6 +412,24 @@ function SummaryGrid({ data, mode }: any) {
           <div className="equipment-summary pmb-equipment"><span className="material-symbols-outlined">local_shipping</span><span>{resources.pickupTrucks} xe bán tải + {resources.measuringDevices} máy đo + {resources.weldingMachines} máy hàn</span></div>
         </div>
       </article>
+      {mode === 'trong_bao' && (
+        <>
+          <StormImpactTotalCard
+            label="SL POP ảnh hưởng"
+            value={data.stormImpactSummary.popCount}
+            icon="cell_tower"
+            accentStyle={ACCENT_STYLE.purple}
+            href={`${SHEET_BASE_URL}763532233`}
+          />
+          <StormImpactTotalCard
+            label="SL KHG FTI ảnh hưởng"
+            value={data.stormImpactSummary.ftiCustomerCount}
+            icon="groups"
+            accentStyle={ACCENT_STYLE.teal}
+            href={`${SHEET_BASE_URL}763532233`}
+          />
+        </>
+      )}
     </section>
   );
 }
@@ -475,13 +511,13 @@ function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, 
           </div>
         ) : (
           <table>
-            <thead><tr><th style={{ width: "8%" }}>STT</th><th style={{ width: "30%" }}>Khu vực</th><th style={{ width: "35%" }}>Thời tiết</th><th style={{ width: "27%" }}>Di chuyển</th></tr></thead>
+            <thead><tr><th className="weather-stt-column">STT</th><th className="weather-area-column">Khu vực</th><th className="weather-condition-column">Thời tiết</th><th className="weather-mobility-column">Di chuyển</th></tr></thead>
             <tbody>
               {!rows.length ? (
                 <tr><td colSpan={4}><div className="empty-state">Chưa có dữ liệu trong tab Thời tiết.</div></td></tr>
               ) : current.rows.map((row: any, index: number) => (
                 <tr key={`${row.stt}-${current.start + index}`} title={[row.area, row.weather, row.mobility].filter(Boolean).join(" | ")}>
-                  <td className="strong">{String(current.start + index + 1)}</td>
+                  <td className="strong weather-stt-column">{String(current.start + index + 1)}</td>
                   <td>{row.area || "-"}</td>
                   <td>{weatherIcon(row.weather)} {row.weather || "-"}</td>
                   <td><StatusChip status={row.mobility || "Chưa cập nhật"} /></td>
@@ -716,7 +752,7 @@ function GuestNodePopup({ menu, nodes, incidents, onClose }: any) {
 
 function EmptyData() {
   return {
-    cableIncidents: [], stationIncidents: [], incidents: [], affectedStations: [], affectedRoutes: [], routeInformation: [], deployments: [], operators: [], responseResources: { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 }, weatherRows: [], preStormTasks: [], inStormTasks: [], tasks: []
+    cableIncidents: [], stationIncidents: [], incidents: [], affectedStations: [], affectedRoutes: [], stormImpactSummary: { popCount: 0, ftiCustomerCount: 0 }, routeInformation: [], deployments: [], operators: [], responseResources: { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 }, weatherRows: [], preStormTasks: [], inStormTasks: [], tasks: []
   };
 }
 

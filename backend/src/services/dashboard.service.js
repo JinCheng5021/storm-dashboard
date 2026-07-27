@@ -131,10 +131,16 @@ export function buildDashboardDataFromSheets(sheets) {
         length: get("length"),
         impact: get("routeImpact"),
         pops: get("pops"),
+        ftiCustomers: get("ftiCustomers"),
         availability: get("availability"),
         incidentFrequency: get("incidentFrequency")
       };
     });
+
+  const stormImpactSummary = affectedRoutes.reduce((summary, route) => ({
+    popCount: summary.popCount + numberValue(route.pops),
+    ftiCustomerCount: summary.ftiCustomerCount + numberValue(route.ftiCustomers)
+  }), { popCount: 0, ftiCustomerCount: 0 });
 
   const routeInformationSource = resolveSheet(sheets, "Thông tin tuyến");
   warnings.push(...routeInformationSource.resolver.warnings);
@@ -266,6 +272,7 @@ export function buildDashboardDataFromSheets(sheets) {
       incidents: [...cableIncidents, ...stationIncidents],
       affectedStations,
       affectedRoutes,
+      stormImpactSummary,
       routeInformation,
       deployments,
       operators,

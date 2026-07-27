@@ -160,7 +160,7 @@
       grid-template-columns: minmax(0, 1fr) minmax(290px, 0.31fr);
       grid-template-rows: 116px minmax(0, 1fr);
       grid-template-areas:
-        "summary weather"
+        "summary summary"
         "content weather";
       gap: 8px;
       overflow: hidden;
@@ -170,7 +170,13 @@
       grid-area: summary;
       height: 116px;
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns:
+        minmax(0, 1.22fr)
+        minmax(0, 1.22fr)
+        minmax(0, 1.08fr)
+        minmax(0, 1.22fr)
+        minmax(0, 0.77fr)
+        minmax(0, 0.77fr);
       gap: 7px;
       overflow: hidden;
     }
@@ -463,6 +469,85 @@
       white-space: nowrap;
     }
 
+    .storm-impact-total-card {
+      justify-content: center;
+    }
+
+    .dashboard-mode-trong_bao .storm-impact-total-card .summary-label {
+      min-height: 22px;
+      padding-right: 18px;
+      display: flex;
+      align-items: center;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      line-height: 1.2;
+      letter-spacing: 0.035em;
+    }
+
+    .dashboard-mode-trong_bao .summary-card.chart-card {
+      padding-right: 7px;
+      padding-left: 7px;
+    }
+
+    .dashboard-mode-trong_bao .chart-card-body {
+      gap: 7px;
+    }
+
+    .dashboard-mode-trong_bao .pie-wrap {
+      width: 62px;
+      min-width: 62px;
+      height: 62px;
+    }
+
+    .dashboard-mode-trong_bao .pie-chart {
+      width: 58px;
+      height: 58px;
+    }
+
+    .dashboard-mode-trong_bao .pie-chart::after {
+      width: 32px;
+      height: 32px;
+    }
+
+    .dashboard-mode-trong_bao .pie-legend-row {
+      gap: 4px;
+    }
+
+    .dashboard-mode-trong_bao .pie-legend-value {
+      min-width: 43px;
+      gap: 3px;
+    }
+
+    .dashboard-mode-trong_bao .equipment-summary.pmb-equipment {
+      align-items: flex-start;
+      white-space: normal;
+      line-height: 1.25;
+    }
+
+    .dashboard-mode-trong_bao .equipment-summary.pmb-equipment > span:last-child {
+      min-width: 0;
+      white-space: normal;
+    }
+
+    .storm-impact-total-card .summary-value-row {
+      margin-top: 8px;
+    }
+
+    .storm-impact-total-card .summary-value {
+      font-size: 20px;
+    }
+
+    .summary-total-label {
+      position: relative;
+      z-index: 1;
+      margin: 7px 0 0;
+      color: #49677f;
+      font-size: 9px;
+      line-height: 1;
+      font-weight: 800;
+    }
+
     .chip {
       display: inline-flex;
       align-items: center;
@@ -531,6 +616,33 @@
       font-size: 8px;
       padding: 0 3px;
       text-align: center;
+      line-height: 1.15;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+    }
+
+    .weather-card .table-box .weather-stt-column {
+      width: 12%;
+      min-width: 0;
+      padding-right: 3px;
+      padding-left: 3px;
+      white-space: nowrap;
+      overflow: visible;
+      text-overflow: clip;
+      text-align: center;
+    }
+
+    .weather-card .table-box .weather-area-column {
+      width: 27%;
+    }
+
+    .weather-card .table-box .weather-condition-column {
+      width: 34%;
+    }
+
+    .weather-card .table-box .weather-mobility-column {
+      width: 27%;
     }
 
     .weather-card .table-box td {
@@ -538,6 +650,8 @@
       font-size: 8.5px;
       padding: 2px 3px;
       text-align: center;
+      line-height: 1.15;
+      white-space: normal;
       overflow: visible;
       text-overflow: clip;
     }
@@ -1225,7 +1339,17 @@
       .topbar { height: 44px; flex-basis: 44px; }
       .topbar h1 { font-size: 16px; }
       .dashboard-body { grid-template-columns: minmax(0, 1fr) minmax(300px, 0.31fr); grid-template-rows: 110px minmax(0, 1fr); gap: 6px; }
-      .summary-grid { height: 110px; gap: 6px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .summary-grid {
+        height: 110px;
+        gap: 6px;
+        grid-template-columns:
+          minmax(0, 1.22fr)
+          minmax(0, 1.22fr)
+          minmax(0, 1.08fr)
+          minmax(0, 1.22fr)
+          minmax(0, 0.77fr)
+          minmax(0, 0.77fr);
+      }
       .summary-card { padding: 5px 8px; }
       .summary-icon { width: 26px; height: 26px; flex-basis: 26px; }
       .summary-value { font-size: 17px; }
