@@ -30,28 +30,6 @@ function isDashboardVisible(value) {
   return ["x", "✓", "✔", "true", "1", "có"].includes(marker);
 }
 
-function normalizeRouteKey(value) {
-  return String(value || "")
-    .normalize("NFKC")
-    .replace(/^tuyến\s+/i, "")
-    .split(/\s*[-–—]\s*/)
-    .map((endpoint) => endpoint
-      .replace(/\(\s*MPOP\s*\)/gi, "")
-      .replace(/\b\d+\s*FO\b/gi, "")
-      .replace(/\s+/g, "")
-      .toLocaleUpperCase("vi-VN"))
-    .filter(Boolean)
-    .join("-");
-}
-
-function routeLookupKeys(value) {
-  const key = normalizeRouteKey(value);
-  const endpoints = key.split("-");
-  return endpoints.length === 2
-    ? [key, `${endpoints[1]}-${endpoints[0]}`]
-    : [key];
-}
-
 export function buildDashboardDataFromSheets(sheets) {
   const warnings = [];
 
@@ -142,41 +120,13 @@ export function buildDashboardDataFromSheets(sheets) {
     ftiCustomerCount: summary.ftiCustomerCount + numberValue(route.ftiCustomers)
   }), { popCount: 0, ftiCustomerCount: 0 });
 
-  const routeInformationSource = resolveSheet(sheets, "Thông tin tuyến");
-  warnings.push(...routeInformationSource.resolver.warnings);
-  const affectedRouteByKey = new Map();
-  affectedRoutes.forEach((route) => {
-    routeLookupKeys(route.route).forEach((key) => affectedRouteByKey.set(key, route));
-  });
-
-  const matchedAffectedRouteKeys = new Set();
-  const routeInformation = routeInformationSource.rows
-    .filter((row) => routeInformationSource.resolver.get(row, "route"))
-    .map((row) => {
-      const get = (field) => routeInformationSource.resolver.get(row, field);
-      const route = get("route");
-      const affectedRoute = affectedRouteByKey.get(normalizeRouteKey(route));
-      if (affectedRoute) matchedAffectedRouteKeys.add(normalizeRouteKey(affectedRoute.route));
-
-      return {
-        route,
-        length: affectedRoute?.length || "",
-        pops: affectedRoute?.pops || "",
-        availability: get("availability") || affectedRoute?.availability || "",
-        incidentFrequency: get("incidentFrequency") || affectedRoute?.incidentFrequency || ""
-      };
-    });
-
-  affectedRoutes.forEach((route) => {
-    if (matchedAffectedRouteKeys.has(normalizeRouteKey(route.route))) return;
-    routeInformation.push({
+  const routeInformation = affectedRoutes.map((route) => ({
       route: route.route,
       length: route.length,
       pops: route.pops,
       availability: route.availability,
       incidentFrequency: route.incidentFrequency
-    });
-  });
+  }));
 
   const peopleRows = sheets["Nhân sự"] || [];
   const peopleSource = resolveSheet(sheets, "Nhân sự");

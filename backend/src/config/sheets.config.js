@@ -8,8 +8,7 @@ export const SHEETS = [
   { name: "DS tuyến, trạm ảnh hưởng", gid: "763532233" },
   { name: "Nhân sự", gid: "0" },
   { name: "Thời tiết", gid: "2045494709" },
-  { name: "Công việc", gid: "1363793260" },
-  { name: "Thông tin tuyến", gid: "1037430799" }
+  { name: "Công việc", gid: "1363793260" }
 ];
 
 const column = (headers, options = {}) => ({ headers, ...options });
@@ -110,17 +109,6 @@ export const SHEET_SCHEMAS = {
       inStormName: column(["Công việc", "Tên công việc", "Nội dung công việc"], { occurrence: 2, fallbackIndex: 6 }),
       inStormMarker: column(["Trạng thái", "Tình trạng", "Đánh dấu"], { occurrence: 2, fallbackIndex: 7 }),
       inStormNote: column(["Ghi chú", "Nội dung cập nhật"], { required: false, occurrence: 2, fallbackIndex: 8 })
-    }
-  },
-  "Thông tin tuyến": {
-    fields: {
-      stt: column(["STT", "TT"], { required: false }),
-      route: column(["Tuyến", "Tuyến cáp"]),
-      availability: column(["Độ khả dụng", "ĐKD"]),
-      incidentFrequency: column(["Tần suất SC", "Tần suất SC/100km"]),
-      weakPointCount: column(["SL điểm xung yếu", "Số điểm xung yếu"], { required: false }),
-      weakPointLocation: column(["Vị trí xung yếu"], { required: false }),
-      assessment: column(["Đánh giá", "Mức độ"], { required: false })
     }
   }
 };

@@ -24,8 +24,7 @@ test("giữ nguyên cấu trúc dữ liệu dashboard khi các cột được s�
       ["Bình thường", "Có mây", "106", "Hải Phòng", "1", "20", "x"],
       ["Bình thường", "Có mây", "105", "Hà Nội", "2", "21", ""]
     ],
-    "Công việc": [["", "", ""], ["1", "đo kiểm", "i"]],
-    "Thông tin tuyến": [["STT", "Tuyến", "Độ khả dụng", "Tần suất SC", "SL điểm xung yếu", "Vị trí xung yếu", "Đánh giá"]]
+    "Công việc": [["", "", ""], ["1", "đo kiểm", "i"]]
   };
 
   const result = buildDashboardDataFromSheets(sheets);
@@ -57,8 +56,7 @@ test("tách độc lập bảng công việc Trước bão và Trong bão, khôn
       ["STT", "Nội dung công việc", "Trạng thái", "", "", "Ngày", "Nội dung công việc", "Trạng thái"],
       ["1", "Chuẩn bị vật tư", "Chưa thực hiện", "", "", "15/07/2026", "1. Đo kiểm tuyến\n2. Tuần tra tuyến", "Hoàn thành"],
       ["2", "Kiểm tra nguồn điện", "Hoàn thành", "", "", "15/07/2026", "3. Khắc phục sự cố", "Đang thực hiện"]
-    ],
-    "Thông tin tuyến": [["STT", "Tuyến", "Độ khả dụng", "Tần suất SC", "SL điểm xung yếu", "Vị trí xung yếu", "Đánh giá"]]
+    ]
   };
 
   const result = buildDashboardDataFromSheets(baseSheets);
@@ -82,7 +80,7 @@ test("tách độc lập bảng công việc Trước bão và Trong bão, khôn
   assert.deepEqual(result.data.tasks, result.data.inStormTasks);
 });
 
-test("ghép thông tin tuyến từ đúng hai tab Google Sheet và ưu tiên số liệu tab Thông tin tuyến", () => {
+test("lấy toàn bộ thông tin tuyến từ tab DS tuyến, trạm ảnh hưởng khi không còn tab Thông tin tuyến", () => {
   const sheets = {
     "SC ngoại vi": [["Ngày", "Mã SC", "Mạch", "Tuyến", "TG phát sinh", "Khu vực", "Nguyên nhân", "Tình trạng"]],
     "SC đài trạm": [["Ngày", "Mã SC", "Mạch", "Trạm", "TG phát sinh", "Chi nhánh", "Nguyên nhân", "Tình trạng"]],
@@ -95,21 +93,17 @@ test("ghép thông tin tuyến từ đúng hai tab Google Sheet và ưu tiên s�
     "Công việc": [
       ["TRƯỚC BÃO", "", "", "", "", "TRONG BÃO", "", ""],
       ["STT", "Nội dung công việc", "Trạng thái", "", "", "Ngày", "Nội dung công việc", "Trạng thái"]
-    ],
-    "Thông tin tuyến": [
-      ["STT", "Tuyến", "Độ khả dụng", "Tần suất SC", "SL điểm xung yếu", "Vị trí xung yếu", "Đánh giá"],
-      ["1", "CGT - THA", "40%", "7.5", "1", "Km 10", "Mất an toàn"]
     ]
   };
 
   const result = buildDashboardDataFromSheets(sheets);
 
   assert.deepEqual(result.data.routeInformation, [{
-    route: "CGT - THA",
+    route: "THA - CGT 48FO",
     length: "93.2",
     pops: "3",
-    availability: "40%",
-    incidentFrequency: "7.5"
+    availability: "56%",
+    incidentFrequency: "2.15"
   }]);
   assert.deepEqual(result.data.stormImpactSummary, {
     popCount: 3,
