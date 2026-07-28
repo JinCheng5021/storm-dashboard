@@ -325,10 +325,10 @@ function SummaryGrid({ data, mode }: any) {
 
   if (data?.affectedRoutes) {
     data.affectedRoutes.forEach((route: any) => {
-      const type = (route.impact || "").toLowerCase();
+      const type = String(route.impact || "").trim().toLocaleLowerCase("vi-VN");
       const len = parseFloat(route.length) || 0;
       const pop = parseInt(route.pops) || 0;
-      totalPopCount += pop;
+      if (type) totalPopCount += pop;
 
       if (type.includes("trực tiếp")) {
         directRouteCount++;
@@ -533,8 +533,11 @@ function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, 
 }
 
 function TasksPanel({ tasks, page, setPage, today, mode }: any) {
-  const visibleTasks = mode === 'truoc_bao' ? tasks : tasksForDate(tasks, today);
-  const current = pageItems(visibleTasks, page, PAGE_SIZE.tasks);
+  const isPreStorm = mode === 'truoc_bao';
+  const visibleTasks = isPreStorm ? tasks : tasksForDate(tasks, today);
+  const current = isPreStorm
+    ? { rows: visibleTasks, start: 0, page: 0 }
+    : pageItems(visibleTasks, page, PAGE_SIZE.tasks);
   return (
     <article className="card tasks-card" style={ACCENT_STYLE.orange}>
       <div className="card-header">
@@ -545,7 +548,9 @@ function TasksPanel({ tasks, page, setPage, today, mode }: any) {
           </h2>
           {mode !== 'truoc_bao' && <time className="task-card-date" dateTime={today.split("/").reverse().join("-")}>{today}</time>}
         </div>
-        <Pager page={current.page} setPage={setPage} total={visibleTasks.length} size={PAGE_SIZE.tasks} />
+        {!isPreStorm && (
+          <Pager page={current.page} setPage={setPage} total={visibleTasks.length} size={PAGE_SIZE.tasks} />
+        )}
       </div>
       <div className="list-box">
         {!visibleTasks.length ? (
