@@ -810,8 +810,9 @@ export default function App() {
     edges: mapState.edges,
     nodes: mapState.nodes,
     cableIncidents: data.cableIncidents,
-    stationIncidents: data.stationIncidents
-  }), [dashboardMode, mapState.edges, mapState.nodes, data.cableIncidents, data.stationIncidents]);
+    stationIncidents: data.stationIncidents,
+    affectedRoutes: data.affectedRoutes
+  }), [dashboardMode, mapState.edges, mapState.nodes, data.cableIncidents, data.stationIncidents, data.affectedRoutes]);
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   const pendingTeamIdRef = useRef<string | null>(null);
 

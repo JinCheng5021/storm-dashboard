@@ -4,6 +4,7 @@ import {
   canonicalRouteKey,
   deriveIncidentMapFeatures,
   edgeStatusFromIncident,
+  edgeStatusBeforeTyphoonFromLevel,
   nodeStatusFromCause
 } from "../../src/incidentMapStatus.js";
 
@@ -19,6 +20,13 @@ test("ghép tuyến hai chiều và bỏ hậu tố dung lượng FO", () => {
     canonicalRouteKey("Tuyến KEP - LSN"),
     canonicalRouteKey("LSN - KEP 48FO")
   );
+});
+
+test("ánh xạ mức độ trước bão sang đúng ba trạng thái màu tuyến", () => {
+  assert.equal(edgeStatusBeforeTyphoonFromLevel("An toàn"), "safe");
+  assert.equal(edgeStatusBeforeTyphoonFromLevel("Có nguy cơ"), "risky");
+  assert.equal(edgeStatusBeforeTyphoonFromLevel("Mất an toàn"), "unsafe");
+  assert.equal(edgeStatusBeforeTyphoonFromLevel(""), null);
 });
 
 test("tự động áp dụng sự cố tuyến và nguyên nhân đài trạm trong bão", () => {
@@ -75,8 +83,13 @@ test("tự động áp dụng sự cố tuyến và nguyên nhân đài trạm t
   assert.equal(nodeStatusFromCause("SC accu"), "active");
 });
 
-test("không thay đổi trạng thái bản đồ khi đang ở chế độ trước bão", () => {
-  const edges = [{ id: "edge_ab", name: "Tuyến A - B", status: "normal", statusBeforeTyphoon: "unsafe" }];
+test("tự động áp dụng mức độ từ DS tuyến, trạm ảnh hưởng khi đang ở chế độ trước bão", () => {
+  const edges = [
+    { id: "edge_ab", name: "Tuyến A - B", status: "normal", statusBeforeTyphoon: "unsafe" },
+    { id: "edge_cd", name: "Tuyến C - D", status: "normal", statusBeforeTyphoon: "safe" },
+    { id: "edge_ef", name: "Tuyến E - F", status: "normal", statusBeforeTyphoon: "safe" },
+    { id: "edge_gh", name: "Tuyến G - H", status: "normal", statusBeforeTyphoon: "unsafe" }
+  ];
   const nodes = [{ id: "node_CGT", name: "CGT", status: "active" }];
 
   const result = deriveIncidentMapFeatures({
@@ -84,11 +97,20 @@ test("không thay đổi trạng thái bản đồ khi đang ở chế độ tr�
     edges,
     nodes,
     cableIncidents: [{ target: "A - B", status: "Chưa tiếp cận" }],
-    stationIncidents: [{ target: "CGT", cause: "Mất điện AC" }]
+    stationIncidents: [{ target: "CGT", cause: "Mất điện AC" }],
+    affectedRoutes: [
+      { route: "B - A 48FO", riskLevel: "An toàn" },
+      { route: "C - D", riskLevel: "Có nguy cơ" },
+      { route: "E - F", riskLevel: "Mất an toàn" }
+    ]
   });
 
-  assert.strictEqual(result.edges, edges);
+  assert.deepEqual(result.edges.map((edge) => edge.statusBeforeTyphoon), [
+    "safe",
+    "risky",
+    "unsafe",
+    "normal"
+  ]);
   assert.strictEqual(result.nodes, nodes);
-  assert.equal(result.edges[0].statusBeforeTyphoon, "unsafe");
   assert.equal(result.nodes[0].status, "active");
 });

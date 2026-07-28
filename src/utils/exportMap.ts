@@ -59,7 +59,7 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
             let edgeLegendItems = [];
             if (mode === 'truoc_bao') {
               edgeLegendItems = [
-                { color: '#0066FF', dash: false, label: 'Tuyến an toàn' },
+                { color: '#00C853', dash: false, label: 'Tuyến an toàn' },
                 { color: '#FFD600', dash: false, label: 'Tuyến có nguy cơ' },
                 { color: '#FF0000', dash: false, label: 'Tuyến mất an toàn' },
               ];

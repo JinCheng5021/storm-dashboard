@@ -12,7 +12,7 @@ test("giữ nguyên cấu trúc dữ liệu dashboard khi các cột được s�
       ["Trạng thái", "Mã sự cố", "Chi nhánh", "Tên trạm", "Trục", "Thời gian phát sinh", "Ngày", "Nguyên nhân"],
       ["Hoàn thành", "SC02", "QNH", "MCI", "DBB", "13/07/2026 10:00", "13/07/2026", "Mất điện"]
     ],
-    "DS tuyến, trạm ảnh hưởng": [["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài tuyến", "Ảnh hưởng tuyến cáp", "SL KHG FTI"]],
+    "DS tuyến, trạm ảnh hưởng": [["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài tuyến", "Ảnh hưởng tuyến cáp", "SL KHG FTI", "Mức độ"]],
     "Nhân sự": [
       ["STT", "Điểm đồn trú", "Đối tác", "Số lượng nhân sự", "Hiển thị dashboard", "", "STT", "Tên nhân sự", "Điện thoại", "E-mail", "Vai trò", "Nơi lưu trú", "Ghi chú", "", "Số đội ứng cứu", "3"],
       ["1", "Hải Phòng", "FFC", "4", "x", "", "1", "Nguyễn Văn A", "0900", "a@example.com", "VHMB", "Hải Phòng", "", "", "Xe bán tải", "1"],
@@ -48,7 +48,7 @@ test("tách độc lập bảng công việc Trước bão và Trong bão, khôn
   const baseSheets = {
     "SC ngoại vi": [["Ngày", "Mã SC", "Mạch", "Tuyến", "TG phát sinh", "Khu vực", "Nguyên nhân", "Tình trạng"]],
     "SC đài trạm": [["Ngày", "Mã SC", "Mạch", "Trạm", "TG phát sinh", "Chi nhánh", "Nguyên nhân", "Tình trạng"]],
-    "DS tuyến, trạm ảnh hưởng": [["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài tuyến", "Ảnh hưởng tuyến cáp", "SL KHG FTI"]],
+    "DS tuyến, trạm ảnh hưởng": [["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài tuyến", "Ảnh hưởng tuyến cáp", "SL KHG FTI", "Mức độ"]],
     "Nhân sự": [["STT", "Đồn trú", "Đối tác", "SL nhân sự tại đồn trú", "Hiển thị", "", "STT", "Họ và tên", "Số điện thoại", "Email", "Chức vụ", "Vị trí lưu trú"]],
     "Thời tiết": [["STT", "Khu vực", "Lat", "Long", "Thời tiết", "Khả năng di chuyển", "Hiển thị (dành cho dashboard)"]],
     "Công việc": [
@@ -85,8 +85,8 @@ test("lấy toàn bộ thông tin tuyến từ tab DS tuyến, trạm ảnh hư�
     "SC ngoại vi": [["Ngày", "Mã SC", "Mạch", "Tuyến", "TG phát sinh", "Khu vực", "Nguyên nhân", "Tình trạng"]],
     "SC đài trạm": [["Ngày", "Mã SC", "Mạch", "Trạm", "TG phát sinh", "Chi nhánh", "Nguyên nhân", "Tình trạng"]],
     "DS tuyến, trạm ảnh hưởng": [
-      ["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài", "Ảnh hưởng tuyến cáp", "SL POP ảnh hưởng", "SL KHG FTI", "Độ khả dụng", "Tần suất SC/100km"],
-      ["", "", "", "", "", "", "", "", "", "", "1", "DBB", "THA - CGT 48FO", "93.2", "Trực tiếp", "3", "2", "56%", "2.15"]
+      ["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài", "Ảnh hưởng tuyến cáp", "SL POP ảnh hưởng", "SL KHG FTI", "Độ khả dụng", "Tần suất SC/100km", "Mức độ"],
+      ["", "", "", "", "", "", "", "", "", "", "1", "DBB", "THA - CGT 48FO", "93.2", "Trực tiếp", "3", "2", "56%", "2.15", "Có nguy cơ"]
     ],
     "Nhân sự": [["STT", "Đồn trú", "Đối tác", "SL nhân sự tại đồn trú", "Hiển thị", "", "STT", "Họ và tên", "Số điện thoại", "Email", "Chức vụ", "Vị trí lưu trú"]],
     "Thời tiết": [["STT", "Khu vực", "Lat", "Long", "Thời tiết", "Khả năng di chuyển", "Hiển thị (dành cho dashboard)"]],
@@ -109,4 +109,5 @@ test("lấy toàn bộ thông tin tuyến từ tab DS tuyến, trạm ảnh hư�
     popCount: 3,
     ftiCustomerCount: 2
   });
+  assert.equal(result.data.affectedRoutes[0].riskLevel, "Có nguy cơ");
 });

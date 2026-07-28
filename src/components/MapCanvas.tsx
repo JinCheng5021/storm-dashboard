@@ -280,7 +280,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             'danger_zone', '#FFD600',
             'risky', '#FFD600',
             'resolved', '#00C853',
-            '#0066FF' // normal / safe
+            'safe', '#00C853',
+            '#0066FF' // normal
           ],
           'line-opacity': [
             'match',

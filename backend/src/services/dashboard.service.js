@@ -111,7 +111,8 @@ export function buildDashboardDataFromSheets(sheets) {
         pops: get("pops"),
         ftiCustomers: get("ftiCustomers"),
         availability: get("availability"),
-        incidentFrequency: get("incidentFrequency")
+        incidentFrequency: get("incidentFrequency"),
+        riskLevel: get("riskLevel")
       };
     });
 

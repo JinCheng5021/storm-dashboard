@@ -67,7 +67,8 @@ export const SHEET_SCHEMAS = {
       pops: column(["SL POP ảnh hưởng", "Số POP ảnh hưởng"], { required: false }),
       ftiCustomers: column(["SL KHG FTI", "SL KHG FTI ảnh hưởng", "Số KHG FTI"]),
       availability: column(["Độ khả dụng", "ĐKD"], { required: false }),
-      incidentFrequency: column(["Tần suất SC/100km", "Tần suất SC"], { required: false })
+      incidentFrequency: column(["Tần suất SC/100km", "Tần suất SC"], { required: false }),
+      riskLevel: column(["Mức độ", "Đánh giá"])
     }
   },
   "Nhân sự": {

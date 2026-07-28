@@ -6,6 +6,12 @@ const EDGE_STATUS_PRIORITY = {
   incident_external: 3
 };
 
+const PRE_STORM_EDGE_STATUS_PRIORITY = {
+  safe: 1,
+  risky: 2,
+  unsafe: 3
+};
+
 const NODE_STATUS_PRIORITY = {
   active: 0,
   power_out: 1,
@@ -50,6 +56,14 @@ export function edgeStatusFromIncident(value) {
   return null;
 }
 
+export function edgeStatusBeforeTyphoonFromLevel(value) {
+  const level = normalizeIncidentText(value);
+  if (level.includes("mat an toan")) return "unsafe";
+  if (level.includes("co nguy co")) return "risky";
+  if (level.includes("an toan")) return "safe";
+  return null;
+}
+
 export function nodeStatusFromCause(value) {
   const cause = normalizeIncidentText(value);
   if (cause.includes("co lap")) return "isolated";
@@ -70,9 +84,28 @@ export function deriveIncidentMapFeatures({
   edges,
   nodes,
   cableIncidents,
-  stationIncidents
+  stationIncidents,
+  affectedRoutes = []
 }) {
-  if (mode !== "trong_bao") return { edges, nodes };
+  if (mode === "truoc_bao") {
+    const preStormEdgeStatuses = new Map();
+    affectedRoutes.forEach((route) => {
+      setHigherPriorityStatus(
+        preStormEdgeStatuses,
+        canonicalRouteKey(route.route),
+        edgeStatusBeforeTyphoonFromLevel(route.riskLevel),
+        PRE_STORM_EDGE_STATUS_PRIORITY
+      );
+    });
+
+    return {
+      edges: edges.map((edge) => ({
+        ...edge,
+        statusBeforeTyphoon: preStormEdgeStatuses.get(canonicalRouteKey(edge.name)) || "normal"
+      })),
+      nodes
+    };
+  }
 
   const edgeStatuses = new Map();
   cableIncidents.forEach((incident) => {
