@@ -64,21 +64,47 @@ export async function syncJtwcStorms() {
     const activeStormIds = [];
     let syncedCount = 0;
 
+    // --- CẤU HÌNH LỌC KHU VỰC BÃO ---
+    // Đổi biến này thành `true` nếu bạn CHỈ muốn theo dõi bão ở khu vực Biển Đông / Tây Bắc Thái Bình Dương (Việt Nam).
+    // Đổi thành `false` nếu bạn muốn hiển thị toàn bộ bão trên thế giới.
+    const FILTER_NW_PACIFIC_ONLY = true;
+
     for (const item of items) {
+      const title = item.title || "";
       const description = item.description || "";
       
-      // Tìm link TXT và KMZ
-      const txtMatch = description.match(/href=['"]([^'"]+\.txt)['"]/i);
-      const kmzMatch = description.match(/href=['"]([^'"]+\.kmz)['"]/i);
+      // Nếu bật bộ lọc, bỏ qua các item không thuộc khu vực Tây Bắc Thái Bình Dương
+      if (FILTER_NW_PACIFIC_ONLY && !title.includes("Northwest Pacific")) {
+        console.log(`[Lọc khu vực] Bỏ qua mục: ${title}`);
+        continue;
+      }
+
+      const txtMatches = [...description.matchAll(/href=['"]([^'"]+?([a-z]{2}[0-9]{4})(?:web)?\.txt)['"]/ig)];
+      const kmzMatches = [...description.matchAll(/href=['"]([^'"]+?([a-z]{2}[0-9]{4})\.kmz)['"]/ig)];
       
-      if (txtMatch && kmzMatch) {
-        const txtUrl = txtMatch[1];
-        const kmzUrl = kmzMatch[1];
+      const stormsMap = {};
+      
+      txtMatches.forEach(match => {
+         const url = match[1];
+         const stormId = match[2].toLowerCase();
+         if (!url.includes('prog.txt') && !url.includes('fix.txt')) {
+             if (!stormsMap[stormId]) stormsMap[stormId] = {};
+             stormsMap[stormId].txtUrl = url;
+         }
+      });
+      
+      kmzMatches.forEach(match => {
+         const url = match[1];
+         const stormId = match[2].toLowerCase();
+         if (!stormsMap[stormId]) stormsMap[stormId] = {};
+         stormsMap[stormId].kmzUrl = url;
+      });
+      
+      for (const [stormId, urls] of Object.entries(stormsMap)) {
+        if (!urls.txtUrl || !urls.kmzUrl) continue;
         
-        // Extract storm_id (vd: ep0626 từ ep0626web.txt)
-        const stormIdMatch = txtUrl.match(/\/([a-z0-9]+)web\.txt/i) || txtUrl.match(/\/([a-z0-9]+)\.txt/i);
-        if (!stormIdMatch) continue;
-        const stormId = stormIdMatch[1].toLowerCase();
+        const txtUrl = urls.txtUrl;
+        const kmzUrl = urls.kmzUrl;
         activeStormIds.push(stormId);
 
         console.log(`Processing storm: ${stormId}`);
