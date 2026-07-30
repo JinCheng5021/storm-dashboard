@@ -7,6 +7,42 @@ import { supabaseAdmin } from "../config/supabase.js";
 
 const RSS_URL = "https://www.metoc.navy.mil/jtwc/rss/jtwc.rss";
 
+// Helper function to prevent GeoJSON from wrapping across the antimeridian
+function unwrapGeoJSON(geojson) {
+  if (!geojson) return geojson;
+
+  function unwrapCoordinates(coords) {
+    if (!Array.isArray(coords) || coords.length === 0) return coords;
+    
+    if (typeof coords[0] === 'number') return coords;
+    
+    if (typeof coords[0][0] === 'number') {
+      let prevLng = coords[0][0];
+      return coords.map((pt, i) => {
+        if (i === 0) return pt;
+        let lng = pt[0];
+        const lat = pt[1];
+        while (lng - prevLng > 180) lng -= 360;
+        while (prevLng - lng > 180) lng += 360;
+        prevLng = lng;
+        return [lng, lat];
+      });
+    }
+    
+    return coords.map(c => unwrapCoordinates(c));
+  }
+
+  if (geojson.type === 'FeatureCollection' && Array.isArray(geojson.features)) {
+    geojson.features = geojson.features.map(f => {
+      if (f.geometry && f.geometry.coordinates) {
+        f.geometry.coordinates = unwrapCoordinates(f.geometry.coordinates);
+      }
+      return f;
+    });
+  }
+  return geojson;
+}
+
 export async function syncJtwcStorms() {
   try {
     console.log("Fetching JTWC RSS feed...");
@@ -71,7 +107,7 @@ export async function syncJtwcStorms() {
           if (kmlEntry) {
             const kmlString = kmlEntry.getData().toString('utf8');
             const kmlDom = new DOMParser().parseFromString(kmlString, "text/xml");
-            geojson = toGeoJSON.kml(kmlDom);
+            geojson = unwrapGeoJSON(toGeoJSON.kml(kmlDom));
           }
         } catch (e) {
           console.error(`Error converting KMZ for ${stormId}:`, e.message);
