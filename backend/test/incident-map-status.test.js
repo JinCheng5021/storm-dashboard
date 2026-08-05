@@ -62,7 +62,7 @@ test("ánh xạ mức độ trước bão sang đúng ba trạng thái màu tuy�
   assert.equal(edgeStatusBeforeTyphoonFromLevel(""), null);
 });
 
-test("tô đỏ tuyến sự cố, xanh tuyến có dữ liệu và giữ xanh dương tuyến không có dữ liệu", () => {
+test("chỉ đổi màu tuyến theo trạng thái trong SC ngoại vi", () => {
   const edges = [
     { id: "edge_ab", name: "Tuyến A - B", status: "normal", statusBeforeTyphoon: "safe" },
     { id: "edge_cd", name: "Tuyến C - D", status: "normal", statusBeforeTyphoon: "risky" },
@@ -89,7 +89,8 @@ test("tô đỏ tuyến sự cố, xanh tuyến có dữ liệu và giữ xanh d
     affectedRoutes: [
       { route: 'A - B' },
       { route: 'C - D' },
-      { route: 'E - F' }
+      { route: 'E - F' },
+      { route: 'G - H' }
     ],
     stationIncidents: [
       { target: "CGT", cause: "Mất điện AC" },

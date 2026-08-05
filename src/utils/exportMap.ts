@@ -65,9 +65,9 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
               ];
             } else {
               edgeLegendItems = [
-                { color: '#00C853', dash: false, label: 'Tuyến bình thường / đã khắc phục' },
+                { color: '#00C853', dash: false, label: 'Tuyến hoàn thành' },
                 { color: '#FF0000', dash: false, label: 'Tuyến chưa tiếp cận / đang xử lý' },
-                { color: '#0066FF', dash: false, label: 'Tuyến không có thông tin ảnh hưởng' },
+                { color: '#0066FF', dash: false, label: 'Tuyến không có trạng thái SC ngoại vi' },
               ];
             }
 

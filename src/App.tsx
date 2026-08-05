@@ -294,7 +294,7 @@ function PreStormStationChart({ data, isLoading }: any) {
   );
 }
 
-function StormImpactTotalCard({ label, value, icon, accentStyle, href, details, footerLabel = "Tổng" }: any) {
+function StormImpactTotalCard({ label, value, icon, accentStyle, href }: any) {
   return (
     <article className="summary-card storm-impact-total-card" style={accentStyle}>
       <a href={href} target="_blank" rel="noreferrer" className="sheet-link" title="Mở tab DS tuyến, trạm ảnh hưởng">
@@ -304,15 +304,6 @@ function StormImpactTotalCard({ label, value, icon, accentStyle, href, details, 
       <div className="min-w-0 flex-1">
         <p className="summary-label">{label}</p>
         <div className="summary-value-row"><p className="summary-value">{value}</p></div>
-        {details?.length ? (
-          <div className="storm-impact-breakdown">
-            {details.map((detail: any) => (
-              <span key={detail.label}><strong>{detail.value}</strong> {detail.label}</span>
-            ))}
-          </div>
-        ) : (
-          <p className="summary-total-label">{footerLabel}</p>
-        )}
       </div>
     </article>
   );
@@ -434,10 +425,6 @@ function SummaryGrid({ data, mode }: any) {
             icon="cell_tower"
             accentStyle={ACCENT_STYLE.purple}
             href={`${SHEET_BASE_URL}763532233`}
-            details={[
-              { label: "Trực tiếp", value: activeStormImpact.directPopCount },
-              { label: "Gián tiếp", value: activeStormImpact.indirectPopCount }
-            ]}
           />
           <StormImpactTotalCard
             label="SL KHG FTI ảnh hưởng"
@@ -445,7 +432,6 @@ function SummaryGrid({ data, mode }: any) {
             icon="groups"
             accentStyle={ACCENT_STYLE.teal}
             href={`${SHEET_BASE_URL}763532233`}
-            footerLabel="Khách hàng"
           />
         </>
       )}
@@ -1266,7 +1252,7 @@ export default function App() {
             onClick={() => setDashboardMode(prev => prev === 'trong_bao' ? 'truoc_bao' : 'trong_bao')}
             title="Nhấn để chuyển đổi chế độ Trước Bão / Trong Bão"
           >
-            {dashboardMode === 'trong_bao' ? 'Dashboard Báo Cáo Bão QLVHMB' : 'Công tác chuẩn bị trước bão của QLVHMB'}
+            {dashboardMode === 'trong_bao' ? 'Dashboard báo cáo bão PMB' : 'Công tác chuẩn bị trước bão PMB'}
             <span className="material-symbols-outlined text-[20px]">swap_horiz</span>
           </h1>
           <a href={`https://docs.google.com/spreadsheets/d/${import.meta.env.VITE_GOOGLE_SHEET_ID || "1fTDLSaxfzLU4XZnPwVhLqIdFNX4-1SdSMpdvyO372nk"}/edit`} target="_blank" rel="noreferrer" title="Mở file Google Sheet" className="text-slate-400 hover:text-[var(--fpt-blue)] transition-colors flex items-center text-sm underline ml-1">
