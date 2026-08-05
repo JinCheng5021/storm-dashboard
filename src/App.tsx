@@ -151,7 +151,7 @@ function PreStormImpactChart({ data, isLoading }: any) {
         <a href={SHEET_BASE_URL} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
           <span className="material-symbols-outlined">open_in_new</span>
         </a>
-        <p className="summary-label text-center">SL POP ảnh hưởng<br/><span className="text-sm font-normal text-slate-400">(Đang tải dữ liệu...)</span></p>
+        <p className="summary-label text-center">SL POP có nguy cơ<br/><span className="text-sm font-normal text-slate-400">(Đang tải dữ liệu...)</span></p>
       </article>
     );
   }
@@ -175,7 +175,7 @@ function PreStormImpactChart({ data, isLoading }: any) {
         <div className="summary-icon">
           <span className="material-symbols-outlined text-[20px]">router</span>
         </div>
-        <p className="summary-label">SL POP ảnh hưởng</p>
+        <p className="summary-label">SL POP có nguy cơ</p>
       </div>
       <div className="chart-card-body">
         <div className="pie-wrap">
@@ -202,7 +202,7 @@ function PreStormRouteChart({ data, isLoading }: any) {
         <a href={SHEET_BASE_URL} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
           <span className="material-symbols-outlined">open_in_new</span>
         </a>
-        <p className="summary-label text-center">SL tuyến ảnh hưởng<br/><span className="text-sm font-normal text-slate-400">(Đang tải dữ liệu...)</span></p>
+        <p className="summary-label text-center">SL tuyến có nguy cơ<br/><span className="text-sm font-normal text-slate-400">(Đang tải dữ liệu...)</span></p>
       </article>
     );
   }
@@ -225,7 +225,7 @@ function PreStormRouteChart({ data, isLoading }: any) {
         <div className="summary-icon">
           <span className="material-symbols-outlined text-[20px]">cable</span>
         </div>
-        <p className="summary-label">SL tuyến ảnh hưởng</p>
+        <p className="summary-label">SL tuyến có nguy cơ</p>
       </div>
       <div className="chart-card-body">
         <div className="pie-wrap">
@@ -252,7 +252,7 @@ function PreStormStationChart({ data, isLoading }: any) {
         <a href={SHEET_BASE_URL} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
           <span className="material-symbols-outlined">open_in_new</span>
         </a>
-        <p className="summary-label text-center">SL trạm ảnh hưởng<br/><span className="text-sm font-normal text-slate-400">(Đang tải dữ liệu...)</span></p>
+        <p className="summary-label text-center">SL trạm có nguy cơ<br/><span className="text-sm font-normal text-slate-400">(Đang tải dữ liệu...)</span></p>
       </article>
     );
   }
@@ -276,7 +276,7 @@ function PreStormStationChart({ data, isLoading }: any) {
         <div className="summary-icon">
           <span className="material-symbols-outlined text-[20px]">router</span>
         </div>
-        <p className="summary-label">SL trạm ảnh hưởng</p>
+        <p className="summary-label">SL trạm có nguy cơ</p>
       </div>
       <div className="chart-card-body">
         <div className="pie-wrap">
@@ -532,12 +532,22 @@ function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, 
   );
 }
 
-function TasksPanel({ tasks, page, setPage, today, mode }: any) {
+function TasksPanel({ tasks, today, mode }: any) {
   const isPreStorm = mode === 'truoc_bao';
   const visibleTasks = isPreStorm ? tasks : tasksForDate(tasks, today);
-  const current = isPreStorm
-    ? { rows: visibleTasks, start: 0, page: 0 }
-    : pageItems(visibleTasks, page, PAGE_SIZE.tasks);
+  const taskEntries = visibleTasks.map((task: any, index: number) => ({
+    task,
+    index,
+    status: taskStatusMeta(task.status || task.marker)
+  }));
+  const taskGroups = [
+    { key: 'completed', label: 'Hoàn thành', className: 'task-completed', icon: 'check_circle' },
+    { key: 'in-progress', label: 'Đang thực hiện', className: 'task-in-progress', icon: 'pending' },
+    { key: 'not-started', label: 'Chưa thực hiện', className: 'task-not-started', icon: 'cancel' }
+  ].map((group) => ({
+    ...group,
+    entries: taskEntries.filter((entry: any) => entry.status.className === group.className)
+  }));
   return (
     <article className="card tasks-card" style={ACCENT_STYLE.orange}>
       <div className="card-header">
@@ -548,30 +558,38 @@ function TasksPanel({ tasks, page, setPage, today, mode }: any) {
           </h2>
           {mode !== 'truoc_bao' && <time className="task-card-date" dateTime={today.split("/").reverse().join("-")}>{today}</time>}
         </div>
-        {!isPreStorm && (
-          <Pager page={current.page} setPage={setPage} total={visibleTasks.length} size={PAGE_SIZE.tasks} />
-        )}
       </div>
       <div className="list-box">
         {!visibleTasks.length ? (
           <div className="empty-state">
             {mode === 'truoc_bao' ? 'Chưa có công việc cần làm.' : `Chưa có công việc ngày ${today} trong tab Công việc.`}
           </div>
-        ) : current.rows.map((task: any, index: number) => {
-          const status = taskStatusMeta(task.status || task.marker);
-          const displayPosition = current.start + index + 1;
-          return (
-            <div className={`task-row ${status.className}`} key={`${task.id}-${current.start + index}`}>
-              <div className="task-icon"><span className="material-symbols-outlined text-[15px]">{status.icon}</span></div>
-              <div className="task-copy">
-                <span className="task-content">{numberedTaskName(task.name, displayPosition)}</span>
-                {task.carriedOver && <span className="task-carried-date">Công việc tồn ngày {task.originalDate}</span>}
-                {task.note && <span className="task-note">{task.note}</span>}
-                <span className="task-status">{status.label}</span>
-              </div>
-            </div>
-          );
-        })}
+        ) : (
+          <div className="task-status-table">
+            {taskGroups.map((group) => (
+              <section className={`task-status-group ${group.className}`} key={group.key}>
+                <div className="task-status-group-header">
+                  <span className="material-symbols-outlined">{group.icon}</span>
+                  <h3>{group.label}</h3>
+                  <span className="task-status-count">{group.entries.length}</span>
+                </div>
+                <div className="task-status-group-body">
+                  {group.entries.length ? group.entries.map(({ task, index }: any, groupIndex: number) => (
+                    <div className="task-status-group-row" key={`${task.id}-${index}`}>
+                      <div className="task-copy">
+                        <span className="task-content">{numberedTaskName(task.name, groupIndex + 1)}</span>
+                        {task.carriedOver && <span className="task-carried-date">Công việc tồn ngày {task.originalDate}</span>}
+                        {task.note && <span className="task-note">{task.note}</span>}
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="task-status-group-empty">Chưa có công việc</div>
+                  )}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
       </div>
     </article>
   );

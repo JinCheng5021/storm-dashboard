@@ -8,9 +8,9 @@ import {
   nodeStatusFromCause
 } from "../../src/incidentMapStatus.js";
 
-test("ánh xạ tình trạng sự cố ngoại vi sang đúng bốn trạng thái tuyến trong bão", () => {
+test("quy trạng thái sự cố đang xử lý về màu đỏ", () => {
   assert.equal(edgeStatusFromIncident("⛔ Chưa tiếp cận"), "incident_external");
-  assert.equal(edgeStatusFromIncident("⏳ Đang xử lí"), "danger_zone");
+  assert.equal(edgeStatusFromIncident("⏳ Đang xử lí"), "incident_external");
   assert.equal(edgeStatusFromIncident("✅ Hoàn thành"), "resolved");
   assert.equal(edgeStatusFromIncident(""), null);
 });
@@ -29,7 +29,7 @@ test("ánh xạ mức độ trước bão sang đúng ba trạng thái màu tuy�
   assert.equal(edgeStatusBeforeTyphoonFromLevel(""), null);
 });
 
-test("tự động áp dụng sự cố tuyến và nguyên nhân đài trạm trong bão", () => {
+test("tô đỏ tuyến sự cố, xanh tuyến có dữ liệu và giữ xanh dương tuyến không có dữ liệu", () => {
   const edges = [
     { id: "edge_ab", name: "Tuyến A - B", status: "normal", statusBeforeTyphoon: "safe" },
     { id: "edge_cd", name: "Tuyến C - D", status: "normal", statusBeforeTyphoon: "risky" },
@@ -53,6 +53,11 @@ test("tự động áp dụng sự cố tuyến và nguyên nhân đài trạm t
       { target: "D - C", status: "⏳ Đang xử lý" },
       { target: "E - F", status: "✅ Hoàn thành" }
     ],
+    affectedRoutes: [
+      { route: 'A - B' },
+      { route: 'C - D' },
+      { route: 'E - F' }
+    ],
     stationIncidents: [
       { target: "CGT", cause: "Mất điện AC" },
       { target: "TGO", cause: "Trạm bị cô lập do ngập" },
@@ -62,7 +67,7 @@ test("tự động áp dụng sự cố tuyến và nguyên nhân đài trạm t
 
   assert.deepEqual(result.edges.map((edge) => edge.status), [
     "incident_external",
-    "danger_zone",
+    "incident_external",
     "resolved",
     "normal"
   ]);

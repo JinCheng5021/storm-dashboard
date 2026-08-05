@@ -65,10 +65,9 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
               ];
             } else {
               edgeLegendItems = [
-                { color: '#0066FF', dash: false, label: 'Tuyến bình thường' },
-                { color: '#FFD600', dash: false, label: 'Tuyến nguy hiểm' },
-                { color: '#FF0000', dash: false, label: 'Tuyến đang gặp sự cố' },
-                { color: '#00C853', dash: false, label: 'Tuyến đã khắc phục' },
+                { color: '#00C853', dash: false, label: 'Tuyến bình thường / đã khắc phục' },
+                { color: '#FF0000', dash: false, label: 'Tuyến chưa tiếp cận / đang xử lý' },
+                { color: '#0066FF', dash: false, label: 'Tuyến không có thông tin ảnh hưởng' },
               ];
             }
 

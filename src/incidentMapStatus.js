@@ -2,8 +2,7 @@ import { normalizeIncidentText } from "./incidentUtils.js";
 
 const EDGE_STATUS_PRIORITY = {
   resolved: 1,
-  danger_zone: 2,
-  incident_external: 3
+  incident_external: 2
 };
 
 const PRE_STORM_EDGE_STATUS_PRIORITY = {
@@ -50,8 +49,11 @@ export function stationKey(value) {
 
 export function edgeStatusFromIncident(value) {
   const status = normalizeIncidentText(value);
-  if (status.includes("chua tiep can")) return "incident_external";
-  if (status.includes("dang xu ly") || status.includes("dang xu li")) return "danger_zone";
+  if (
+    status.includes("chua tiep can")
+    || status.includes("dang xu ly")
+    || status.includes("dang xu li")
+  ) return "incident_external";
   if (status.includes("hoan thanh")) return "resolved";
   return null;
 }
@@ -117,6 +119,12 @@ export function deriveIncidentMapFeatures({
     );
   });
 
+  const affectedRouteKeys = new Set(
+    affectedRoutes
+      .map((route) => canonicalRouteKey(route.route))
+      .filter(Boolean)
+  );
+
   const nodeStatuses = new Map();
   stationIncidents.forEach((incident) => {
     setHigherPriorityStatus(
@@ -128,10 +136,18 @@ export function deriveIncidentMapFeatures({
   });
 
   return {
-    edges: edges.map((edge) => ({
-      ...edge,
-      status: edgeStatuses.get(canonicalRouteKey(edge.name)) || "normal"
-    })),
+    edges: edges.map((edge) => {
+      const routeKey = canonicalRouteKey(edge.name);
+      const incidentStatus = edgeStatuses.get(routeKey);
+      return {
+        ...edge,
+        status: incidentStatus === "incident_external"
+          ? "incident_external"
+          : affectedRouteKeys.has(routeKey)
+            ? "resolved"
+            : "normal"
+      };
+    }),
     nodes: nodes.map((node) => ({
       ...node,
       status: nodeStatuses.get(stationKey(node.name)) || "active"

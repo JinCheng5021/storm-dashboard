@@ -108,6 +108,7 @@ function edgesGeoJSON(edges: EdgeFeature[], mode: DashboardMode, routeInformatio
           id: e.id,
           name: e.name,
           status: mode === 'truoc_bao' ? (e.statusBeforeTyphoon || 'normal') : e.status,
+          dashboardMode: mode,
           routeLength: route?.length || '',
           routePops: route?.pops || '',
           routeAvailability: route?.availability || '',
@@ -283,15 +284,24 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             2 // normal / safe
           ],
           'line-color': [
-            'match',
-            ['get', 'status'],
-            'incident_external', '#FF0000',
-            'unsafe', '#FF0000',
-            'danger_zone', '#FFD600',
-            'risky', '#FFD600',
-            'resolved', '#00C853',
-            'safe', '#00C853',
-            '#0066FF' // normal
+            'case',
+            ['==', ['get', 'dashboardMode'], 'trong_bao'],
+            [
+              'match',
+              ['get', 'status'],
+              'incident_external', '#FF0000',
+              'danger_zone', '#FF0000',
+              'resolved', '#00C853',
+              '#0066FF'
+            ],
+            [
+              'match',
+              ['get', 'status'],
+              'unsafe', '#FF0000',
+              'risky', '#FFD600',
+              'safe', '#00C853',
+              '#0066FF'
+            ]
           ],
           'line-opacity': [
             'match',

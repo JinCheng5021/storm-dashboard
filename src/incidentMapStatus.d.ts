@@ -19,7 +19,7 @@ export function canonicalRouteKey(value: unknown): string;
 export function stationKey(value: unknown): string;
 export function edgeStatusFromIncident(
   value: unknown
-): "incident_external" | "danger_zone" | "resolved" | null;
+): "incident_external" | "resolved" | null;
 export function edgeStatusBeforeTyphoonFromLevel(
   value: unknown
 ): "safe" | "risky" | "unsafe" | null;
