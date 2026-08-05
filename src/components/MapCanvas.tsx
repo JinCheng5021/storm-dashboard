@@ -18,6 +18,7 @@ interface MapCanvasProps {
   routeInformation: RouteInformation[];
   sidebarCollapsed: boolean;
   mode: DashboardMode;
+  isLoggedIn?: boolean;
   onContextMenu: (state: ContextMenuState) => void;
   onCloseContextMenu: () => void;
   onTeamDrop: (teamId: string, lngLat: [number, number]) => void;
@@ -25,6 +26,7 @@ interface MapCanvasProps {
   pendingTeam: Team | null;
   onTeamNameChange: (teamId: string, name: string) => void;
   onTeamNoteChange: (teamId: string, note: string) => void;
+  onTeamDonTruChange?: (teamId: string, donTru: string) => void;
   onTeamTypeChange: (teamId: string, type: TeamType) => void;
   onTeamLabelDrop?: (teamId: string, dx: number, dy: number) => void;
   onConfirmTeam: (teamId: string) => void;
@@ -174,6 +176,7 @@ function createShapeImage(shape: 'triangle' | 'pentagon' | 'warning', size: numb
 }
 
 const DAI_TRAM = ['TGO', 'MCU', 'GPU', 'BKE', 'BHA', 'TKE', 'DDG', 'KEP', 'TYN', 'NDH', 'BSN', 'THA', 'CGT', 'HMI', 'VINH', 'HPO', 'DLE', 'KAH', 'DHI', 'LTY', 'LTY2', 'DHA', 'LBO', 'HUE', 'PLC'];
+const MANG_XONG = ['TTH (Treo)', 'TTH (Ngầm)', 'HNI (Treo)', 'HNI (Ngầm)', 'HLA'];
 
 export const MapCanvas: React.FC<MapCanvasProps> = ({
   edges,
@@ -182,6 +185,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   routeInformation,
   sidebarCollapsed,
   mode,
+  isLoggedIn = false,
   onContextMenu,
   onCloseContextMenu,
   onTeamDrop,
@@ -189,6 +193,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   pendingTeam,
   onTeamNameChange,
   onTeamNoteChange,
+  onTeamDonTruChange,
   onTeamTypeChange,
   onTeamLabelDrop,
   onConfirmTeam,
@@ -204,6 +209,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   const tooltipRef = useRef<maplibregl.Popup | null>(null);
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
   const isDraggingTeamRef = useRef(false);
+
+  const teamsRef = useRef(teams);
+  teamsRef.current = teams;
+  const isLoggedInRef = useRef(isLoggedIn);
+  isLoggedInRef.current = isLoggedIn;
 
   // ── Init map ────────────────────────────────────────────────
   useEffect(() => {
@@ -324,24 +334,29 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         },
       });
 
-      // Inner Icon for Node Types (DaiTram vs MPOP)
+      // Inner Icon for Node Types (DaiTram vs MPOP vs MangXong)
       map.addLayer({
         id: 'nodes-inner-icon',
         type: 'symbol',
         source: 'nodes',
         layout: {
           'icon-image': [
-            'case',
-            ['==', ['get', 'status'], 'isolated'], 'icon-warning',
-            ['match',
-              ['get', 'name'],
-              DAI_TRAM, [
-                'match',
-                ['get', 'status'],
-                'power_out', 'icon-triangle-red',
-                'icon-triangle'
-              ],
-              'icon-pentagon'
+            'match',
+            ['get', 'name'],
+            MANG_XONG, '',
+            [
+              'case',
+              ['==', ['get', 'status'], 'isolated'], 'icon-warning',
+              ['match',
+                ['get', 'name'],
+                DAI_TRAM, [
+                  'match',
+                  ['get', 'status'],
+                  'power_out', 'icon-triangle-red',
+                  'icon-triangle'
+                ],
+                'icon-pentagon'
+              ]
             ]
           ],
           'icon-size': ['interpolate', ['linear'], ['zoom'], 5, 0.45, 10, 0.65, 14, 0.8],
@@ -368,7 +383,12 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         type: 'symbol',
         source: 'nodes',
         layout: {
-          'text-field': ['get', 'name'],
+          'text-field': [
+            'match',
+            ['get', 'name'],
+            ['TTH (Treo)', 'TTH (Ngầm)', 'HNI (Treo)', 'HNI (Ngầm)'], '',
+            ['get', 'name']
+          ],
           'text-size': ['interpolate', ['linear'], ['zoom'], 6, 9, 10, 12, 14, 14],
           'text-offset': [0.8, 0.3],
           'text-anchor': 'left',
@@ -423,13 +443,16 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           if (topFeature.layer.id === 'nodes-hitbox') {
             const { name, status } = topFeature.properties as { name: string; status: string };
             const isDaiTram = DAI_TRAM.includes(name);
-            const statusLabel = isDaiTram
-              ? {
-                active: '▲ Hoạt động',
-                power_out: '🔺 Mất điện lưới',
-                isolated: '⚠️ Bị cô lập',
-              }[status] || status
-              : '⬟ Hoạt động';
+            const isMangXong = MANG_XONG.includes(name);
+            const statusLabel = isMangXong
+              ? '● Hoạt động'
+              : isDaiTram
+                ? {
+                  active: '▲ Hoạt động',
+                  power_out: '🔺 Mất điện lưới',
+                  isolated: '⚠️ Bị cô lập',
+                }[status] || status
+                : '⬟ Hoạt động';
 
             tooltipRef.current
               ?.setLngLat(e.lngLat)
@@ -477,6 +500,14 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           tooltipRef.current?.remove();
           const topFeature = features.find((f) => f.layer.id === 'nodes-hitbox') || features[0];
           const targetType = topFeature.layer.id === 'nodes-hitbox' ? 'node' : 'edge';
+
+          if (targetType === 'node') {
+            const name = String(topFeature.properties?.name ?? '');
+            if (MANG_XONG.includes(name)) {
+              onCloseContextMenu();
+              return;
+            }
+          }
 
           onContextMenu({
             visible: true,
@@ -613,6 +644,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     // Add / update markers
     teams.forEach((team) => {
       const color = TEAM_COLORS[team.type];
+      const isEditable = Boolean(isLoggedIn) && team.editable !== false;
 
       const TEAM_ICONS: Record<TeamType, string> = {
         FPT: `<img src="/fpt.svg" style="width: 32px; height: 32px; vertical-align: middle; background: transparent;" alt="FPT" />`,
@@ -658,10 +690,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
           const closeBtn = el.querySelector('.team-marker__close') as HTMLElement;
           if (closeBtn) {
-            closeBtn.style.display = team.editable === false ? 'none' : 'flex';
+            closeBtn.style.display = isEditable ? 'flex' : 'none';
           }
 
-          marker.setDraggable(team.editable !== false);
+          marker.setDraggable(isEditable);
         }
         return;
       }
@@ -677,9 +709,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       el.style.transform = 'translate(-50%, -50%)'; // Tự neo tâm bằng CSS
       el.style.setProperty('--team-color', color);
 
-      const closeBtnHtml = team.editable !== false
-        ? `<button class="team-marker__close" title="Xóa đội">✕</button>`
-        : '';
+      const closeBtnHtml = `<button class="team-marker__close" title="Xóa đội" style="${isEditable ? '' : 'display: none'}">✕</button>`;
 
       const displayText = team.note ? `${team.name}\n(${team.note})` : team.name;
       const escapeHtml = (str: string) => str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -724,6 +754,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         createdNameEl.addEventListener('touchstart', stopProp);
 
         createdNameEl.addEventListener('pointerdown', (e) => {
+          const currentTeam = teamsRef.current.find((t) => t.id === team.id);
+          const canEdit = Boolean(isLoggedInRef.current) && (currentTeam ? currentTeam.editable !== false : team.editable !== false);
+          if (!canEdit) return;
+
           e.preventDefault();
           e.stopPropagation();
           isDraggingLabel = true;
@@ -753,10 +787,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         });
       }
 
-      // Gắn wrapper vào MapLibre, vô hiệu hóa draggable nếu editable = false
+      // Gắn wrapper vào MapLibre, vô hiệu hóa draggable nếu không editable hoặc chưa đăng nhập
       const marker = new maplibregl.Marker({
         element: wrapper,
-        draggable: team.editable !== false,
+        draggable: isEditable,
         anchor: 'center',
         offset: [0, 0]
       })
@@ -765,7 +799,27 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
       el.querySelector('.team-marker__close')?.addEventListener('click', (e) => {
         e.stopPropagation();
-        onRemoveTeam(team.id);
+        const currentTeam = teamsRef.current.find((t) => t.id === team.id);
+        const canEdit = Boolean(isLoggedInRef.current) && (currentTeam ? currentTeam.editable !== false : team.editable !== false);
+        if (canEdit) {
+          onRemoveTeam(team.id);
+        }
+      });
+
+      el.addEventListener('click', (e) => {
+        if (isDraggingTeamRef.current) return;
+        const currentTeam = teamsRef.current.find((t) => t.id === team.id);
+        if (currentTeam && (currentTeam.type === 'FFC' || currentTeam.type === 'DCV')) {
+          e.stopPropagation();
+          const point = mapRef.current ? mapRef.current.project(currentTeam.position) : { x: e.clientX, y: e.clientY };
+          onContextMenu({
+            visible: true,
+            x: point.x,
+            y: point.y,
+            targetId: currentTeam.id,
+            targetType: 'team',
+          });
+        }
       });
 
       marker.on('dragstart', () => {
@@ -780,7 +834,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
       markersRef.current.set(team.id, marker);
     });
-  }, [teams, mapReady, onTeamDrop, onTeamLabelDrop, onRemoveTeam]);
+  }, [teams, mapReady, isLoggedIn, onTeamDrop, onTeamLabelDrop, onRemoveTeam]);
 
 
   // ── Pending team input popup ─────────────────────────────────
@@ -805,6 +859,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     currentPendingIdRef.current = pendingTeam.id;
 
     const map = mapRef.current;
+    const isFpt = pendingTeam.type === 'FPT';
+    const secondaryFieldHtml = isFpt
+      ? `<textarea id="tip-secondary-${pendingTeam.id}" class="tip-input" style="color: black; resize: none; width: 100%; box-sizing: border-box;" rows="2" placeholder="Ghi chú...">${pendingTeam.note || ''}</textarea>`
+      : `<textarea id="tip-secondary-${pendingTeam.id}" class="tip-input" style="color: black; resize: none; width: 100%; box-sizing: border-box;" rows="2" placeholder="Nhập đồn trú...">${pendingTeam.don_tru || ''}</textarea>`;
+
     const popupEl = document.createElement('div');
     popupEl.className = 'team-input-popup glass';
     popupEl.innerHTML = `
@@ -812,8 +871,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       <div class="tip-row">
         <textarea id="tip-name-${pendingTeam.id}" class="tip-input" style="color: black; resize: none; width: 100%; box-sizing: border-box;" rows="2" placeholder="Tên đội (VD: BinhNT89 + BachDX6)">${pendingTeam.name}</textarea>
       </div>
-      <div class="tip-row">
-        <textarea id="tip-note-${pendingTeam.id}" class="tip-input" style="color: black; resize: none; width: 100%; box-sizing: border-box;" rows="2" placeholder="Ghi chú...">${pendingTeam.note || ''}</textarea>
+      <div class="tip-row" id="tip-secondary-wrapper-${pendingTeam.id}">
+        ${secondaryFieldHtml}
       </div>
       <div class="tip-row">
         <label class="tip-label">Loại đội:</label>
@@ -838,18 +897,39 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     // Wire events after DOM is mounted
     setTimeout(() => {
       const nameEl = document.getElementById(`tip-name-${pendingTeam.id}`) as HTMLTextAreaElement | null;
-      const noteEl = document.getElementById(`tip-note-${pendingTeam.id}`) as HTMLTextAreaElement | null;
       const typeEl = document.getElementById(`tip-type-${pendingTeam.id}`) as HTMLSelectElement | null;
       const btnEl = document.getElementById(`tip-confirm-${pendingTeam.id}`) as HTMLButtonElement | null;
+
+      const wireSecondaryInput = (currentType: TeamType) => {
+        const secEl = document.getElementById(`tip-secondary-${pendingTeam.id}`) as HTMLTextAreaElement | null;
+        secEl?.addEventListener('input', (e) => {
+          const val = (e.target as HTMLTextAreaElement).value;
+          if (currentType === 'FPT') {
+            onTeamNoteChange(pendingTeam.id, val);
+          } else if (onTeamDonTruChange) {
+            onTeamDonTruChange(pendingTeam.id, val);
+          }
+        });
+      };
+
+      wireSecondaryInput(pendingTeam.type);
 
       nameEl?.addEventListener('input', (e) => {
         onTeamNameChange(pendingTeam.id, (e.target as HTMLTextAreaElement).value);
       });
-      noteEl?.addEventListener('input', (e) => {
-        onTeamNoteChange(pendingTeam.id, (e.target as HTMLTextAreaElement).value);
-      });
+
       typeEl?.addEventListener('change', (e) => {
-        onTeamTypeChange(pendingTeam.id, (e.target as HTMLSelectElement).value as TeamType);
+        const newType = (e.target as HTMLSelectElement).value as TeamType;
+        onTeamTypeChange(pendingTeam.id, newType);
+
+        const secWrap = document.getElementById(`tip-secondary-wrapper-${pendingTeam.id}`);
+        if (secWrap) {
+          const isNewFpt = newType === 'FPT';
+          secWrap.innerHTML = isNewFpt
+            ? `<textarea id="tip-secondary-${pendingTeam.id}" class="tip-input" style="color: black; resize: none; width: 100%; box-sizing: border-box;" rows="2" placeholder="Ghi chú...">${pendingTeam.note || ''}</textarea>`
+            : `<textarea id="tip-secondary-${pendingTeam.id}" class="tip-input" style="color: black; resize: none; width: 100%; box-sizing: border-box;" rows="2" placeholder="Nhập đồn trú...">${pendingTeam.don_tru || ''}</textarea>`;
+          wireSecondaryInput(newType);
+        }
       });
       btnEl?.addEventListener('click', () => {
         onConfirmTeam(pendingTeam.id);

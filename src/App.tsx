@@ -604,11 +604,12 @@ function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
   const incident = matchingIncidents.find((inc: any) => edgeStatusFromIncident(inc.status) === edge.status)
     || matchingIncidents[0];
 
+  const isNearBottom = menu.y > (window.innerHeight - 250) || menu.y > 360;
   const style: React.CSSProperties = {
     position: 'absolute',
     left: menu.x,
-    top: menu.y,
-    transform: 'translate(-50%, 16px)',
+    top: isNearBottom ? menu.y - 16 : menu.y + 16,
+    transform: isNearBottom ? 'translate(-50%, -100%)' : 'translate(-50%, 0)',
     background: 'white',
     padding: '12px 16px',
     borderRadius: '8px',
@@ -618,11 +619,6 @@ function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
     fontSize: '13px',
     color: '#333'
   };
-
-  if (style.top && (style.top as number) > window.innerHeight - 150) {
-    style.transform = 'translate(-50%, -100%)';
-    style.marginTop = '-16px';
-  }
 
   if (!incident) {
     return (
@@ -686,11 +682,12 @@ function GuestNodePopup({ menu, nodes, incidents, onClose }: any) {
   const node = nodes.find((n: any) => n.id == menu.targetId);
   if (!node) return null;
 
+  const isNearBottom = menu.y > (window.innerHeight - 250) || menu.y > 360;
   const style: React.CSSProperties = {
     position: 'absolute',
     left: menu.x,
-    top: menu.y,
-    transform: 'translate(-50%, 16px)',
+    top: isNearBottom ? menu.y - 16 : menu.y + 16,
+    transform: isNearBottom ? 'translate(-50%, -100%)' : 'translate(-50%, 0)',
     background: 'rgba(6, 10, 20, 0.94)',
     padding: '12px 16px',
     borderRadius: '8px',
@@ -702,11 +699,6 @@ function GuestNodePopup({ menu, nodes, incidents, onClose }: any) {
     fontSize: '13px',
     color: '#ffffff'
   };
-
-  if (style.top && (style.top as number) > window.innerHeight - 150) {
-    style.transform = 'translate(-50%, -100%)';
-    style.marginTop = '-16px';
-  }
 
   const nodeKey = stationKey(node.name);
   const stationIncidents = incidents.filter((inc: any) => stationKey(inc.target) === nodeKey);
@@ -740,6 +732,60 @@ function GuestNodePopup({ menu, nodes, incidents, onClose }: any) {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function GuestTeamPopup({ menu, teams, deployments, onClose }: any) {
+  if (menu.targetType !== 'team') return null;
+  const team = teams.find((t: any) => t.id === menu.targetId);
+  if (!team || (team.type !== 'FFC' && team.type !== 'DCV')) return null;
+
+  const donTru = String(team.don_tru || '').trim();
+  const deployment = deployments.find((d: any) => (
+    d.location && donTru && String(d.location).trim().toLowerCase() === donTru.toLowerCase()
+  ));
+
+  const leader = String(deployment?.leader || '').trim();
+  if (!leader) return null;
+
+  const isNearBottom = menu.y > (window.innerHeight - 250) || menu.y > 360;
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    left: menu.x,
+    top: isNearBottom ? menu.y - 16 : menu.y + 16,
+    transform: isNearBottom ? 'translate(-50%, -100%)' : 'translate(-50%, 0)',
+    background: 'rgba(6, 10, 20, 0.94)',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    border: '1px solid rgba(0, 102, 255, 0.35)',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
+    zIndex: 1000,
+    minWidth: '240px',
+    maxWidth: '320px',
+    fontSize: '13px',
+    color: '#ffffff'
+  };
+
+  return (
+    <div style={style} className="guest-incident-popup guest-team-popup">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '9px', borderBottom: '1px solid rgba(148, 163, 184, 0.22)', paddingBottom: '7px' }}>
+        <strong style={{ fontSize: '14px', color: '#ffffff' }}>{team.name || `Đội ${team.type}`}</strong>
+        <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8', padding: '0 4px', fontSize: '16px' }}>✕</button>
+      </div>
+
+      <div style={{ marginBottom: '5px' }}>
+        <span style={{ color: '#94a3b8' }}>Đồn trú:</span> <b style={{ marginLeft: '4px', color: '#ffffff' }}>{donTru || '-'}</b>
+      </div>
+      <div style={{ marginBottom: '5px' }}>
+        <span style={{ color: '#94a3b8' }}>Đối tác:</span> <b style={{ marginLeft: '4px', color: '#ffffff' }}>{deployment?.partner || team.type}</b>
+      </div>
+      <div style={{ marginBottom: '5px' }}>
+        <span style={{ color: '#94a3b8' }}>SL nhân sự tại đồn trú:</span> <b style={{ marginLeft: '4px', color: '#ffffff' }}>{deployment?.count ?? '-'}</b>
+      </div>
+      <div>
+        <span style={{ color: '#94a3b8' }}>Đội trưởng:</span> <b style={{ marginLeft: '4px', color: '#ffffff' }}>{leader}</b>
+      </div>
     </div>
   );
 }
@@ -968,6 +1014,11 @@ export default function App() {
   const handleTeamNoteChange = useCallback(async (teamId: string, note: string) => {
     mapDispatch({ type: 'UPDATE_TEAM', id: teamId, patch: { note } });
     if (session) await supabase.from('teams').update({ note }).eq('id', teamId);
+  }, [session]);
+
+  const handleTeamDonTruChange = useCallback(async (teamId: string, don_tru: string) => {
+    mapDispatch({ type: 'UPDATE_TEAM', id: teamId, patch: { don_tru } });
+    if (session) await supabase.from('teams').update({ don_tru }).eq('id', teamId);
   }, [session]);
 
   const handleTeamTypeChange = useCallback(async (teamId: string, type: string) => {
@@ -1268,6 +1319,7 @@ export default function App() {
                 sidebarCollapsed={false}
                 showTeamNames={mapState.showTeamNames}
                 mode={dashboardMode}
+                isLoggedIn={Boolean(session)}
                 activeStormGeoJSONs={activeStormGeoJSONs}
                 onToggleTeamNames={() => mapDispatch({ type: 'TOGGLE_TEAM_NAMES' })}
                 onContextMenu={(menu) => mapDispatch({ type: 'OPEN_CONTEXT', menu })}
@@ -1277,6 +1329,7 @@ export default function App() {
                 pendingTeam={pendingTeam}
                 onTeamNameChange={handleTeamNameChange}
                 onTeamNoteChange={handleTeamNoteChange}
+                onTeamDonTruChange={handleTeamDonTruChange}
                 onTeamTypeChange={handleTeamTypeChange}
                 onTeamLabelDrop={handleTeamLabelDrop}
                 onConfirmTeam={handleConfirmTeam}
@@ -1305,6 +1358,12 @@ export default function App() {
                     menu={mapState.contextMenu}
                     nodes={incidentMapState.nodes}
                     incidents={data.stationIncidents}
+                    onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
+                  />
+                  <GuestTeamPopup
+                    menu={mapState.contextMenu}
+                    teams={mapState.teams}
+                    deployments={data.deployments}
                     onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
                   />
                 </>

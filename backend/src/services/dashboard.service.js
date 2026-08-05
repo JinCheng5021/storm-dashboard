@@ -134,8 +134,7 @@ export function buildDashboardDataFromSheets(sheets) {
   warnings.push(...peopleSource.resolver.warnings);
   const deployments = peopleSource.rows
     .filter((row) => (
-      peopleSource.resolver.get(row, "deploymentStt")
-      && isDashboardVisible(peopleSource.resolver.get(row, "visible"))
+      peopleSource.resolver.get(row, "location") || peopleSource.resolver.get(row, "deploymentStt")
     ))
     .map((row, index) => {
       const get = (field) => peopleSource.resolver.get(row, field);
@@ -143,7 +142,9 @@ export function buildDashboardDataFromSheets(sheets) {
         stt: get("deploymentStt") || String(index + 1),
         location: get("location"),
         partner: get("partner"),
-        count: numberValue(get("count"))
+        count: numberValue(get("count")),
+        leader: get("leader"),
+        visible: get("visible")
       };
     });
 

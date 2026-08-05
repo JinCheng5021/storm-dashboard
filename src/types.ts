@@ -26,6 +26,7 @@ export interface Team {
   assignedNodeId?: string;
   editable?: boolean;
   note?: string;
+  don_tru?: string;
   labelOffset?: { dx: number; dy: number };
 }
 
@@ -34,7 +35,7 @@ export interface ContextMenuState {
   x: number;
   y: number;
   targetId: string;
-  targetType: 'node' | 'edge';
+  targetType: 'node' | 'edge' | 'team';
 }
 
 export interface MapViewState {
