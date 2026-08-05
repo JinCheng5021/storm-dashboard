@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useReducer } from "react";
 import maplibregl from "maplibre-gl";
 import * as htmlToImage from "html-to-image";
-import { loadDashboardData } from "./dashboardData";
+import { loadDashboardData, visibleDashboardDeployments } from "./dashboardData";
 import { MapCanvas } from "./components/MapCanvas";
 import { ContextMenu } from "./components/ContextMenu";
 import { parseGeoJSON } from "./data/geojsonParser";
@@ -10,7 +10,7 @@ import { exportMapImage } from "./utils/exportMap";
 import { supabase } from "./lib/supabase";
 import { numberedTaskName, tasksForDate } from "./taskUtils";
 import { incidentStatusBreakdown } from "./incidentUtils";
-import { canonicalRouteKey, deriveIncidentMapFeatures, edgeStatusFromIncident, stationKey } from "./incidentMapStatus";
+import { canonicalRouteKey, deriveIncidentMapFeatures, edgeStatusFromIncident, stationKey, summarizeActiveStormImpact } from "./incidentMapStatus";
 import type { NodeStatus, EdgeStatus, Team, TeamType, DashboardMode } from "./types";
 
 const PAGE_SIZE = {
@@ -294,7 +294,7 @@ function PreStormStationChart({ data, isLoading }: any) {
   );
 }
 
-function StormImpactTotalCard({ label, value, icon, accentStyle, href }: any) {
+function StormImpactTotalCard({ label, value, icon, accentStyle, href, details, footerLabel = "Tổng" }: any) {
   return (
     <article className="summary-card storm-impact-total-card" style={accentStyle}>
       <a href={href} target="_blank" rel="noreferrer" className="sheet-link" title="Mở tab DS tuyến, trạm ảnh hưởng">
@@ -304,15 +304,24 @@ function StormImpactTotalCard({ label, value, icon, accentStyle, href }: any) {
       <div className="min-w-0 flex-1">
         <p className="summary-label">{label}</p>
         <div className="summary-value-row"><p className="summary-value">{value}</p></div>
-        <p className="summary-total-label">Tổng</p>
+        {details?.length ? (
+          <div className="storm-impact-breakdown">
+            {details.map((detail: any) => (
+              <span key={detail.label}><strong>{detail.value}</strong> {detail.label}</span>
+            ))}
+          </div>
+        ) : (
+          <p className="summary-total-label">{footerLabel}</p>
+        )}
       </div>
     </article>
   );
 }
 
 function SummaryGrid({ data, mode }: any) {
-  const totalPersonnel = data.deployments.reduce((sum: any, item: any) => sum + item.count, 0);
-  const deploymentCount = data.deployments.length;
+  const visibleDeployments = visibleDashboardDeployments(data.deployments);
+  const totalPersonnel = visibleDeployments.reduce((sum: any, item: any) => sum + item.count, 0);
+  const deploymentCount = visibleDeployments.length;
   const resources = data.responseResources || { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 };
   
   let directRouteCount = 0;
@@ -371,6 +380,10 @@ function SummaryGrid({ data, mode }: any) {
   }
 
   const preStormStationData = { directCount: stationDirectCount, indirectCount: stationIndirectCount, totalCount: stationTotalCount };
+  const activeStormImpact = summarizeActiveStormImpact({
+    affectedRoutes: data.affectedRoutes,
+    cableIncidents: data.cableIncidents
+  });
 
   // Check if data is completely empty (initial EmptyData state where arrays are empty)
   const isLoading = data.affectedRoutes.length === 0 && data.deployments.length === 0;
@@ -417,17 +430,22 @@ function SummaryGrid({ data, mode }: any) {
         <>
           <StormImpactTotalCard
             label="SL POP ảnh hưởng"
-            value={data.stormImpactSummary.popCount}
+            value={activeStormImpact.popCount}
             icon="cell_tower"
             accentStyle={ACCENT_STYLE.purple}
             href={`${SHEET_BASE_URL}763532233`}
+            details={[
+              { label: "Trực tiếp", value: activeStormImpact.directPopCount },
+              { label: "Gián tiếp", value: activeStormImpact.indirectPopCount }
+            ]}
           />
           <StormImpactTotalCard
             label="SL KHG FTI ảnh hưởng"
-            value={data.stormImpactSummary.ftiCustomerCount}
+            value={activeStormImpact.ftiCustomerCount}
             icon="groups"
             accentStyle={ACCENT_STYLE.teal}
             href={`${SHEET_BASE_URL}763532233`}
+            footerLabel="Khách hàng"
           />
         </>
       )}

@@ -5,7 +5,8 @@ import {
   deriveIncidentMapFeatures,
   edgeStatusFromIncident,
   edgeStatusBeforeTyphoonFromLevel,
-  nodeStatusFromCause
+  nodeStatusFromCause,
+  summarizeActiveStormImpact
 } from "../../src/incidentMapStatus.js";
 
 test("quy trạng thái sự cố đang xử lý về màu đỏ", () => {
@@ -13,6 +14,38 @@ test("quy trạng thái sự cố đang xử lý về màu đỏ", () => {
   assert.equal(edgeStatusFromIncident("⏳ Đang xử lí"), "incident_external");
   assert.equal(edgeStatusFromIncident("✅ Hoàn thành"), "resolved");
   assert.equal(edgeStatusFromIncident(""), null);
+});
+
+test("chỉ cộng POP và KHG FTI của tuyến đang màu đỏ", () => {
+  const summary = summarizeActiveStormImpact({
+    affectedRoutes: [
+      { route: "A - B", impact: "Trực tiếp", pops: "3", ftiCustomers: "2" },
+      { route: "C - D", impact: "Gián tiếp", pops: "4", ftiCustomers: "5" },
+      { route: "E - F", impact: "Trực tiếp", pops: "8", ftiCustomers: "9" }
+    ],
+    cableIncidents: [
+      { target: "B - A 48FO", status: "Chưa tiếp cận" },
+      { target: "D - C", status: "Đang xử lý" },
+      { target: "A - B", status: "Chưa tiếp cận" },
+      { target: "E - F", status: "Hoàn thành" }
+    ]
+  });
+
+  assert.deepEqual(summary, {
+    popCount: 7,
+    directPopCount: 3,
+    indirectPopCount: 4,
+    ftiCustomerCount: 7
+  });
+  assert.deepEqual(summarizeActiveStormImpact({
+    affectedRoutes: [{ route: "A - B", impact: "Trực tiếp", pops: "3", ftiCustomers: "2" }],
+    cableIncidents: [{ target: "A - B", status: "Hoàn thành" }]
+  }), {
+    popCount: 0,
+    directPopCount: 0,
+    indirectPopCount: 0,
+    ftiCustomerCount: 0
+  });
 });
 
 test("ghép tuyến hai chiều và bỏ hậu tố dung lượng FO", () => {

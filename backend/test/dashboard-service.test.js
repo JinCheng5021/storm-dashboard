@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { buildDashboardDataFromSheets } from "../src/services/dashboard.service.js";
+import { visibleDashboardDeployments } from "../../src/dashboardData.js";
 
 test("giữ nguyên cấu trúc dữ liệu dashboard khi các cột được sắp xếp lại", () => {
   const sheets = {
@@ -33,7 +34,10 @@ test("giữ nguyên cấu trúc dữ liệu dashboard khi các cột được s�
   assert.equal(result.data.cableIncidents[0].status, "Đang xử lý");
   assert.equal(result.data.stationIncidents[0].target, "MCI");
   assert.equal(result.data.deployments[0].count, 4);
-  assert.equal(result.data.deployments.length, 1);
+  assert.equal(result.data.deployments.length, 2);
+  const visibleDeployments = visibleDashboardDeployments(result.data.deployments);
+  assert.equal(visibleDeployments.length, 1);
+  assert.equal(visibleDeployments[0].location, "Hải Phòng");
   assert.equal(result.data.operators[0].name, "Nguyễn Văn A");
   assert.equal(result.data.operators.length, 3);
   assert.deepEqual(result.data.responseResources, { teams: 3, pickupTrucks: 1, measuringDevices: 2, weldingMachines: 2 });

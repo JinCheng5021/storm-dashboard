@@ -58,6 +58,36 @@ export function edgeStatusFromIncident(value) {
   return null;
 }
 
+function incidentNumberValue(value) {
+  return Number(String(value || "").replace(/[^\d.-]/g, "")) || 0;
+}
+
+export function summarizeActiveStormImpact({ affectedRoutes = [], cableIncidents = [] }) {
+  const activeRouteKeys = new Set(
+    cableIncidents
+      .filter((incident) => edgeStatusFromIncident(incident.status) === "incident_external")
+      .map((incident) => canonicalRouteKey(incident.target))
+      .filter(Boolean)
+  );
+
+  return affectedRoutes.reduce((summary, route) => {
+    if (!activeRouteKeys.has(canonicalRouteKey(route.route))) return summary;
+
+    const popCount = incidentNumberValue(route.pops);
+    const impact = normalizeIncidentText(route.impact);
+    summary.popCount += popCount;
+    summary.ftiCustomerCount += incidentNumberValue(route.ftiCustomers);
+    if (impact.includes("truc tiep")) summary.directPopCount += popCount;
+    if (impact.includes("gian tiep")) summary.indirectPopCount += popCount;
+    return summary;
+  }, {
+    popCount: 0,
+    directPopCount: 0,
+    indirectPopCount: 0,
+    ftiCustomerCount: 0
+  });
+}
+
 export function edgeStatusBeforeTyphoonFromLevel(value) {
   const level = normalizeIncidentText(value);
   if (level.includes("mat an toan")) return "unsafe";

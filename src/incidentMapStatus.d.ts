@@ -20,6 +20,20 @@ export function stationKey(value: unknown): string;
 export function edgeStatusFromIncident(
   value: unknown
 ): "incident_external" | "resolved" | null;
+export function summarizeActiveStormImpact(input: {
+  affectedRoutes?: Array<{
+    route?: unknown;
+    impact?: unknown;
+    pops?: unknown;
+    ftiCustomers?: unknown;
+  }>;
+  cableIncidents?: Array<{ target?: unknown; status?: unknown }>;
+}): {
+  popCount: number;
+  directPopCount: number;
+  indirectPopCount: number;
+  ftiCustomerCount: number;
+};
 export function edgeStatusBeforeTyphoonFromLevel(
   value: unknown
 ): "safe" | "risky" | "unsafe" | null;
