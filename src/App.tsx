@@ -741,10 +741,24 @@ function GuestTeamPopup({ menu, teams, deployments, onClose }: any) {
   const team = teams.find((t: any) => t.id === menu.targetId);
   if (!team || (team.type !== 'FFC' && team.type !== 'DCV')) return null;
 
-  const donTru = String(team.don_tru || '').trim();
-  const deployment = deployments.find((d: any) => (
-    d.location && donTru && String(d.location).trim().toLowerCase() === donTru.toLowerCase()
-  ));
+  const donTru = String(team.don_tru || team.donTru || '').trim();
+  const donTruClean = donTru.toLowerCase();
+  const teamTypeClean = String(team.type || '').toUpperCase().trim();
+
+  const matchPartner = (type: string, partner: string) => {
+    const p = String(partner || '').toUpperCase().trim();
+    if (type === 'DCV' && (p.includes('DCV') || p.includes('ĐCV'))) return true;
+    if (type === 'FFC' && p.includes('FFC')) return true;
+    return type === p;
+  };
+
+  const deployment = deployments.find((d: any) => {
+    const loc = String(d.location || '').trim().toLowerCase();
+    return loc && donTruClean && loc === donTruClean && matchPartner(teamTypeClean, d.partner);
+  }) || deployments.find((d: any) => {
+    const loc = String(d.location || '').trim().toLowerCase();
+    return loc && donTruClean && loc === donTruClean && Boolean(String(d.leader || '').trim());
+  });
 
   const leader = String(deployment?.leader || '').trim();
   if (!leader) return null;
@@ -1335,31 +1349,35 @@ export default function App() {
                 onConfirmTeam={handleConfirmTeam}
                 onRemoveTeam={handleRemoveTeam}
               />
-              {mapState.contextMenu?.visible && session && dashboardMode === 'truoc_bao' && (
-                <ContextMenu
-                  menu={mapState.contextMenu}
-                  currentNodeStatus={contextNodeStatus}
-                  currentEdgeStatus={contextEdgeStatus}
-                  onNodeStatusChange={handleNodeStatus}
-                  onEdgeStatusChange={handleEdgeStatus}
-                  onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
-                  mode={dashboardMode}
-                />
-              )}
-              {mapState.contextMenu?.visible && (!session || dashboardMode === 'trong_bao') && (
+              {mapState.contextMenu?.visible && (
                 <>
-                  <GuestIncidentPopup
-                    menu={mapState.contextMenu}
-                    edges={incidentMapState.edges}
-                    incidents={data.cableIncidents}
-                    onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
-                  />
-                  <GuestNodePopup
-                    menu={mapState.contextMenu}
-                    nodes={incidentMapState.nodes}
-                    incidents={data.stationIncidents}
-                    onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
-                  />
+                  {session && dashboardMode === 'truoc_bao' && (
+                    <ContextMenu
+                      menu={mapState.contextMenu}
+                      currentNodeStatus={contextNodeStatus}
+                      currentEdgeStatus={contextEdgeStatus}
+                      onNodeStatusChange={handleNodeStatus}
+                      onEdgeStatusChange={handleEdgeStatus}
+                      onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
+                      mode={dashboardMode}
+                    />
+                  )}
+                  {(!session || dashboardMode === 'trong_bao') && (
+                    <>
+                      <GuestIncidentPopup
+                        menu={mapState.contextMenu}
+                        edges={incidentMapState.edges}
+                        incidents={data.cableIncidents}
+                        onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
+                      />
+                      <GuestNodePopup
+                        menu={mapState.contextMenu}
+                        nodes={incidentMapState.nodes}
+                        incidents={data.stationIncidents}
+                        onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
+                      />
+                    </>
+                  )}
                   <GuestTeamPopup
                     menu={mapState.contextMenu}
                     teams={mapState.teams}
