@@ -149,12 +149,6 @@ export function deriveIncidentMapFeatures({
     );
   });
 
-  const affectedRouteKeys = new Set(
-    affectedRoutes
-      .map((route) => canonicalRouteKey(route.route))
-      .filter(Boolean)
-  );
-
   const nodeStatuses = new Map();
   stationIncidents.forEach((incident) => {
     setHigherPriorityStatus(
@@ -166,18 +160,10 @@ export function deriveIncidentMapFeatures({
   });
 
   return {
-    edges: edges.map((edge) => {
-      const routeKey = canonicalRouteKey(edge.name);
-      const incidentStatus = edgeStatuses.get(routeKey);
-      return {
-        ...edge,
-        status: incidentStatus === "incident_external"
-          ? "incident_external"
-          : affectedRouteKeys.has(routeKey)
-            ? "resolved"
-            : "normal"
-      };
-    }),
+    edges: edges.map((edge) => ({
+      ...edge,
+      status: edgeStatuses.get(canonicalRouteKey(edge.name)) || "normal"
+    })),
     nodes: nodes.map((node) => ({
       ...node,
       status: nodeStatuses.get(stationKey(node.name)) || "active"
