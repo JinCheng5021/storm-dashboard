@@ -818,9 +818,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
       el.addEventListener('click', (e) => {
         if (isDraggingTeamRef.current) return;
+        e.stopPropagation();
         const currentTeam = teamsRef.current.find((t) => t.id === team.id);
         if (currentTeam && (currentTeam.type === 'FFC' || currentTeam.type === 'DCV')) {
-          e.stopPropagation();
           const point = mapRef.current ? mapRef.current.project(currentTeam.position) : { x: e.clientX, y: e.clientY };
           onContextMenu({
             visible: true,

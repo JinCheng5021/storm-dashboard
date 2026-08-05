@@ -41,6 +41,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
   onEdgeStatusChange,
   onClose,
 }) => {
+  if (menu.targetType !== 'node' && menu.targetType !== 'edge') return null;
+
   const ref = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ left: menu.x, top: menu.y, opacity: 0 });
 
