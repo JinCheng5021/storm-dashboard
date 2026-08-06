@@ -1143,7 +1143,7 @@ export default function App() {
     setCapturing(true);
     setCaptureMode(true);
     try {
-      // 1. Lấy ảnh map đã render SVG và marker
+      // 1. Lấy ảnh map composited (đã gồm chú giải, icon đội) dưới dạng dataURL
       const mapDataURL = await exportMapImage({
         map: mapInstanceRef.current,
         operatorName: mapState.operatorName,
@@ -1155,32 +1155,22 @@ export default function App() {
         returnUrl: true,
       });
 
-      // 2. Ẩn map tương tác, hiển thị ảnh tĩnh
-      const mapCanvasWrap = document.querySelector('.map-canvas-wrap') as HTMLElement;
-      const imageSlot = document.querySelector('.image-slot') as HTMLElement;
+      // Preload ảnh map bằng Image element thuần của JS
+      const mapImg = new Image();
+      mapImg.crossOrigin = 'Anonymous';
+      await new Promise((resolve, reject) => {
+        mapImg.onload = resolve;
+        mapImg.onerror = reject;
+        mapImg.src = mapDataURL as string;
+      });
 
-      let tempImg: HTMLImageElement | null = null;
-      if (mapCanvasWrap && imageSlot) {
-        mapCanvasWrap.style.display = 'none';
-        tempImg = document.createElement('img');
-        tempImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-        
-        await new Promise((resolve, reject) => {
-          tempImg!.onload = resolve;
-          tempImg!.onerror = reject;
-          tempImg!.src = mapDataURL as string;
-        });
-
-        imageSlot.insertBefore(tempImg, mapCanvasWrap);
-      }
-
-      // FIX #1: Chờ font load xong (Inter, Material Symbols)
+      // 2. Chờ font load xong (Inter, Material Symbols)
       await document.fonts.ready;
       await new Promise(res => setTimeout(res, 200));
 
-      // 3. Chụp bằng html-to-image
       const dashboardElement = document.querySelector('.dashboard-shell') as HTMLElement;
-      if (!dashboardElement) throw new Error("Không tìm thấy dashboard");
+      const imageSlot = document.querySelector('.image-slot') as HTMLElement;
+      if (!dashboardElement || !imageSlot) throw new Error("Không tìm thấy giao diện báo cáo");
 
       // Lưu lại style cũ và ép kích thước Desktop nếu màn hình đang hẹp hoặc lùn
       const originalWidth = dashboardElement.style.width;
@@ -1196,31 +1186,49 @@ export default function App() {
         await new Promise(res => setTimeout(res, 200)); // Chờ layout cập nhật
       }
 
-      const dataUrl = await htmlToImage.toPng(dashboardElement, {
+      // 3. Tính toán vị trí tương quan của khung chứa map (.image-slot) so với .dashboard-shell
+      const dashRect = dashboardElement.getBoundingClientRect();
+      const slotRect = imageSlot.getBoundingClientRect();
+
+      const pixelRatio = window.devicePixelRatio || 1.5;
+      const relLeft = slotRect.left - dashRect.left;
+      const relTop = slotRect.top - dashRect.top;
+      const relW = slotRect.width;
+      const relH = slotRect.height;
+
+      // 4. Chụp toàn bộ dashboard thành 2D Canvas bằng html-to-image
+      const dashboardCanvas = await htmlToImage.toCanvas(dashboardElement, {
         backgroundColor: '#f3f7fb',
-        pixelRatio: window.devicePixelRatio || 1.5,
+        pixelRatio,
       });
 
-      // Trả lại kích thước ban đầu
+      // Trả lại kích thước ban đầu cho DOM
       dashboardElement.style.width = originalWidth;
       dashboardElement.style.height = originalHeight;
       dashboardElement.style.transform = originalTransform;
       dashboardElement.style.overflow = originalOverflow;
 
-      // 4. Download file
+      // 5. Vẽ đè ảnh map trực tiếp lên dashboardCanvas bằng Canvas 2D Context (Hoàn toàn tương thích iOS WebKit)
+      const ctx = dashboardCanvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(
+          mapImg,
+          relLeft * pixelRatio,
+          relTop * pixelRatio,
+          relW * pixelRatio,
+          relH * pixelRatio
+        );
+      }
+
+      // 6. Download file PNG
+      const finalDataUrl = dashboardCanvas.toDataURL('image/png');
       const link = document.createElement("a");
       const timestamp = new Date().toISOString().slice(0, 19).replaceAll(":", "-");
       link.download = `bao-cao-bao-noc-${timestamp}.png`;
-      link.href = dataUrl;
+      link.href = finalDataUrl;
       document.body.appendChild(link);
       link.click();
       link.remove();
-
-      // 5. Cleanup
-      if (mapCanvasWrap && tempImg && imageSlot) {
-        imageSlot.removeChild(tempImg);
-        mapCanvasWrap.style.display = '';
-      }
     } catch (error: any) {
       console.error(error);
       alert(`Chưa chụp được báo cáo: ${error.message}`);

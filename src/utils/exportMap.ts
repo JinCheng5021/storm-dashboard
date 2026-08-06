@@ -66,8 +66,8 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
             } else {
               edgeLegendItems = [
                 { color: '#00C853', dash: false, label: 'Tuyến hoàn thành' },
-                { color: '#FF0000', dash: false, label: 'Tuyến chưa tiếp cận / đang xử lý' },
-                { color: '#0066FF', dash: false, label: 'Tuyến không có trạng thái SC ngoại vi' },
+                { color: '#FF0000', dash: false, label: 'Tuyến đang sự cố' },
+                { color: '#0066FF', dash: false, label: 'Tuyến bình thường'},
               ];
             }
 
@@ -82,50 +82,55 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
               { img: ffcImg, label: 'Đối tác FFC' },
             ];
 
+            const container = map.getContainer();
+            const pixelRatioX = w / container.clientWidth;
+            const pixelRatioY = h / container.clientHeight;
+            const scale = Math.max(pixelRatioX, 1);
+
             const rows = Math.ceil(legendItems.length / 2);
-            const legendPad = 14;
-            const legendLineH = 26;
-            const legendW = 320;
-            const legendH = legendPad * 2 + rows * legendLineH + 12;
-            const legendX = w - legendW - 16;
-            const legendY = h - legendH - 46;
+            const legendPad = 14 * scale;
+            const legendLineH = 26 * scale;
+            const legendW = 320 * scale;
+            const legendH = legendPad * 2 + rows * legendLineH + 12 * scale;
+            const legendX = w - legendW - 16 * scale;
+            const legendY = h - legendH - 46 * scale;
 
             // Legend background
             ctx.save();
             ctx.globalAlpha = 0.88;
             ctx.fillStyle = '#56595eff';
-            roundRect(ctx, legendX, legendY, legendW, legendH, 10);
+            roundRect(ctx, legendX, legendY, legendW, legendH, 10 * scale);
             ctx.fill();
             ctx.globalAlpha = 1;
             ctx.strokeStyle = 'rgba(102, 98, 98, 0.21)';
-            ctx.lineWidth = 1;
-            roundRect(ctx, legendX, legendY, legendW, legendH, 10);
+            ctx.lineWidth = 1 * scale;
+            roundRect(ctx, legendX, legendY, legendW, legendH, 10 * scale);
             ctx.stroke();
             ctx.restore();
 
             // Legend title
             ctx.save();
-            ctx.font = '600 13px Inter, sans-serif';
+            ctx.font = `600 ${Math.round(13 * scale)}px Inter, sans-serif`;
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#7C8BAA';
             ctx.letterSpacing = '0.05em';
-            ctx.fillText('CHÚ GIẢI BẢN ĐỒ', legendX + legendPad, legendY + legendPad + 6);
+            ctx.fillText('CHÚ GIẢI BẢN ĐỒ', legendX + legendPad, legendY + legendPad + 6 * scale);
             ctx.restore();
 
             // Divider
             ctx.save();
             ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-            ctx.lineWidth = 1;
+            ctx.lineWidth = 1 * scale;
             ctx.beginPath();
-            ctx.moveTo(legendX + legendPad, legendY + legendPad + 18);
-            ctx.lineTo(legendX + legendW - legendPad, legendY + legendPad + 18);
+            ctx.moveTo(legendX + legendPad, legendY + legendPad + 18 * scale);
+            ctx.lineTo(legendX + legendW - legendPad, legendY + legendPad + 18 * scale);
             ctx.stroke();
             ctx.restore();
 
             legendItems.forEach((item, i) => {
               const col = i >= rows ? 1 : 0;
               const row = i % rows;
-              const centerY = legendY + legendPad + 28 + row * legendLineH + (legendLineH / 2);
+              const centerY = legendY + legendPad + 28 * scale + row * legendLineH + (legendLineH / 2);
               const ix = legendX + legendPad + col * (legendW / 2);
 
               ctx.save();
@@ -133,26 +138,27 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
               if (item.dash !== undefined) {
                 // Line symbol
                 ctx.strokeStyle = item.color;
-                ctx.lineWidth = item.dash ? 2.5 : 2;
-                if (item.dash) ctx.setLineDash([5, 3]);
+                ctx.lineWidth = (item.dash ? 2.5 : 2) * scale;
+                if (item.dash) ctx.setLineDash([5 * scale, 3 * scale]);
                 ctx.beginPath();
                 ctx.moveTo(ix, centerY);
-                ctx.lineTo(ix + 28, centerY);
+                ctx.lineTo(ix + 28 * scale, centerY);
                 ctx.stroke();
                 ctx.setLineDash([]);
               } else if (item.img) {
                 // Team icon
-                ctx.drawImage(item.img, ix + 6, centerY - 9, 18, 18);
+                const iconDim = 18 * scale;
+                ctx.drawImage(item.img, ix + 6 * scale, centerY - iconDim / 2, iconDim, iconDim);
               } else {
                 // Node symbol
-                ctx.font = '14px sans-serif';
+                ctx.font = `${Math.round(14 * scale)}px sans-serif`;
                 ctx.fillStyle = item.color;
-                ctx.fillText(item.node, ix + 6, centerY + 2);
+                ctx.fillText(item.node, ix + 6 * scale, centerY + 2 * scale);
               }
 
-              ctx.font = '500 12px Inter, sans-serif';
+              ctx.font = `500 ${Math.round(12 * scale)}px Inter, sans-serif`;
               ctx.fillStyle = '#C8D0E0';
-              ctx.fillText(item.label, ix + 36, centerY);
+              ctx.fillText(item.label, ix + 36 * scale, centerY);
               ctx.restore();
             });
 
@@ -161,9 +167,6 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
 
             // ── Draw Team Markers ─────────────────────────────────────
             const TEAM_ICONS_MAP: Record<string, HTMLImageElement> = { FPT: fptImg, DCV: dcvImg, FFC: ffcImg };
-            const container = map.getContainer();
-            const pixelRatioX = w / container.clientWidth;
-            const pixelRatioY = h / container.clientHeight;
 
             ctx.save();
             teams.forEach(team => {
