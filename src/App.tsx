@@ -420,14 +420,14 @@ function SummaryGrid({ data, mode }: any) {
       {mode === 'trong_bao' && (
         <>
           <StormImpactTotalCard
-            label="SL POP bị ảnh hưởng"
+            label="SL POP đang ảnh hưởng"
             value={activeStormImpact.popCount}
             icon="cell_tower"
             accentStyle={ACCENT_STYLE.purple}
             href={`${SHEET_BASE_URL}763532233`}
           />
           <StormImpactTotalCard
-            label="SL KHG FTI bị ảnh hưởng"
+            label="SL KHG FTI đang ảnh hưởng"
             value={activeStormImpact.ftiCustomerCount}
             icon="groups"
             accentStyle={ACCENT_STYLE.teal}
