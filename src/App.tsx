@@ -1143,8 +1143,17 @@ export default function App() {
     setCapturing(true);
     setCaptureMode(true);
     try {
-      // 1. Lấy ảnh map composited (đã gồm chú giải, icon đội) dưới dạng dataURL
-      const mapDataURL = await exportMapImage({
+      // Nhận diện thiết bị iOS (iPhone / iPad)
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+      // Khống chế pixelRatio trên di động iOS <= 2.0 để tránh tràn trần 16 Megapixels của Safari
+      const pixelRatio = isIOS
+        ? Math.min(window.devicePixelRatio || 1.5, 2.0)
+        : (window.devicePixelRatio || 1.5);
+
+      // 1. Lấy trực tiếp HTMLCanvasElement từ exportMapImage (Canvas-to-Canvas 0-copy)
+      const mapCanvas = (await exportMapImage({
         map: mapInstanceRef.current,
         operatorName: mapState.operatorName,
         edges: incidentMapState.edges,
@@ -1152,17 +1161,8 @@ export default function App() {
         teams: mapState.teams,
         showTeamNames: mapState.showTeamNames,
         mode: dashboardMode,
-        returnUrl: true,
-      });
-
-      // Preload ảnh map bằng Image element thuần của JS
-      const mapImg = new Image();
-      mapImg.crossOrigin = 'Anonymous';
-      await new Promise((resolve, reject) => {
-        mapImg.onload = resolve;
-        mapImg.onerror = reject;
-        mapImg.src = mapDataURL as string;
-      });
+        returnCanvas: true,
+      })) as HTMLCanvasElement;
 
       // 2. Chờ font load xong (Inter, Material Symbols)
       await document.fonts.ready;
@@ -1190,7 +1190,6 @@ export default function App() {
       const dashRect = dashboardElement.getBoundingClientRect();
       const slotRect = imageSlot.getBoundingClientRect();
 
-      const pixelRatio = window.devicePixelRatio || 1.5;
       const relLeft = slotRect.left - dashRect.left;
       const relTop = slotRect.top - dashRect.top;
       const relW = slotRect.width;
@@ -1208,11 +1207,11 @@ export default function App() {
       dashboardElement.style.transform = originalTransform;
       dashboardElement.style.overflow = originalOverflow;
 
-      // 5. Vẽ đè ảnh map trực tiếp lên dashboardCanvas bằng Canvas 2D Context (Hoàn toàn tương thích iOS WebKit)
+      // 5. Vẽ đè mapCanvas trực tiếp lên dashboardCanvas bằng Canvas 2D Context (Hoàn toàn đồng bộ & tiết kiệm RAM)
       const ctx = dashboardCanvas.getContext('2d');
-      if (ctx) {
+      if (ctx && mapCanvas) {
         ctx.drawImage(
-          mapImg,
+          mapCanvas,
           relLeft * pixelRatio,
           relTop * pixelRatio,
           relW * pixelRatio,
@@ -1220,15 +1219,54 @@ export default function App() {
         );
       }
 
-      // 6. Download file PNG
-      const finalDataUrl = dashboardCanvas.toDataURL('image/png');
-      const link = document.createElement("a");
+      // 6. Chuyển đổi sang Blob và phân nhánh tải file theo OS (iOS Share Sheet vs PC 1-Click)
       const timestamp = new Date().toISOString().slice(0, 19).replaceAll(":", "-");
-      link.download = `bao-cao-bao-noc-${timestamp}.png`;
-      link.href = finalDataUrl;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const filename = `bao-cao-bao-noc-${timestamp}.png`;
+
+      await new Promise<void>((resolve, reject) => {
+        dashboardCanvas.toBlob(async (blob) => {
+          if (!blob) {
+            reject(new Error("Tạo dữ liệu ảnh thất bại"));
+            return;
+          }
+
+          try {
+            // Ưu tiên Web Share API trên iOS (iPhone/iPad)
+            if (isIOS && navigator.share) {
+              const file = new File([blob], filename, { type: 'image/png' });
+              if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], title: 'Báo cáo tác chiến NOC' });
+                resolve();
+                return;
+              }
+            }
+
+            // PC / Android / Fallback: Tạo Blob URL
+            const blobUrl = URL.createObjectURL(blob);
+
+            if (isIOS) {
+              // iOS Fallback: Mở tab mới với Blob URL để người dùng chạm giữ "Lưu vào Ảnh"
+              const newWindow = window.open(blobUrl, '_blank');
+              if (!newWindow) {
+                alert("Vui lòng cho phép 'Cửa sổ bật lên' (Pop-up) trên Safari để xem và lưu ảnh.");
+              }
+            } else {
+              // PC / Android: Tự động tải file 1-Click
+              const link = document.createElement("a");
+              link.download = filename;
+              link.href = blobUrl;
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+            }
+
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
+        }, 'image/png');
+      });
     } catch (error: any) {
       console.error(error);
       alert(`Chưa chụp được báo cáo: ${error.message}`);
