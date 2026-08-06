@@ -82,15 +82,30 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
               { img: ffcImg, label: 'Đối tác FFC' },
             ];
 
+            // ── CẤU HÌNH LEGEND (Thay đổi LEGEND_ZOOM để phóng to/thu nhỏ toàn bộ Legend) ──
+            const LEGEND_ZOOM = 0.82; // 1.0 = 100%, 1.2 = 120%, 0.8 = 80%
+
+            const LEGEND_CONFIG = {
+              width: 290,           // Chiều rộng khung chú giải
+              padding: 10,          // Lề trong khung
+              lineHeight: 28,       // Chiều cao mỗi dòng
+              titleFontSize: 13,    // Cỡ chữ tiêu đề "CHÚ GIẢI BẢN ĐỒ"
+              itemFontSize: 11,     // Cỡ chữ các mục chú giải
+              nodeFontSize: 12,     // Cỡ biểu tượng Trạm (⬟, ▲, ⚠️)
+              teamIconSize: 16,     // Kích thước icon Đội (FPT, ĐCV, FFC)
+              lineSymbolLength: 28, // Độ dài nét vẽ tuyến cáp
+              borderRadius: 10,     // Độ bo góc khung
+            };
+
             const container = map.getContainer();
             const pixelRatioX = w / container.clientWidth;
             const pixelRatioY = h / container.clientHeight;
-            const scale = Math.max(pixelRatioX, 1);
+            const scale = Math.max(pixelRatioX, 1) * LEGEND_ZOOM;
 
             const rows = Math.ceil(legendItems.length / 2);
-            const legendPad = 14 * scale;
-            const legendLineH = 26 * scale;
-            const legendW = 320 * scale;
+            const legendPad = LEGEND_CONFIG.padding * scale;
+            const legendLineH = LEGEND_CONFIG.lineHeight * scale;
+            const legendW = LEGEND_CONFIG.width * scale;
             const legendH = legendPad * 2 + rows * legendLineH + 12 * scale;
             const legendX = w - legendW - 16 * scale;
             const legendY = h - legendH - 46 * scale;
@@ -99,18 +114,18 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
             ctx.save();
             ctx.globalAlpha = 0.88;
             ctx.fillStyle = '#56595eff';
-            roundRect(ctx, legendX, legendY, legendW, legendH, 10 * scale);
+            roundRect(ctx, legendX, legendY, legendW, legendH, LEGEND_CONFIG.borderRadius * scale);
             ctx.fill();
             ctx.globalAlpha = 1;
             ctx.strokeStyle = 'rgba(102, 98, 98, 0.21)';
             ctx.lineWidth = 1 * scale;
-            roundRect(ctx, legendX, legendY, legendW, legendH, 10 * scale);
+            roundRect(ctx, legendX, legendY, legendW, legendH, LEGEND_CONFIG.borderRadius * scale);
             ctx.stroke();
             ctx.restore();
 
             // Legend title
             ctx.save();
-            ctx.font = `600 ${Math.round(13 * scale)}px Inter, sans-serif`;
+            ctx.font = `600 ${Math.round(LEGEND_CONFIG.titleFontSize * scale)}px Inter, sans-serif`;
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#7C8BAA';
             ctx.letterSpacing = '0.05em';
@@ -142,23 +157,23 @@ export async function exportMapImage(opts: ExportOptions): Promise<string | void
                 if (item.dash) ctx.setLineDash([5 * scale, 3 * scale]);
                 ctx.beginPath();
                 ctx.moveTo(ix, centerY);
-                ctx.lineTo(ix + 28 * scale, centerY);
+                ctx.lineTo(ix + LEGEND_CONFIG.lineSymbolLength * scale, centerY);
                 ctx.stroke();
                 ctx.setLineDash([]);
               } else if (item.img) {
                 // Team icon
-                const iconDim = 18 * scale;
+                const iconDim = LEGEND_CONFIG.teamIconSize * scale;
                 ctx.drawImage(item.img, ix + 6 * scale, centerY - iconDim / 2, iconDim, iconDim);
               } else {
                 // Node symbol
-                ctx.font = `${Math.round(14 * scale)}px sans-serif`;
+                ctx.font = `${Math.round(LEGEND_CONFIG.nodeFontSize * scale)}px sans-serif`;
                 ctx.fillStyle = item.color;
                 ctx.fillText(item.node, ix + 6 * scale, centerY + 2 * scale);
               }
 
-              ctx.font = `500 ${Math.round(12 * scale)}px Inter, sans-serif`;
+              ctx.font = `500 ${Math.round(LEGEND_CONFIG.itemFontSize * scale)}px Inter, sans-serif`;
               ctx.fillStyle = '#C8D0E0';
-              ctx.fillText(item.label, ix + 36 * scale, centerY);
+              ctx.fillText(item.label, ix + (LEGEND_CONFIG.lineSymbolLength + 8) * scale, centerY);
               ctx.restore();
             });
 
