@@ -103,6 +103,11 @@ export function nodeStatusFromCause(value) {
   return "active";
 }
 
+export function nodeStatusFromIncident(cause, status) {
+  if (normalizeIncidentText(status).includes("hoan thanh")) return "active";
+  return nodeStatusFromCause(cause);
+}
+
 function setHigherPriorityStatus(statuses, key, status, priorities) {
   if (!key || !status) return;
   const currentStatus = statuses.get(key);
@@ -135,7 +140,10 @@ export function deriveIncidentMapFeatures({
         ...edge,
         statusBeforeTyphoon: preStormEdgeStatuses.get(canonicalRouteKey(edge.name)) || "normal"
       })),
-      nodes
+      nodes: nodes.map((node) => ({
+        ...node,
+        status: "active"
+      }))
     };
   }
 
@@ -154,7 +162,7 @@ export function deriveIncidentMapFeatures({
     setHigherPriorityStatus(
       nodeStatuses,
       stationKey(incident.target),
-      nodeStatusFromCause(incident.cause),
+      nodeStatusFromIncident(incident.cause, incident.status),
       NODE_STATUS_PRIORITY
     );
   });

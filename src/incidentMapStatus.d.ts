@@ -40,6 +40,10 @@ export function edgeStatusBeforeTyphoonFromLevel(
 export function nodeStatusFromCause(
   value: unknown
 ): "active" | "power_out" | "isolated";
+export function nodeStatusFromIncident(
+  cause: unknown,
+  status: unknown
+): "active" | "power_out" | "isolated";
 export function deriveIncidentMapFeatures(options: {
   mode: DashboardMode;
   edges: EdgeFeature[];

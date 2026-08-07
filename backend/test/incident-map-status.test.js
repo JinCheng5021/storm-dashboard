@@ -6,6 +6,7 @@ import {
   edgeStatusFromIncident,
   edgeStatusBeforeTyphoonFromLevel,
   nodeStatusFromCause,
+  nodeStatusFromIncident,
   summarizeActiveStormImpact
 } from "../../src/incidentMapStatus.js";
 
@@ -93,9 +94,9 @@ test("chỉ đổi màu tuyến theo trạng thái trong SC ngoại vi", () => {
       { route: 'G - H' }
     ],
     stationIncidents: [
-      { target: "CGT", cause: "Mất điện AC" },
-      { target: "TGO", cause: "Trạm bị cô lập do ngập" },
-      { target: "HNI", cause: "SC accu" }
+      { target: "CGT", cause: "Mất điện AC", status: "Hoàn thành" },
+      { target: "TGO", cause: "Trạm bị cô lập do ngập", status: "Đang xử lý" },
+      { target: "HNI", cause: "Mất điện AC", status: "Chưa tiếp cận" }
     ]
   });
 
@@ -106,9 +107,9 @@ test("chỉ đổi màu tuyến theo trạng thái trong SC ngoại vi", () => {
     "normal"
   ]);
   assert.deepEqual(result.nodes.map((node) => node.status), [
-    "power_out",
-    "isolated",
     "active",
+    "isolated",
+    "power_out",
     "active"
   ]);
   assert.deepEqual(result.edges.map((edge) => edge.statusBeforeTyphoon), [
@@ -120,6 +121,9 @@ test("chỉ đổi màu tuyến theo trạng thái trong SC ngoại vi", () => {
   assert.equal(nodeStatusFromCause("Mất điện AC"), "power_out");
   assert.equal(nodeStatusFromCause("Bị cô lập"), "isolated");
   assert.equal(nodeStatusFromCause("SC accu"), "active");
+  assert.equal(nodeStatusFromIncident("Mất điện AC", "Hoàn thành"), "active");
+  assert.equal(nodeStatusFromIncident("Mất điện AC", "Đang xử lý"), "power_out");
+  assert.equal(nodeStatusFromIncident("Bị cô lập", "Chưa tiếp cận"), "isolated");
 });
 
 test("tự động áp dụng mức độ từ DS tuyến, trạm ảnh hưởng khi đang ở chế độ trước bão", () => {
@@ -129,14 +133,20 @@ test("tự động áp dụng mức độ từ DS tuyến, trạm ảnh hưởng
     { id: "edge_ef", name: "Tuyến E - F", status: "normal", statusBeforeTyphoon: "safe" },
     { id: "edge_gh", name: "Tuyến G - H", status: "normal", statusBeforeTyphoon: "unsafe" }
   ];
-  const nodes = [{ id: "node_CGT", name: "CGT", status: "active" }];
+  const nodes = [
+    { id: "node_CGT", name: "CGT", status: "power_out" },
+    { id: "node_TGO", name: "TGO", status: "isolated" }
+  ];
 
   const result = deriveIncidentMapFeatures({
     mode: "truoc_bao",
     edges,
     nodes,
     cableIncidents: [{ target: "A - B", status: "Chưa tiếp cận" }],
-    stationIncidents: [{ target: "CGT", cause: "Mất điện AC" }],
+    stationIncidents: [
+      { target: "CGT", cause: "mat dien AC", status: "dang xu ly" },
+      { target: "TGO", cause: "bi co lap", status: "chua tiep can" }
+    ],
     affectedRoutes: [
       { route: "B - A 48FO", riskLevel: "An toàn" },
       { route: "C - D", riskLevel: "Có nguy cơ" },
@@ -150,6 +160,6 @@ test("tự động áp dụng mức độ từ DS tuyến, trạm ảnh hưởng
     "unsafe",
     "normal"
   ]);
-  assert.strictEqual(result.nodes, nodes);
-  assert.equal(result.nodes[0].status, "active");
+  assert.deepEqual(result.nodes.map((node) => node.status), ["active", "active"]);
+  assert.deepEqual(nodes.map((node) => node.status), ["power_out", "isolated"]);
 });
