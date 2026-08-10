@@ -176,6 +176,34 @@ function createShapeImage(shape: 'triangle' | 'pentagon' | 'warning', size: numb
   return ctx.getImageData(0, 0, size, size);
 }
 
+function createIncidentXImage(size: number): ImageData {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const inset = size * 0.27;
+
+  const drawX = () => {
+    ctx.beginPath();
+    ctx.moveTo(inset, inset);
+    ctx.lineTo(size - inset, size - inset);
+    ctx.moveTo(size - inset, inset);
+    ctx.lineTo(inset, size - inset);
+    ctx.stroke();
+  };
+
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = size * 0.22;
+  drawX();
+  ctx.strokeStyle = '#FF0000';
+  ctx.lineWidth = size * 0.12;
+  drawX();
+
+  return ctx.getImageData(0, 0, size, size);
+}
+
 const DAI_TRAM = ['TGO', 'MCU', 'GPU', 'BKE', 'BHA', 'TKE', 'DDG', 'KEP', 'TYN', 'NDH', 'BSN', 'THA', 'CGT', 'HMI', 'VINH', 'HPO', 'DLE', 'KAH', 'DHI', 'LTY', 'LTY2', 'DHA', 'LBO', 'HUE', 'PLC'];
 const MANG_XONG = ['TTH (Treo)', 'TTH (Ngầm)', 'HNI (Treo)', 'HNI (Ngầm)', 'HLA'];
 
@@ -259,6 +287,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       map.addImage('icon-triangle-red', createShapeImage('triangle', 32, '#FF0000'));
       map.addImage('icon-pentagon', createShapeImage('pentagon', 32, '#FF8C00'));
       map.addImage('icon-warning', createShapeImage('warning', 32, '#000000'));
+      map.addImage('icon-incident-x', createIncidentXImage(48));
 
       // ── Edge sources & layers ────────────────────────
       map.addSource('edges', {
@@ -289,7 +318,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             [
               'match',
               ['get', 'status'],
-              'incident_external', '#FF0000',
+              'incident_external', '#0066FF',
               'danger_zone', '#FF0000',
               'resolved', '#00C853',
               '#0066FF'
@@ -313,6 +342,24 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             'resolved', 1,
             0.7 // normal / safe
           ],
+        },
+      });
+
+      map.addLayer({
+        id: 'edges-incident-markers',
+        type: 'symbol',
+        source: 'edges',
+        filter: [
+          'all',
+          ['==', ['get', 'dashboardMode'], 'trong_bao'],
+          ['==', ['get', 'status'], 'incident_external']
+        ],
+        layout: {
+          'symbol-placement': 'line-center',
+          'icon-image': 'icon-incident-x',
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 5, 0.7, 10, 0.9, 14, 1.1],
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
         },
       });
 

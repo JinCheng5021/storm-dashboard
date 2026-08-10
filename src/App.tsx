@@ -3,15 +3,14 @@ import vietmapgl from "@vietmap/vietmap-gl-js";
 import * as htmlToImage from "html-to-image";
 import { loadDashboardData, visibleDashboardDeployments } from "./dashboardData";
 import { MapCanvas } from "./components/MapCanvas";
-import { ContextMenu } from "./components/ContextMenu";
 import { parseGeoJSON } from "./data/geojsonParser";
 import { mapReducer, EMPTY_MAP_STATE, haversine } from "./mapState";
 import { exportMapImage } from "./utils/exportMap";
 import { supabase } from "./lib/supabase";
 import { numberedTaskName, tasksForDate } from "./taskUtils";
-import { incidentStatusBreakdown } from "./incidentUtils";
-import { canonicalRouteKey, deriveIncidentMapFeatures, edgeStatusFromIncident, stationKey, summarizeActiveStormImpact } from "./incidentMapStatus";
-import type { NodeStatus, EdgeStatus, Team, TeamType, DashboardMode } from "./types";
+import { incidentStatusBreakdown, summarizeRouteIncidents } from "./incidentUtils";
+import { canonicalRouteKey, deriveIncidentMapFeatures, stationKey, summarizeActiveStormImpact } from "./incidentMapStatus";
+import type { Team, TeamType, DashboardMode } from "./types";
 
 const PAGE_SIZE = {
   cable: 4,
@@ -420,14 +419,14 @@ function SummaryGrid({ data, mode }: any) {
       {mode === 'trong_bao' && (
         <>
           <StormImpactTotalCard
-            label="SL POP bị ảnh hưởng"
+            label="SL POP đang ảnh hưởng"
             value={activeStormImpact.popCount}
             icon="cell_tower"
             accentStyle={ACCENT_STYLE.purple}
             href={`${SHEET_BASE_URL}763532233`}
           />
           <StormImpactTotalCard
-            label="SL KHG FTI bị ảnh hưởng"
+            label="SL KHG FTI đang ảnh hưởng"
             value={activeStormImpact.ftiCustomerCount}
             icon="groups"
             accentStyle={ACCENT_STYLE.teal}
@@ -623,8 +622,7 @@ function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
 
   const edgeKey = canonicalRouteKey(edge.name);
   const matchingIncidents = incidents.filter((inc: any) => canonicalRouteKey(inc.target) === edgeKey);
-  const incident = matchingIncidents.find((inc: any) => edgeStatusFromIncident(inc.status) === edge.status)
-    || matchingIncidents[0];
+  const incidentSummary = summarizeRouteIncidents(matchingIncidents);
 
   const isNearBottom = menu.y > (window.innerHeight - 250) || menu.y > 360;
   const style: React.CSSProperties = {
@@ -642,7 +640,7 @@ function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
     color: '#333'
   };
 
-  if (!incident) {
+  if (!matchingIncidents.length) {
     return (
       <div style={style} className="guest-incident-popup">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid #eee', paddingBottom: '4px' }}>
@@ -664,16 +662,19 @@ function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
       </div>
 
       <div style={{ marginBottom: '4px' }}>
-        <span style={{ color: '#666' }}>Số vị trí sự cố:</span> <b style={{ marginLeft: '4px' }}>{incident.incidentCount || '-'}</b>
+        <span style={{ color: '#666' }}>Số sự cố:</span> <b style={{ marginLeft: '4px' }}>{incidentSummary.recordCount || '-'}</b>
+      </div>
+      <div style={{ marginBottom: '4px' }}>
+        <span style={{ color: '#666' }}>Số vị trí sự cố:</span> <b style={{ marginLeft: '4px' }}>{incidentSummary.incidentCount || '-'}</b>
       </div>
       <div style={{ marginBottom: '4px' }}>
         <span style={{ color: '#666' }}>Vị trí:</span> 
-        <b style={{ marginLeft: '4px', whiteSpace: 'pre-line' }}>{incident.location || '-'}</b>
+        <b style={{ marginLeft: '4px', whiteSpace: 'pre-line' }}>{incidentSummary.location || '-'}</b>
       </div>
 
       {isResolved && (
         <div>
-          <span style={{ color: '#666' }}>Tổng thời gian xử lý:</span> <b style={{ marginLeft: '4px' }}>{incident.processingTime || '-'}</b>
+          <span style={{ color: '#666' }}>Tổng thời gian xử lý:</span> <b style={{ marginLeft: '4px' }}>{incidentSummary.processingTime}</b>
         </div>
       )}
     </div>
@@ -992,23 +993,6 @@ export default function App() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const handleNodeStatus = useCallback(async (id: string, status: string) => {
-    if (!session) return;
-    mapDispatch({ type: 'SET_NODE_STATUS', id, status }); // Optimistic local
-    await supabase.from('nodes_status').upsert({ id, status });
-  }, [session]);
-
-  const handleEdgeStatus = useCallback(async (id: string, status: string) => {
-    if (!session) return;
-    if (dashboardMode === 'truoc_bao') {
-      mapDispatch({ type: 'SET_EDGE_STATUS', id, statusBeforeTyphoon: status as EdgeStatus }); // Optimistic local
-      await supabase.from('edges_status').update({ statusbeforetyphoon: status }).eq('id', id);
-    } else {
-      mapDispatch({ type: 'SET_EDGE_STATUS', id, status: status as EdgeStatus }); // Optimistic local
-      await supabase.from('edges_status').update({ status }).eq('id', id);
-    }
-  }, [session, dashboardMode]);
-
   const handleAddTeam = useCallback(async () => {
     if (!mapInstanceRef.current || !session) return;
     const center = mapInstanceRef.current.getCenter();
@@ -1079,13 +1063,6 @@ export default function App() {
     if (pendingTeamIdRef.current === id) pendingTeamIdRef.current = null;
     await supabase.from('teams').delete().eq('id', id);
   }, [session]);
-
-  const contextNodeStatus = mapState.contextMenu?.targetType === 'node'
-    ? incidentMapState.nodes.find((n) => n.id === mapState.contextMenu?.targetId)?.status
-    : undefined;
-  const contextEdgeStatus = mapState.contextMenu?.targetType === 'edge'
-    ? incidentMapState.edges.find((e) => e.id === mapState.contextMenu?.targetId)?.status
-    : undefined;
 
   const pendingTeam = pendingTeamIdRef.current
     ? mapState.teams.find((t) => t.id === pendingTeamIdRef.current) ?? null
@@ -1419,17 +1396,6 @@ export default function App() {
               />
               {mapState.contextMenu?.visible && (
                 <>
-                  {session && dashboardMode === 'truoc_bao' && (
-                    <ContextMenu
-                      menu={mapState.contextMenu}
-                      currentNodeStatus={contextNodeStatus}
-                      currentEdgeStatus={contextEdgeStatus}
-                      onNodeStatusChange={handleNodeStatus}
-                      onEdgeStatusChange={handleEdgeStatus}
-                      onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
-                      mode={dashboardMode}
-                    />
-                  )}
                   {(!session || dashboardMode === 'trong_bao') && (
                     <>
                       <GuestIncidentPopup

@@ -186,7 +186,7 @@
       grid-template-rows: 116px minmax(0, 1fr);
       grid-template-areas:
         "summary summary summary summary summary"
-        "tasks rescue rescue rescue weather";
+        "weather rescue rescue rescue tasks";
     }
 
     .dashboard-mode-truoc_bao .summary-grid {
