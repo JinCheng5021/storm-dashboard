@@ -39,3 +39,57 @@ export function incidentStatusBreakdown(incidents) {
     unreachable: { count: counts.unreachable, percent: percentage(counts.unreachable, total) }
   };
 }
+
+function incidentNumberValue(value) {
+  return Number(String(value || "").replace(/[^\d.-]/g, "")) || 0;
+}
+
+function incidentDurationSeconds(value) {
+  const text = String(value || "").trim();
+  if (!text) return 0;
+
+  const parts = text.split(":").map(Number);
+  if (parts.length === 3 && parts.every(Number.isFinite)) {
+    return (parts[0] * 60 * 60) + (parts[1] * 60) + parts[2];
+  }
+  if (parts.length === 2 && parts.every(Number.isFinite)) {
+    return (parts[0] * 60 * 60) + (parts[1] * 60);
+  }
+
+  const hours = Number(text.replace(",", "."));
+  return Number.isFinite(hours) ? hours * 60 * 60 : 0;
+}
+
+function formatIncidentDuration(totalSeconds) {
+  if (!totalSeconds) return "-";
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+  return [hours, minutes, seconds]
+    .map((part) => String(part).padStart(2, "0"))
+    .join(":");
+}
+
+export function summarizeRouteIncidents(incidents = []) {
+  const summary = incidents.reduce((result, incident) => {
+    result.incidentCount += incidentNumberValue(incident.incidentCount);
+    result.processingSeconds += incidentDurationSeconds(incident.processingTime);
+    String(incident.location || "")
+      .split(/\r?\n/)
+      .map((location) => location.trim())
+      .filter(Boolean)
+      .forEach((location) => result.locations.push(location));
+    return result;
+  }, {
+    incidentCount: 0,
+    processingSeconds: 0,
+    locations: []
+  });
+
+  return {
+    recordCount: incidents.length,
+    incidentCount: summary.incidentCount,
+    location: summary.locations.join("\n"),
+    processingTime: formatIncidentDuration(summary.processingSeconds)
+  };
+}

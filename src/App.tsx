@@ -9,8 +9,8 @@ import { mapReducer, EMPTY_MAP_STATE, haversine } from "./mapState";
 import { exportMapImage } from "./utils/exportMap";
 import { supabase } from "./lib/supabase";
 import { numberedTaskName, tasksForDate } from "./taskUtils";
-import { incidentStatusBreakdown } from "./incidentUtils";
-import { canonicalRouteKey, deriveIncidentMapFeatures, edgeStatusFromIncident, stationKey, summarizeActiveStormImpact } from "./incidentMapStatus";
+import { incidentStatusBreakdown, summarizeRouteIncidents } from "./incidentUtils";
+import { canonicalRouteKey, deriveIncidentMapFeatures, stationKey, summarizeActiveStormImpact } from "./incidentMapStatus";
 import type { NodeStatus, EdgeStatus, Team, TeamType, DashboardMode } from "./types";
 
 const PAGE_SIZE = {
@@ -623,8 +623,7 @@ function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
 
   const edgeKey = canonicalRouteKey(edge.name);
   const matchingIncidents = incidents.filter((inc: any) => canonicalRouteKey(inc.target) === edgeKey);
-  const incident = matchingIncidents.find((inc: any) => edgeStatusFromIncident(inc.status) === edge.status)
-    || matchingIncidents[0];
+  const incidentSummary = summarizeRouteIncidents(matchingIncidents);
 
   const isNearBottom = menu.y > (window.innerHeight - 250) || menu.y > 360;
   const style: React.CSSProperties = {
@@ -642,7 +641,7 @@ function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
     color: '#333'
   };
 
-  if (!incident) {
+  if (!matchingIncidents.length) {
     return (
       <div style={style} className="guest-incident-popup">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid #eee', paddingBottom: '4px' }}>
@@ -664,16 +663,19 @@ function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
       </div>
 
       <div style={{ marginBottom: '4px' }}>
-        <span style={{ color: '#666' }}>Số vị trí sự cố:</span> <b style={{ marginLeft: '4px' }}>{incident.incidentCount || '-'}</b>
+        <span style={{ color: '#666' }}>Số sự cố:</span> <b style={{ marginLeft: '4px' }}>{incidentSummary.recordCount || '-'}</b>
+      </div>
+      <div style={{ marginBottom: '4px' }}>
+        <span style={{ color: '#666' }}>Số vị trí sự cố:</span> <b style={{ marginLeft: '4px' }}>{incidentSummary.incidentCount || '-'}</b>
       </div>
       <div style={{ marginBottom: '4px' }}>
         <span style={{ color: '#666' }}>Vị trí:</span> 
-        <b style={{ marginLeft: '4px', whiteSpace: 'pre-line' }}>{incident.location || '-'}</b>
+        <b style={{ marginLeft: '4px', whiteSpace: 'pre-line' }}>{incidentSummary.location || '-'}</b>
       </div>
 
       {isResolved && (
         <div>
-          <span style={{ color: '#666' }}>Tổng thời gian xử lý:</span> <b style={{ marginLeft: '4px' }}>{incident.processingTime || '-'}</b>
+          <span style={{ color: '#666' }}>Tổng thời gian xử lý:</span> <b style={{ marginLeft: '4px' }}>{incidentSummary.processingTime}</b>
         </div>
       )}
     </div>
