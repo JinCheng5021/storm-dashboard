@@ -3,7 +3,6 @@ import maplibregl from "maplibre-gl";
 import * as htmlToImage from "html-to-image";
 import { loadDashboardData, visibleDashboardDeployments } from "./dashboardData";
 import { MapCanvas } from "./components/MapCanvas";
-import { ContextMenu } from "./components/ContextMenu";
 import { parseGeoJSON } from "./data/geojsonParser";
 import { mapReducer, EMPTY_MAP_STATE, haversine } from "./mapState";
 import { exportMapImage } from "./utils/exportMap";
@@ -11,7 +10,7 @@ import { supabase } from "./lib/supabase";
 import { numberedTaskName, tasksForDate } from "./taskUtils";
 import { incidentStatusBreakdown, summarizeRouteIncidents } from "./incidentUtils";
 import { canonicalRouteKey, deriveIncidentMapFeatures, stationKey, summarizeActiveStormImpact } from "./incidentMapStatus";
-import type { NodeStatus, EdgeStatus, Team, TeamType, DashboardMode } from "./types";
+import type { Team, TeamType, DashboardMode } from "./types";
 
 const PAGE_SIZE = {
   cable: 4,
@@ -994,23 +993,6 @@ export default function App() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const handleNodeStatus = useCallback(async (id: string, status: string) => {
-    if (!session) return;
-    mapDispatch({ type: 'SET_NODE_STATUS', id, status }); // Optimistic local
-    await supabase.from('nodes_status').upsert({ id, status });
-  }, [session]);
-
-  const handleEdgeStatus = useCallback(async (id: string, status: string) => {
-    if (!session) return;
-    if (dashboardMode === 'truoc_bao') {
-      mapDispatch({ type: 'SET_EDGE_STATUS', id, statusBeforeTyphoon: status as EdgeStatus }); // Optimistic local
-      await supabase.from('edges_status').update({ statusbeforetyphoon: status }).eq('id', id);
-    } else {
-      mapDispatch({ type: 'SET_EDGE_STATUS', id, status: status as EdgeStatus }); // Optimistic local
-      await supabase.from('edges_status').update({ status }).eq('id', id);
-    }
-  }, [session, dashboardMode]);
-
   const handleAddTeam = useCallback(async () => {
     if (!mapInstanceRef.current || !session) return;
     const center = mapInstanceRef.current.getCenter();
@@ -1081,13 +1063,6 @@ export default function App() {
     if (pendingTeamIdRef.current === id) pendingTeamIdRef.current = null;
     await supabase.from('teams').delete().eq('id', id);
   }, [session]);
-
-  const contextNodeStatus = mapState.contextMenu?.targetType === 'node'
-    ? incidentMapState.nodes.find((n) => n.id === mapState.contextMenu?.targetId)?.status
-    : undefined;
-  const contextEdgeStatus = mapState.contextMenu?.targetType === 'edge'
-    ? incidentMapState.edges.find((e) => e.id === mapState.contextMenu?.targetId)?.status
-    : undefined;
 
   const pendingTeam = pendingTeamIdRef.current
     ? mapState.teams.find((t) => t.id === pendingTeamIdRef.current) ?? null
@@ -1421,17 +1396,6 @@ export default function App() {
               />
               {mapState.contextMenu?.visible && (
                 <>
-                  {session && dashboardMode === 'truoc_bao' && (
-                    <ContextMenu
-                      menu={mapState.contextMenu}
-                      currentNodeStatus={contextNodeStatus}
-                      currentEdgeStatus={contextEdgeStatus}
-                      onNodeStatusChange={handleNodeStatus}
-                      onEdgeStatusChange={handleEdgeStatus}
-                      onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
-                      mode={dashboardMode}
-                    />
-                  )}
                   {(!session || dashboardMode === 'trong_bao') && (
                     <>
                       <GuestIncidentPopup
