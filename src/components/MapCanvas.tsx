@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import vietmapgl from '@vietmap/vietmap-gl-js';
+import '@vietmap/vietmap-gl-js/vietmap-gl.css';
 import type {
   EdgeFeature,
   NodeFeature,
@@ -22,7 +22,7 @@ interface MapCanvasProps {
   onContextMenu: (state: ContextMenuState) => void;
   onCloseContextMenu: () => void;
   onTeamDrop: (teamId: string, lngLat: [number, number]) => void;
-  onMapReady?: (map: maplibregl.Map) => void;
+  onMapReady?: (map: vietmapgl.Map) => void;
   pendingTeam: Team | null;
   onTeamNameChange: (teamId: string, name: string) => void;
   onTeamNoteChange: (teamId: string, note: string) => void;
@@ -204,11 +204,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   activeStormGeoJSONs = {},
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
+  const mapRef = useRef<vietmapgl.Map | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
-  const tooltipRef = useRef<maplibregl.Popup | null>(null);
-  const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
+  const tooltipRef = useRef<vietmapgl.Popup | null>(null);
+  const markersRef = useRef<Map<string, vietmapgl.Marker>>(new Map());
   const isDraggingTeamRef = useRef(false);
 
   const teamsRef = useRef(teams);
@@ -220,17 +220,17 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
-    const map = new maplibregl.Map({
+    const map = new vietmapgl.Map({
       container: mapContainerRef.current,
-      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+      style: 'https://maps.vietmap.vn/maps/styles/lm/style.json?apikey=b1e2628492963187131715cdb85c1af876ddefcb8125ed43',
       center: INIT_CENTER,
       zoom: INIT_ZOOM,
       // maxBounds: [[95, 7], [115, 24]] as [[number, number], [number, number]],
       preserveDrawingBuffer: true, // Required for map.getCanvas().toDataURL()
-    } as maplibregl.MapOptions);
+    } as vietmapgl.MapOptions);
 
-    map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-    map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
+    map.addControl(new vietmapgl.NavigationControl(), 'bottom-right');
+    map.addControl(new vietmapgl.ScaleControl({ unit: 'metric' }), 'bottom-right');
 
     map.on('load', () => {
       // ── Background wash (fades the carto basemap) ──
@@ -429,7 +429,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       // ── Interactions ─────────────────────────────────
 
       // Tooltip popup
-      tooltipRef.current = new maplibregl.Popup({
+      tooltipRef.current = new vietmapgl.Popup({
         closeButton: false,
         closeOnClick: false,
         anchor: 'bottom',
@@ -547,7 +547,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
     const map = mapRef.current;
-    const src = map.getSource('edges') as maplibregl.GeoJSONSource | undefined;
+    const src = map.getSource('edges') as vietmapgl.GeoJSONSource | undefined;
     src?.setData(edgesGeoJSON(edges, mode, routeInformation));
   }, [edges, mapReady, mode, routeInformation]);
 
@@ -555,7 +555,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
     const map = mapRef.current;
-    const src = map.getSource('nodes') as maplibregl.GeoJSONSource | undefined;
+    const src = map.getSource('nodes') as vietmapgl.GeoJSONSource | undefined;
     src?.setData(nodesGeoJSON(nodes));
   }, [nodes, mapReady]);
 
@@ -601,7 +601,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       if (!map.getSource(sourceId)) {
         map.addSource(sourceId, { type: 'geojson', data: geojson });
       } else {
-        (map.getSource(sourceId) as maplibregl.GeoJSONSource).setData(geojson);
+        (map.getSource(sourceId) as vietmapgl.GeoJSONSource).setData(geojson);
       }
 
       if (!map.getLayer(fillLayerId)) {
@@ -797,8 +797,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         });
       }
 
-      // Gắn wrapper vào MapLibre, vô hiệu hóa draggable nếu không editable hoặc chưa đăng nhập
-      const marker = new maplibregl.Marker({
+      // Gắn wrapper vào VietMap, vô hiệu hóa draggable nếu không editable hoặc chưa đăng nhập
+      const marker = new vietmapgl.Marker({
         element: wrapper,
         draggable: isEditable,
         anchor: 'center',
@@ -848,7 +848,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
 
   // ── Pending team input popup ─────────────────────────────────
-  const pendingPopupRef = useRef<maplibregl.Popup | null>(null);
+  const pendingPopupRef = useRef<vietmapgl.Popup | null>(null);
   const currentPendingIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -895,7 +895,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       <button id="tip-confirm-${pendingTeam.id}" class="tip-confirm btn btn-primary">Xác nhận ✓</button>
     `;
 
-    const popup = new maplibregl.Popup({
+    const popup = new vietmapgl.Popup({
       closeButton: false,
       closeOnClick: false,
       maxWidth: '260px',

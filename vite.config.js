@@ -4,6 +4,12 @@ import { resolve } from "node:path";
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: [
+      { find: "@vietmap/vietmap-gl-js/vietmap-gl.css", replacement: resolve(import.meta.dirname, "node_modules/@vietmap/vietmap-gl-js/dist/vietmap-gl.css") },
+      { find: "@vietmap/vietmap-gl-js", replacement: resolve(import.meta.dirname, "node_modules/@vietmap/vietmap-gl-js/dist/vietmap-gl.js") }
+    ]
+  },
   server: {
     proxy: {
       "/api": {

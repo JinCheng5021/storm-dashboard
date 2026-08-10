@@ -1,8 +1,8 @@
-import type maplibregl from 'maplibre-gl';
+import type vietmapgl from '@vietmap/vietmap-gl-js';
 import type { EdgeFeature, NodeFeature, Team, DashboardMode } from '../types';
 
 interface ExportOptions {
-  map: maplibregl.Map;
+  map: vietmapgl.Map;
   operatorName: string;
   edges: EdgeFeature[];
   nodes: NodeFeature[];

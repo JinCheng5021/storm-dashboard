@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useReducer } from "react";
-import maplibregl from "maplibre-gl";
+import vietmapgl from "@vietmap/vietmap-gl-js";
 import * as htmlToImage from "html-to-image";
 import { loadDashboardData, visibleDashboardDeployments } from "./dashboardData";
 import { MapCanvas } from "./components/MapCanvas";
@@ -895,7 +895,7 @@ export default function App() {
     stationIncidents: data.stationIncidents,
     affectedRoutes: data.affectedRoutes
   }), [dashboardMode, mapState.edges, mapState.nodes, data.cableIncidents, data.stationIncidents, data.affectedRoutes]);
-  const mapInstanceRef = useRef<maplibregl.Map | null>(null);
+  const mapInstanceRef = useRef<vietmapgl.Map | null>(null);
   const pendingTeamIdRef = useRef<string | null>(null);
 
   // --- Auth State ---
