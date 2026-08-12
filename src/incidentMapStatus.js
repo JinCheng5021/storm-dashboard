@@ -120,61 +120,44 @@ export function deriveIncidentMapFeatures({
   mode,
   edges,
   nodes,
-  cableIncidents,
-  stationIncidents,
-  affectedRoutes = []
+  cableIncidents = [],
+  stationIncidents = []
 }) {
-  if (mode === "truoc_bao") {
-    const preStormEdgeStatuses = new Map();
-    affectedRoutes.forEach((route) => {
+  const edgeIncidentStatuses = new Map();
+  const nodeStatuses = new Map();
+
+  if (mode === "trong_bao") {
+    cableIncidents.forEach((incident) => {
       setHigherPriorityStatus(
-        preStormEdgeStatuses,
-        canonicalRouteKey(route.route),
-        edgeStatusBeforeTyphoonFromLevel(route.riskLevel),
-        PRE_STORM_EDGE_STATUS_PRIORITY
+        edgeIncidentStatuses,
+        canonicalRouteKey(incident.target),
+        edgeStatusFromIncident(incident.status),
+        EDGE_STATUS_PRIORITY
       );
     });
 
-    return {
-      edges: edges.map((edge) => ({
-        ...edge,
-        statusBeforeTyphoon: preStormEdgeStatuses.get(canonicalRouteKey(edge.name)) || "normal"
-      })),
-      nodes: nodes.map((node) => ({
-        ...node,
-        status: "active"
-      }))
-    };
+    stationIncidents.forEach((incident) => {
+      setHigherPriorityStatus(
+        nodeStatuses,
+        stationKey(incident.target),
+        nodeStatusFromIncident(incident.cause, incident.status),
+        NODE_STATUS_PRIORITY
+      );
+    });
   }
-
-  const edgeStatuses = new Map();
-  cableIncidents.forEach((incident) => {
-    setHigherPriorityStatus(
-      edgeStatuses,
-      canonicalRouteKey(incident.target),
-      edgeStatusFromIncident(incident.status),
-      EDGE_STATUS_PRIORITY
-    );
-  });
-
-  const nodeStatuses = new Map();
-  stationIncidents.forEach((incident) => {
-    setHigherPriorityStatus(
-      nodeStatuses,
-      stationKey(incident.target),
-      nodeStatusFromIncident(incident.cause, incident.status),
-      NODE_STATUS_PRIORITY
-    );
-  });
 
   return {
     edges: edges.map((edge) => ({
       ...edge,
-      status: edgeStatuses.get(canonicalRouteKey(edge.name)) || "normal"
+      // Đảm bảo màu sắc nét vẽ tuyến luôn giữ theo bán kính bão (normal / unsafe / risky)
+      status: edge.status || "normal",
+      statusBeforeTyphoon: edge.statusBeforeTyphoon || edge.status || "normal",
+      // Đặt icon dấu X (incident_external) hoặc dấu Check V (resolved) theo sự cố từ Sheet SC ngoại vi
+      cableIncidentStatus: edgeIncidentStatuses.get(canonicalRouteKey(edge.name)) || null
     })),
     nodes: nodes.map((node) => ({
       ...node,
-      status: nodeStatuses.get(stationKey(node.name)) || "active"
+      status: mode === "truoc_bao" ? "active" : (nodeStatuses.get(stationKey(node.name)) || "active")
     }))
   };
 }

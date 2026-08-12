@@ -21,3 +21,18 @@ export async function syncStorms(req, res, next) {
     next(error);
   }
 }
+
+export async function recalculateImpact(req, res, next) {
+  try {
+    const { recalculateStormImpact } = await import("../services/stormImpact.service.js");
+    const result = await recalculateStormImpact();
+    if (result.success) {
+      res.json({ success: true, data: result.stats });
+    } else {
+      res.status(500).json({ success: false, message: result.error || result.message });
+    }
+  } catch (error) {
+    next(error);
+  }
+}
+

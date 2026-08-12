@@ -4,6 +4,7 @@ import { DOMParser } from "@xmldom/xmldom";
 import * as toGeoJSON from "@tmcw/togeojson";
 import { parseJtwcText } from "../utils/jtwcParser.js";
 import { supabaseAdmin } from "../config/supabase.js";
+import { recalculateStormImpact } from "./stormImpact.service.js";
 
 const RSS_URL = "https://www.metoc.navy.mil/jtwc/rss/jtwc.rss";
 
@@ -172,6 +173,13 @@ export async function syncJtwcStorms() {
       if (updateErr) {
         console.error("Error updating inactive storms:", updateErr);
       }
+    }
+
+    // Tự động tính toán không gian và cập nhật 3 trạng thái tuyến cáp vào Supabase (edges_status)
+    try {
+      await recalculateStormImpact();
+    } catch (calcErr) {
+      console.error("Error recalculating storm impact:", calcErr);
     }
 
     return { success: true, synced: syncedCount };

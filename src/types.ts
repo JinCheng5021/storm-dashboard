@@ -16,6 +16,7 @@ export interface EdgeFeature {
   coordinates: [number, number][]; // array of [lng, lat]
   status: EdgeStatus;
   statusBeforeTyphoon?: EdgeStatus;
+  cableIncidentStatus?: 'incident_external' | 'resolved' | null;
 }
 
 export interface Team {

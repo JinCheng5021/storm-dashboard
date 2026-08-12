@@ -211,7 +211,7 @@ function PreStormRouteChart({ data, isLoading }: any) {
   const directEnd = totalCount ? (directCount / totalCount) * 100 : 0;
   const chartStyle = {
     background: totalCount
-      ? `conic-gradient(var(--fpt-orange) 0 ${directEnd}%, var(--fpt-green) ${directEnd}% 100%)`
+      ? `conic-gradient(#FF0000 0 ${directEnd}%, #FFD600 ${directEnd}% 100%)`
       : "#e2e8f0"
   };
 
@@ -233,8 +233,8 @@ function PreStormRouteChart({ data, isLoading }: any) {
         </div>
         <div className="pie-meta">
           <div className="pie-legend">
-            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-orange"></i>Trực tiếp</span><span className="pie-legend-value"><strong>{directCount}</strong><small>{directLength.toFixed(1)} km</small></span></div>
-            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-green"></i>Gián tiếp</span><span className="pie-legend-value"><strong>{indirectCount}</strong><small>{indirectLength.toFixed(1)} km</small></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot" style={{ backgroundColor: '#FF0000' }}></i>Trực tiếp</span><span className="pie-legend-value"><strong>{directCount}</strong><small>{directLength.toFixed(1)} km</small></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot" style={{ backgroundColor: '#FFD600' }}></i>Gián tiếp</span><span className="pie-legend-value"><strong>{indirectCount}</strong><small>{indirectLength.toFixed(1)} km</small></span></div>
           </div>
         </div>
       </div>
@@ -308,12 +308,19 @@ function StormImpactTotalCard({ label, value, icon, accentStyle, href }: any) {
   );
 }
 
-function SummaryGrid({ data, mode }: any) {
+function SummaryGrid({ data, mode, edges = [] }: any) {
   const visibleDeployments = visibleDashboardDeployments(data.deployments);
   const totalPersonnel = visibleDeployments.reduce((sum: any, item: any) => sum + item.count, 0);
   const deploymentCount = visibleDeployments.length;
   const resources = data.responseResources || { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 };
   
+  const routeInfoMap = new Map<string, any>();
+  if (Array.isArray(data.routeInformation)) {
+    data.routeInformation.forEach((r: any) => {
+      routeInfoMap.set(canonicalRouteKey(r.route), r);
+    });
+  }
+
   let directRouteCount = 0;
   let directLength = 0;
   let indirectRouteCount = 0;
@@ -322,20 +329,45 @@ function SummaryGrid({ data, mode }: any) {
   let indirectPopCount = 0;
   let totalPopCount = 0;
 
+  if (Array.isArray(edges)) {
+    edges.forEach((edge: any) => {
+      const status = edge.status || edge.statusBeforeTyphoon;
+      const isDirect = status === 'unsafe' || status === 'incident_external' || status === 'danger_zone';
+      const isIndirect = status === 'risky';
+
+      if (isDirect || isIndirect) {
+        const routeInfo = routeInfoMap.get(canonicalRouteKey(edge.name));
+        let len = 0;
+        if (routeInfo && routeInfo.length) {
+          len = parseFloat(routeInfo.length) || 0;
+        }
+        if (!len && Array.isArray(edge.coordinates) && edge.coordinates.length > 1) {
+          for (let i = 0; i < edge.coordinates.length - 1; i++) {
+            len += haversine(edge.coordinates[i], edge.coordinates[i + 1]);
+          }
+        }
+
+        if (isDirect) {
+          directRouteCount++;
+          directLength += len;
+        } else if (isIndirect) {
+          indirectRouteCount++;
+          indirectLength += len;
+        }
+      }
+    });
+  }
+
+  // Khôi phục tính toán "SL POP có nguy cơ" đọc từ Sheet Google (affectedRoutes)
   if (data?.affectedRoutes) {
     data.affectedRoutes.forEach((route: any) => {
       const type = String(route.impact || "").trim().toLocaleLowerCase("vi-VN");
-      const len = parseFloat(route.length) || 0;
       const pop = parseInt(route.pops) || 0;
       if (type) totalPopCount += pop;
 
       if (type.includes("trực tiếp")) {
-        directRouteCount++;
-        directLength += len;
         directPopCount += pop;
       } else if (type.includes("gián tiếp")) {
-        indirectRouteCount++;
-        indirectLength += len;
         indirectPopCount += pop;
       }
     });
@@ -618,10 +650,14 @@ function HiddenIncidentTables({ data, pages, setPages }) {
 function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
   if (menu.targetType !== 'edge') return null;
   const edge = edges.find((e: any) => e.id == menu.targetId);
-  if (!edge || !['incident_external', 'danger_zone', 'resolved'].includes(edge.status)) return null;
+  if (!edge) return null;
 
   const edgeKey = canonicalRouteKey(edge.name);
   const matchingIncidents = incidents.filter((inc: any) => canonicalRouteKey(inc.target) === edgeKey);
+
+  // Chỉ hiển thị popup khi tuyến cáp có sự cố trong Sheet SC ngoại vi
+  if (!matchingIncidents.length && !edge.cableIncidentStatus) return null;
+
   const incidentSummary = summarizeRouteIncidents(matchingIncidents);
 
   const isNearBottom = menu.y > (window.innerHeight - 250) || menu.y > 360;
@@ -652,7 +688,7 @@ function GuestIncidentPopup({ menu, edges, incidents, onClose }: any) {
     );
   }
 
-  const isResolved = edge.status === 'resolved';
+  const isResolved = edge.cableIncidentStatus === 'resolved' || edge.status === 'resolved';
 
   return (
     <div style={style} className="guest-incident-popup">
@@ -893,9 +929,8 @@ export default function App() {
     edges: mapState.edges,
     nodes: mapState.nodes,
     cableIncidents: data.cableIncidents,
-    stationIncidents: data.stationIncidents,
-    affectedRoutes: data.affectedRoutes
-  }), [dashboardMode, mapState.edges, mapState.nodes, data.cableIncidents, data.stationIncidents, data.affectedRoutes]);
+    stationIncidents: data.stationIncidents
+  }), [dashboardMode, mapState.edges, mapState.nodes, data.cableIncidents, data.stationIncidents]);
   const mapInstanceRef = useRef<vietmapgl.Map | null>(null);
   const pendingTeamIdRef = useRef<string | null>(null);
 
@@ -940,14 +975,14 @@ export default function App() {
 
         // Merge state
         const nodeMap = new Map(dbNodes.map(n => [n.id, n.status]));
-        const edgeMap = new Map(dbEdges.map(e => [e.id, { status: e.status, statusBeforeTyphoon: e.statusbeforetyphoon || e.statusBeforeTyphoon }]));
+        const edgeMap = new Map(dbEdges.map(e => [e.id, e.status]));
 
         nodes.forEach(n => { if (nodeMap.has(n.id)) n.status = nodeMap.get(n.id); });
         edges.forEach(e => {
           if (edgeMap.has(e.id)) {
-            const mapped = edgeMap.get(e.id)!;
-            e.status = mapped.status;
-            if (mapped.statusBeforeTyphoon) e.statusBeforeTyphoon = mapped.statusBeforeTyphoon;
+            const mappedStatus = edgeMap.get(e.id)!;
+            e.status = mappedStatus;
+            e.statusBeforeTyphoon = mappedStatus;
           }
         });
 
@@ -974,7 +1009,7 @@ export default function App() {
             type: 'SET_EDGE_STATUS', 
             id: payload.new.id, 
             status: payload.new.status,
-            statusBeforeTyphoon: payload.new.statusbeforetyphoon || payload.new.statusBeforeTyphoon 
+            statusBeforeTyphoon: payload.new.status 
           });
         }
       })
@@ -1318,7 +1353,7 @@ export default function App() {
       </header>
 
       <div className="dashboard-body">
-        <SummaryGrid data={data} mode={dashboardMode} />
+        <SummaryGrid data={data} mode={dashboardMode} edges={incidentMapState.edges} />
         <WeatherPanel 
           rows={data.weatherRows} 
           page={pages.weather} 
@@ -1396,22 +1431,18 @@ export default function App() {
               />
               {mapState.contextMenu?.visible && (
                 <>
-                  {(!session || dashboardMode === 'trong_bao') && (
-                    <>
-                      <GuestIncidentPopup
-                        menu={mapState.contextMenu}
-                        edges={incidentMapState.edges}
-                        incidents={data.cableIncidents}
-                        onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
-                      />
-                      <GuestNodePopup
-                        menu={mapState.contextMenu}
-                        nodes={incidentMapState.nodes}
-                        incidents={data.stationIncidents}
-                        onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
-                      />
-                    </>
-                  )}
+                  <GuestIncidentPopup
+                    menu={mapState.contextMenu}
+                    edges={incidentMapState.edges}
+                    incidents={data.cableIncidents}
+                    onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
+                  />
+                  <GuestNodePopup
+                    menu={mapState.contextMenu}
+                    nodes={incidentMapState.nodes}
+                    incidents={data.stationIncidents}
+                    onClose={() => mapDispatch({ type: 'CLOSE_CONTEXT' })}
+                  />
                   <GuestTeamPopup
                     menu={mapState.contextMenu}
                     teams={mapState.teams}

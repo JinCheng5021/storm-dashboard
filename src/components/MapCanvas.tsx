@@ -107,7 +107,8 @@ function edgesGeoJSON(edges: EdgeFeature[], mode: DashboardMode, routeInformatio
         properties: {
           id: e.id,
           name: e.name,
-          status: mode === 'truoc_bao' ? (e.statusBeforeTyphoon || 'normal') : e.status,
+          status: e.status || 'normal',
+          cableIncidentStatus: e.cableIncidentStatus || '',
           dashboardMode: mode,
           routeLength: route?.length || '',
           routePops: route?.pops || '',
@@ -204,6 +205,32 @@ function createIncidentXImage(size: number): ImageData {
   return ctx.getImageData(0, 0, size, size);
 }
 
+function createIncidentCheckImage(size: number): ImageData {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+
+  const drawCheck = () => {
+    ctx.beginPath();
+    ctx.moveTo(size * 0.2, size * 0.52);
+    ctx.lineTo(size * 0.42, size * 0.74);
+    ctx.lineTo(size * 0.8, size * 0.28);
+    ctx.stroke();
+  };
+
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = size * 0.22;
+  drawCheck();
+  ctx.strokeStyle = '#00C853';
+  ctx.lineWidth = size * 0.12;
+  drawCheck();
+
+  return ctx.getImageData(0, 0, size, size);
+}
+
 const DAI_TRAM = ['TGO', 'MCU', 'GPU', 'BKE', 'BHA', 'TKE', 'DDG', 'KEP', 'TYN', 'NDH', 'BSN', 'THA', 'CGT', 'HMI', 'VINH', 'HPO', 'DLE', 'KAH', 'DHI', 'LTY', 'LTY2', 'DHA', 'LBO', 'HUE', 'PLC'];
 const MANG_XONG = ['TTH (Treo)', 'TTH (Ngầm)', 'HNI (Treo)', 'HNI (Ngầm)', 'HLA'];
 
@@ -248,19 +275,44 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
+    const vietmapApiKey = import.meta.env.VITE_VIETMAP_API_KEY;
+    const styleUrl = `https://maps.vietmap.vn/maps/styles/lm/style.json?apikey=${vietmapApiKey}`;
+
     const map = new vietmapgl.Map({
       container: mapContainerRef.current,
-      style: 'https://maps.vietmap.vn/maps/styles/lm/style.json?apikey=b1e2628492963187131715cdb85c1af876ddefcb8125ed43',
+      style: styleUrl,
       center: INIT_CENTER,
       zoom: INIT_ZOOM,
-      // maxBounds: [[95, 7], [115, 24]] as [[number, number], [number, number]],
+      fadeDuration: 0, // Tắt hiệu ứng mờ nhãn khi tile load giúp tăng FPS khi zoom
+      maxTileCacheSize: 80, // Giới hạn cache tile nhẹ RAM
       preserveDrawingBuffer: true, // Required for map.getCanvas().toDataURL()
     } as vietmapgl.MapOptions);
+
+    // ── Tối ưu cho màn hình High DPI (2K / 4K / Retina) ──
+    // Giới hạn pixelRatio tối đa là 1.25 để tránh GPU phải render số lượng pixel quá lớn (3840x2160)
+    if (window.devicePixelRatio > 1.25) {
+      (map as any)._pixelRatio = 1.25;
+      map.resize();
+    }
 
     map.addControl(new vietmapgl.NavigationControl(), 'bottom-right');
     map.addControl(new vietmapgl.ScaleControl({ unit: 'metric' }), 'bottom-right');
 
     map.on('load', () => {
+      // Ẩn toàn bộ layer tòa nhà 3D & footprint nặng nề của VietMap để nhẹ đồ họa
+      const style = map.getStyle();
+      if (style && style.layers) {
+        style.layers.forEach((layer) => {
+          if (
+            layer.type === 'fill-extrusion' ||
+            layer.id.includes('building') ||
+            layer.id.includes('3d')
+          ) {
+            map.setLayoutProperty(layer.id, 'visibility', 'none');
+          }
+        });
+      }
+
       // ── Background wash (fades the carto basemap) ──
       map.addSource('world-wash', {
         type: 'geojson',
@@ -288,6 +340,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       map.addImage('icon-pentagon', createShapeImage('pentagon', 32, '#FF8C00'));
       map.addImage('icon-warning', createShapeImage('warning', 32, '#000000'));
       map.addImage('icon-incident-x', createIncidentXImage(48));
+      map.addImage('icon-incident-check', createIncidentCheckImage(48));
 
       // ── Edge sources & layers ────────────────────────
       map.addSource('edges', {
@@ -305,42 +358,29 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           'line-width': [
             'match',
             ['get', 'status'],
-            'incident_external', 3.5,
             'unsafe', 3.5,
+            'incident_external', 3.5,
             'danger_zone', 3.5,
-            'risky', 3.5,
-            'resolved', 3,
-            2 // normal / safe
+            'risky', 3,
+            2 // normal
           ],
           'line-color': [
-            'case',
-            ['==', ['get', 'dashboardMode'], 'trong_bao'],
-            [
-              'match',
-              ['get', 'status'],
-              'incident_external', '#0066FF',
-              'danger_zone', '#FF0000',
-              'resolved', '#00C853',
-              '#0066FF'
-            ],
-            [
-              'match',
-              ['get', 'status'],
-              'unsafe', '#FF0000',
-              'risky', '#FFD600',
-              'safe', '#00C853',
-              '#0066FF'
-            ]
+            'match',
+            ['get', 'status'],
+            'unsafe', '#FF0000',
+            'incident_external', '#FF0000',
+            'danger_zone', '#FF0000',
+            'risky', '#FFD600',
+            '#0066FF' // normal (default blue)
           ],
           'line-opacity': [
             'match',
             ['get', 'status'],
-            'incident_external', 1,
             'unsafe', 1,
+            'incident_external', 1,
             'danger_zone', 1,
             'risky', 1,
-            'resolved', 1,
-            0.7 // normal / safe
+            0.8 // normal
           ],
         },
       });
@@ -352,11 +392,17 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         filter: [
           'all',
           ['==', ['get', 'dashboardMode'], 'trong_bao'],
-          ['==', ['get', 'status'], 'incident_external']
+          ['!=', ['get', 'cableIncidentStatus'], '']
         ],
         layout: {
           'symbol-placement': 'line-center',
-          'icon-image': 'icon-incident-x',
+          'icon-image': [
+            'match',
+            ['get', 'cableIncidentStatus'],
+            'incident_external', 'icon-incident-x',
+            'resolved', 'icon-incident-check',
+            'icon-incident-x'
+          ],
           'icon-size': ['interpolate', ['linear'], ['zoom'], 5, 0.7, 10, 0.9, 14, 1.1],
           'icon-allow-overlap': true,
           'icon-ignore-placement': true,
@@ -454,7 +500,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           'text-allow-overlap': true,
           'text-ignore-placement': false,
           'text-padding': 1,
-          'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+          'text-font': ['Roboto Regular'],
           'text-max-width': 8,
           'visibility': 'visible',
         },

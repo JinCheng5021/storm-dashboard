@@ -1671,7 +1671,8 @@
       "type": "Feature",
       "properties": {
         "name": "Tuyến HUE (MPOP) - DNG",
-        "is_edited": true
+        "is_edited": true,
+        "id": "route_80"
       },
       "geometry": {
         "type": "LineString",
@@ -1695,7 +1696,8 @@
       "type": "Feature",
       "properties": {
         "name": "Tuyến KEP - DDG",
-        "is_edited": true
+        "is_edited": true,
+        "id": "route_81"
       },
       "geometry": {
         "type": "LineString",
@@ -1719,7 +1721,8 @@
       "type": "Feature",
       "properties": {
         "name": "Tuyến DDG - HNI (Ngầm)",
-        "is_edited": true
+        "is_edited": true,
+        "id": "route_82"
       },
       "geometry": {
         "type": "LineString",
@@ -1743,7 +1746,8 @@
       "type": "Feature",
       "properties": {
         "name": "Tuyến DDG - HNI (Treo)",
-        "is_edited": true
+        "is_edited": true,
+        "id": "route_83"
       },
       "geometry": {
         "type": "LineString",
@@ -1767,7 +1771,8 @@
       "type": "Feature",
       "properties": {
         "name": "Tuyến DDG - TTH (Treo)",
-        "is_edited": true
+        "is_edited": true,
+        "id": "route_84"
       },
       "geometry": {
         "type": "LineString",
@@ -1791,7 +1796,8 @@
       "type": "Feature",
       "properties": {
         "name": "Tuyến VBO - PNI",
-        "is_edited": true
+        "is_edited": true,
+        "id": "route_85"
       },
       "geometry": {
         "type": "LineString",
@@ -1811,7 +1817,8 @@
       "type": "Feature",
       "properties": {
         "name": "Tuyến DDG - TTH (Ngầm)",
-        "is_edited": true
+        "is_edited": true,
+        "id": "route_86"
       },
       "geometry": {
         "type": "LineString",
@@ -1835,7 +1842,8 @@
       "type": "Feature",
       "properties": {
         "name": "Tuyến HNI - PNI",
-        "is_edited": true
+        "is_edited": true,
+        "id": "route_87"
       },
       "geometry": {
         "type": "LineString",
@@ -1855,7 +1863,8 @@
       "type": "Feature",
       "properties": {
         "name": "Tuyến VBO - BNH",
-        "is_edited": true
+        "is_edited": true,
+        "id": "route_88"
       },
       "geometry": {
         "type": "LineString",
@@ -1875,7 +1884,8 @@
       "type": "Feature",
       "properties": {
         "name": "Tuyến VBO - DAH",
-        "is_edited": true
+        "is_edited": true,
+        "id": "route_89"
       },
       "geometry": {
         "type": "LineString",
@@ -1895,7 +1905,8 @@
       "type": "Feature",
       "properties": {
         "name": "Tuyến KAH - HLA",
-        "is_edited": true
+        "is_edited": true,
+        "id": "route_90"
       },
       "geometry": {
         "type": "LineString",
@@ -1923,7 +1934,8 @@
       "type": "Feature",
       "properties": {
         "name": "Tuyến KAH - BDN",
-        "is_edited": true
+        "is_edited": true,
+        "id": "route_91"
       },
       "geometry": {
         "type": "LineString",
