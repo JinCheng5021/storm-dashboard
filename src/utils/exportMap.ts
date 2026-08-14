@@ -23,11 +23,13 @@ export async function exportMapImage(opts: ExportOptions): Promise<HTMLCanvasEle
     img.src = url;
   });
 
-  // Preload team SVG icons
-  const [fptImg, dcvImg, ffcImg] = await Promise.all([
+  // Preload team SVG icons & station status icons
+  const [fptImg, dcvImg, ffcImg, matDienImg, cautionImg] = await Promise.all([
     loadSvg('/fpt.svg'),
     loadSvg('/dcv.svg'),
     loadSvg('/ffc.svg'),
+    loadSvg('/matdien.png'),
+    loadSvg('/caution-icon.svg'),
   ]);
 
   return new Promise((resolve, reject) => {
@@ -63,8 +65,8 @@ export async function exportMapImage(opts: ExportOptions): Promise<HTMLCanvasEle
             ...edgeLegendItems,
             { node: '⬟', color: '#FF8C00', label: 'MPOP' },
             { node: '▲', color: '#000000', label: 'Trạm bình thường' },
-            { node: '▲', color: '#FF0000', label: 'Trạm mất điện' },
-            { node: '⚠️', color: '#FF0000', label: 'Trạm cô lập' },
+            { img: matDienImg, label: 'Trạm mất điện' },
+            { img: cautionImg, label: 'Trạm cô lập' },
             { img: fptImg, label: 'Đội FPT' },
             { img: dcvImg, label: 'Đối tác ĐCV' },
             { img: ffcImg, label: 'Đối tác FFC' },

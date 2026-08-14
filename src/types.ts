@@ -8,6 +8,7 @@ export interface NodeFeature {
   name: string;
   coordinates: [number, number]; // [lng, lat]
   status: NodeStatus;
+  anhHuong?: 'normal' | 'direct' | 'indirect';
 }
 
 export interface EdgeFeature {

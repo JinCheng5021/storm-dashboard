@@ -2,7 +2,7 @@ import type { NodeFeature, Team, ContextMenuState, NodeStatus, EdgeStatus, MapVi
 import { parseGeoJSON } from './data/geojsonParser';
 
 export type Action =
-  | { type: 'SET_NODE_STATUS';  id: string; status: NodeStatus }
+  | { type: 'SET_NODE_STATUS';  id: string; status?: NodeStatus; anhHuong?: 'normal' | 'direct' | 'indirect' }
   | { type: 'SET_EDGE_STATUS';  id: string; status?: EdgeStatus; statusBeforeTyphoon?: EdgeStatus }
   | { type: 'ADD_TEAM';         team: Team }
   | { type: 'UPDATE_TEAM';      id: string; patch: Partial<Team> }
@@ -21,9 +21,13 @@ export function mapReducer(state: MapViewState, action: Action): MapViewState {
     case 'SET_NODE_STATUS':
       return {
         ...state,
-        nodes: state.nodes.map((n) =>
-          n.id === action.id ? { ...n, status: action.status } : n
-        ),
+        nodes: state.nodes.map((n) => {
+          if (n.id !== action.id) return n;
+          const updates: Partial<NodeFeature> = {};
+          if (action.status) updates.status = action.status;
+          if (action.anhHuong) updates.anhHuong = action.anhHuong;
+          return { ...n, ...updates };
+        }),
       };
     case 'SET_EDGE_STATUS':
       return {

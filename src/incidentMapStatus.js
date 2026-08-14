@@ -157,7 +157,8 @@ export function deriveIncidentMapFeatures({
     })),
     nodes: nodes.map((node) => ({
       ...node,
-      status: mode === "truoc_bao" ? "active" : (nodeStatuses.get(stationKey(node.name)) || "active")
+      status: mode === "truoc_bao" ? "active" : (nodeStatuses.get(stationKey(node.name)) || "active"),
+      anhHuong: node.anhHuong || "normal"
     }))
   };
 }

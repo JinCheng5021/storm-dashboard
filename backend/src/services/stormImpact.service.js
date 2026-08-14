@@ -120,9 +120,46 @@ export async function recalculateStormImpact() {
       }
     }
 
-    console.log(`[StormImpact] Cable status breakdown -> Direct (unsafe): ${directCount}, Indirect (risky): ${indirectCount}, Normal: ${normalCount}`);
+    // 5. Calculate spatial intersection for Station Node Points
+    const { data: dbNodes } = await supabaseAdmin.from('nodes_status').select('id, status');
+    const existingNodeStatusMap = new Map((dbNodes || []).map(n => [n.id, n.status]));
 
-    // 5. Upsert calculated edge statuses into Supabase 'edges_status'
+    const nodeStatusToUpsert = [];
+    let nodeDirectCount = 0;
+    let nodeIndirectCount = 0;
+    let nodeNormalCount = 0;
+
+    if (Array.isArray(cableGeoJSON.features)) {
+      for (const feature of cableGeoJSON.features) {
+        if (feature.geometry?.type !== 'Point') continue;
+
+        const nodeName = String(feature.properties?.name || '');
+        if (!nodeName) continue;
+        const nodeId = `node_${nodeName}`;
+
+        let anhHuong = 'normal';
+
+        if (directGeo && turf.booleanIntersects(feature, directGeo)) {
+          anhHuong = 'direct';
+          nodeDirectCount++;
+        } else if (indirectGeo && turf.booleanIntersects(feature, indirectGeo)) {
+          anhHuong = 'indirect';
+          nodeIndirectCount++;
+        } else {
+          nodeNormalCount++;
+        }
+
+        nodeStatusToUpsert.push({
+          id: nodeId,
+          status: existingNodeStatusMap.get(nodeId) || 'active',
+          anh_huong: anhHuong
+        });
+      }
+    }
+
+    console.log(`[StormImpact] Station Node breakdown -> Direct: ${nodeDirectCount}, Indirect: ${nodeIndirectCount}, Normal: ${nodeNormalCount}`);
+
+    // 6. Upsert calculated edge statuses into Supabase 'edges_status'
     const edgesToUpsert = Array.from(edgeStatusMap.entries()).map(([id, status]) => ({
       id,
       status
@@ -139,7 +176,17 @@ export async function recalculateStormImpact() {
       }
     }
 
-    console.log("[StormImpact] Successfully updated edges_status in Supabase!");
+    if (nodeStatusToUpsert.length > 0) {
+      const { error: nodeErr } = await supabaseAdmin
+        .from('nodes_status')
+        .upsert(nodeStatusToUpsert, { onConflict: 'id' });
+
+      if (nodeErr) {
+        console.warn("[StormImpact] Warning upserting nodes_status:", nodeErr.message);
+      }
+    }
+
+    console.log("[StormImpact] Successfully updated edges_status & nodes_status in Supabase!");
     return {
       success: true,
       stats: { directCount, indirectCount, normalCount, total: edgesToUpsert.length }

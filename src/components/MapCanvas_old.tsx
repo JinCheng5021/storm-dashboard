@@ -121,7 +121,16 @@ function edgesGeoJSON(edges: EdgeFeature[], mode: DashboardMode, routeInformatio
   };
 }
 
-
+function nodesGeoJSON(nodes: NodeFeature[]) {
+  return {
+    type: 'FeatureCollection' as const,
+    features: nodes.map((n) => ({
+      type: 'Feature' as const,
+      properties: { id: n.id, name: n.name, status: n.status },
+      geometry: { type: 'Point' as const, coordinates: n.coordinates },
+    })),
+  };
+}
 
 const TEAM_COLORS: Record<TeamType, string> = {
   FPT: '#39FF14', // Xanh lá
@@ -150,14 +159,14 @@ function createShapeImage(shape: 'triangle' | 'pentagon' | 'warning', size: numb
   const cy = size / 2;
 
   if (shape === 'triangle') {
-    ctx.moveTo(cx, cy - r * 0.65);
-    ctx.lineTo(cx + r * 0.75, cy + r * 0.65);
-    ctx.lineTo(cx - r * 0.75, cy + r * 0.65);
+    ctx.moveTo(cx, cy - r * 0.6);
+    ctx.lineTo(cx + r * 0.7, cy + r * 0.6);
+    ctx.lineTo(cx - r * 0.7, cy + r * 0.6);
   } else if (shape === 'pentagon') {
     for (let i = 0; i < 5; i++) {
       const angle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
-      const x = cx + r * 0.75 * Math.cos(angle);
-      const y = cy + r * 0.75 * Math.sin(angle);
+      const x = cx + r * 0.7 * Math.cos(angle);
+      const y = cy + r * 0.7 * Math.sin(angle);
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
@@ -222,40 +231,8 @@ function createIncidentCheckImage(size: number): ImageData {
   return ctx.getImageData(0, 0, size, size);
 }
 
-
 const DAI_TRAM = ['TGO', 'MCU', 'GPU', 'BKE', 'BHA', 'TKE', 'DDG', 'KEP', 'TYN', 'NDH', 'BSN', 'THA', 'CGT', 'HMI', 'VINH', 'HPO', 'DLE', 'KAH', 'DHI', 'LTY', 'LTY2', 'DHA', 'LBO', 'HUE', 'PLC'];
 const MANG_XONG = ['TTH (Treo)', 'TTH (Ngầm)', 'HNI (Treo)', 'HNI (Ngầm)', 'HLA'];
-
-function isDaiTramNode(name: string) {
-  const cleanName = String(name || '').replace(/\(\s*MPOP\s*\)/gi, '').trim().toUpperCase();
-  return DAI_TRAM.includes(name) || DAI_TRAM.includes(cleanName);
-}
-
-function isMangXongNode(name: string) {
-  return MANG_XONG.includes(name);
-}
-
-function nodesGeoJSON(nodes: NodeFeature[]) {
-  return {
-    type: 'FeatureCollection' as const,
-    features: nodes.map((n) => {
-      const category = isMangXongNode(n.name)
-        ? 'mang_xong'
-        : (isDaiTramNode(n.name) ? 'dai_tram' : 'mpop');
-      return {
-        type: 'Feature' as const,
-        properties: {
-          id: n.id,
-          name: n.name,
-          status: n.status,
-          anhHuong: n.anhHuong || 'normal',
-          nodeCategory: category,
-        },
-        geometry: { type: 'Point' as const, coordinates: n.coordinates },
-      };
-    }),
-  };
-}
 
 export const MapCanvas: React.FC<MapCanvasProps> = ({
   edges,
@@ -358,40 +335,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         }
       });
 
-      const loadScaledImage = (name: string, url: string, targetSize: number = 32) => {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = targetSize;
-          canvas.height = targetSize;
-          const ctx = canvas.getContext('2d')!;
-
-          const maxDim = Math.max(img.width || targetSize, img.height || targetSize);
-          const scale = (targetSize * 0.88) / maxDim;
-          const w = (img.width || maxDim) * scale;
-          const h = (img.height || maxDim) * scale;
-          const x = (targetSize - w) / 2;
-          const y = (targetSize - h) / 2;
-          ctx.drawImage(img, x, y, w, h);
-
-          const imgData = ctx.getImageData(0, 0, targetSize, targetSize);
-          if (map.hasImage(name)) {
-            map.removeImage(name);
-          }
-          map.addImage(name, imgData);
-          map.triggerRepaint();
-        };
-        img.onerror = (err) => {
-          console.error(`Failed to load image ${name} from ${url}:`, err);
-        };
-        img.src = url;
-      };
-
-      loadScaledImage('icon-matdien', '/matdien.png', 32);
-      loadScaledImage('icon-caution', '/caution-icon.svg', 32);
-
-      map.addImage('icon-empty', { width: 1, height: 1, data: new Uint8Array([0, 0, 0, 0]) });
       map.addImage('icon-triangle', createShapeImage('triangle', 32, '#000000'));
       map.addImage('icon-triangle-red', createShapeImage('triangle', 32, '#FF0000'));
       map.addImage('icon-pentagon', createShapeImage('pentagon', 32, '#FF8C00'));
@@ -463,8 +406,6 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           'icon-size': ['interpolate', ['linear'], ['zoom'], 5, 0.7, 10, 0.9, 14, 1.1],
           'icon-allow-overlap': true,
           'icon-ignore-placement': true,
-          'icon-rotation-alignment': 'viewport',
-          'icon-pitch-alignment': 'viewport',
         },
       });
 
@@ -482,25 +423,14 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         data: nodesGeoJSON(nodes),
       });
 
-      // Base nodes (circle) - All nodes (blue background circle)
+      // Base nodes (circle) - All nodes
       map.addLayer({
         id: 'nodes-base',
         type: 'circle',
         source: 'nodes',
         paint: {
-          'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 6, 10, 9, 14, 13],
-          'circle-color': [
-            'case',
-            ['==', ['get', 'nodeCategory'], 'mang_xong'], '#00C2FF',
-            ['==', ['get', 'nodeCategory'], 'dai_tram'], [
-              'match',
-              ['get', 'anhHuong'],
-              'direct', '#FF0000',
-              'indirect', '#FFD600',
-              '#00C2FF' // normal (Xanh nhạt mặc định)
-            ],
-            '#00C2FF' // MPOP default (Xanh nhạt mặc định)
-          ],
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 5, 10, 9, 14, 14],
+          'circle-color': '#00C2FF',
           'circle-stroke-color': '#ffffff',
           'circle-stroke-width': 1.5,
           'circle-opacity': 0.95,
@@ -514,16 +444,23 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
         source: 'nodes',
         layout: {
           'icon-image': [
-            'case',
-            ['==', ['get', 'nodeCategory'], 'mang_xong'], 'icon-empty',
-            ['==', ['get', 'nodeCategory'], 'mpop'], 'icon-pentagon',
-            ['==', ['get', 'nodeCategory'], 'dai_tram'], [
+            'match',
+            ['get', 'name'],
+            MANG_XONG, '',
+            [
               'case',
-              ['==', ['get', 'status'], 'isolated'], 'icon-caution',
-              ['==', ['get', 'status'], 'power_out'], 'icon-matdien',
-              'icon-triangle'
-            ],
-            'icon-pentagon'
+              ['==', ['get', 'status'], 'isolated'], 'icon-warning',
+              ['match',
+                ['get', 'name'],
+                DAI_TRAM, [
+                  'match',
+                  ['get', 'status'],
+                  'power_out', 'icon-triangle-red',
+                  'icon-triangle'
+                ],
+                'icon-pentagon'
+              ]
+            ]
           ],
           'icon-size': ['interpolate', ['linear'], ['zoom'], 5, 0.45, 10, 0.65, 14, 0.8],
           'icon-allow-overlap': true,

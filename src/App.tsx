@@ -161,7 +161,7 @@ function PreStormImpactChart({ data, isLoading }: any) {
 
   const chartStyle = {
     background: totalCount
-      ? `conic-gradient(var(--fpt-orange) 0 ${directEnd}%, var(--fpt-green) ${directEnd}% 100%)`
+      ? `conic-gradient(#FF0000 0 ${directEnd}%, #FFD600 ${directEnd}% 100%)`
       : "#e2e8f0"
   };
 
@@ -183,8 +183,8 @@ function PreStormImpactChart({ data, isLoading }: any) {
         </div>
         <div className="pie-meta">
           <div className="pie-legend">
-            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-orange"></i>Trực tiếp</span><span className="pie-legend-value"><strong>{directCount}</strong></span></div>
-            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-green"></i>Gián tiếp</span><span className="pie-legend-value"><strong>{indirectCount}</strong></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot" style={{ backgroundColor: '#FF0000' }}></i>Trực tiếp</span><span className="pie-legend-value"><strong>{directCount}</strong></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot" style={{ backgroundColor: '#FFD600' }}></i>Gián tiếp</span><span className="pie-legend-value"><strong>{indirectCount}</strong></span></div>
           </div>
         </div>
       </div>
@@ -262,7 +262,7 @@ function PreStormStationChart({ data, isLoading }: any) {
 
   const chartStyle = {
     background: total
-      ? `conic-gradient(var(--fpt-orange) 0 ${directEnd}%, var(--fpt-green) ${directEnd}% 100%)`
+      ? `conic-gradient(#FF0000 0 ${directEnd}%, #FFD600 ${directEnd}% 100%)`
       : "#e2e8f0"
   };
 
@@ -284,8 +284,8 @@ function PreStormStationChart({ data, isLoading }: any) {
         </div>
         <div className="pie-meta">
           <div className="pie-legend">
-            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-orange"></i>Trực tiếp</span><span className="pie-legend-value"><strong>{directCount}</strong></span></div>
-            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot dot-green"></i>Gián tiếp</span><span className="pie-legend-value"><strong>{indirectCount}</strong></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot" style={{ backgroundColor: '#FF0000' }}></i>Trực tiếp</span><span className="pie-legend-value"><strong>{directCount}</strong></span></div>
+            <div className="pie-legend-row"><span className="pie-legend-label"><i className="legend-dot" style={{ backgroundColor: '#FFD600' }}></i>Gián tiếp</span><span className="pie-legend-value"><strong>{indirectCount}</strong></span></div>
           </div>
         </div>
       </div>
@@ -308,7 +308,14 @@ function StormImpactTotalCard({ label, value, icon, accentStyle, href }: any) {
   );
 }
 
-function SummaryGrid({ data, mode, edges = [] }: any) {
+const DAI_TRAM_LIST = ['TGO', 'MCU', 'GPU', 'BKE', 'BHA', 'TKE', 'DDG', 'KEP', 'TYN', 'NDH', 'BSN', 'THA', 'CGT', 'HMI', 'VINH', 'HPO', 'DLE', 'KAH', 'DHI', 'LTY', 'LTY2', 'DHA', 'LBO', 'HUE', 'PLC'];
+
+function isDaiTramStation(name: string) {
+  const clean = String(name || '').replace(/\(\s*MPOP\s*\)/gi, '').trim().toUpperCase();
+  return DAI_TRAM_LIST.includes(name) || DAI_TRAM_LIST.includes(clean);
+}
+
+function SummaryGrid({ data, mode, edges = [], nodes = [] }: any) {
   const visibleDeployments = visibleDashboardDeployments(data.deployments);
   const totalPersonnel = visibleDeployments.reduce((sum: any, item: any) => sum + item.count, 0);
   const deploymentCount = visibleDeployments.length;
@@ -321,13 +328,21 @@ function SummaryGrid({ data, mode, edges = [] }: any) {
     });
   }
 
+  const affectedRoutePopMap = new Map<string, number>();
+  if (Array.isArray(data.affectedRoutes)) {
+    data.affectedRoutes.forEach((route: any) => {
+      const key = canonicalRouteKey(route.route);
+      const pop = parseInt(route.pops, 10) || 0;
+      affectedRoutePopMap.set(key, pop);
+    });
+  }
+
   let directRouteCount = 0;
   let directLength = 0;
   let indirectRouteCount = 0;
   let indirectLength = 0;
   let directPopCount = 0;
   let indirectPopCount = 0;
-  let totalPopCount = 0;
 
   if (Array.isArray(edges)) {
     edges.forEach((edge: any) => {
@@ -336,7 +351,8 @@ function SummaryGrid({ data, mode, edges = [] }: any) {
       const isIndirect = status === 'risky';
 
       if (isDirect || isIndirect) {
-        const routeInfo = routeInfoMap.get(canonicalRouteKey(edge.name));
+        const edgeKey = canonicalRouteKey(edge.name);
+        const routeInfo = routeInfoMap.get(edgeKey);
         let len = 0;
         if (routeInfo && routeInfo.length) {
           len = parseFloat(routeInfo.length) || 0;
@@ -347,36 +363,25 @@ function SummaryGrid({ data, mode, edges = [] }: any) {
           }
         }
 
+        const popCount = affectedRoutePopMap.get(edgeKey) || 0;
+
         if (isDirect) {
           directRouteCount++;
           directLength += len;
+          directPopCount += popCount;
         } else if (isIndirect) {
           indirectRouteCount++;
           indirectLength += len;
+          indirectPopCount += popCount;
         }
       }
     });
   }
 
-  // Khôi phục tính toán "SL POP có nguy cơ" đọc từ Sheet Google (affectedRoutes)
-  if (data?.affectedRoutes) {
-    data.affectedRoutes.forEach((route: any) => {
-      const type = String(route.impact || "").trim().toLocaleLowerCase("vi-VN");
-      const pop = parseInt(route.pops) || 0;
-      if (type) totalPopCount += pop;
-
-      if (type.includes("trực tiếp")) {
-        directPopCount += pop;
-      } else if (type.includes("gián tiếp")) {
-        indirectPopCount += pop;
-      }
-    });
-  }
-  
   const preStormData = {
     directCount: directPopCount,
     indirectCount: indirectPopCount,
-    totalPop: totalPopCount
+    totalPop: directPopCount + indirectPopCount
   };
   const preStormRouteData = {
     directCount: directRouteCount,
@@ -387,20 +392,20 @@ function SummaryGrid({ data, mode, edges = [] }: any) {
   
   let stationDirectCount = 0;
   let stationIndirectCount = 0;
-  let stationTotalCount = 0;
 
-  if (data?.affectedStations) {
-    stationTotalCount = data.affectedStations.length;
-    data.affectedStations.forEach((station: any) => {
-      const type = (station.impact || "").toLowerCase();
-      if (type.includes("trực tiếp")) {
-        stationDirectCount++;
-      } else if (type.includes("gián tiếp")) {
-        stationIndirectCount++;
+  if (Array.isArray(nodes)) {
+    nodes.forEach((node: any) => {
+      if (isDaiTramStation(node.name)) {
+        if (node.anhHuong === 'direct') {
+          stationDirectCount++;
+        } else if (node.anhHuong === 'indirect') {
+          stationIndirectCount++;
+        }
       }
     });
   }
 
+  const stationTotalCount = stationDirectCount + stationIndirectCount;
   const preStormStationData = { directCount: stationDirectCount, indirectCount: stationIndirectCount, totalCount: stationTotalCount };
   const activeStormImpact = summarizeActiveStormImpact({
     affectedRoutes: data.affectedRoutes,
@@ -974,10 +979,16 @@ export default function App() {
         const dbTeams = teamsRes.data || [];
 
         // Merge state
-        const nodeMap = new Map(dbNodes.map(n => [n.id, n.status]));
+        const nodeMap = new Map(dbNodes.map(n => [n.id, { status: n.status, anhHuong: n.anh_huong || 'normal' }]));
         const edgeMap = new Map(dbEdges.map(e => [e.id, e.status]));
 
-        nodes.forEach(n => { if (nodeMap.has(n.id)) n.status = nodeMap.get(n.id); });
+        nodes.forEach(n => {
+          if (nodeMap.has(n.id)) {
+            const mapped = nodeMap.get(n.id)!;
+            n.status = mapped.status;
+            n.anhHuong = mapped.anhHuong;
+          }
+        });
         edges.forEach(e => {
           if (edgeMap.has(e.id)) {
             const mappedStatus = edgeMap.get(e.id)!;
@@ -1001,7 +1012,14 @@ export default function App() {
     // Subscribe to realtime
     const channel = supabase.channel('map-sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'nodes_status' }, (payload) => {
-        if (payload.new && payload.new.id) mapDispatch({ type: 'SET_NODE_STATUS', id: payload.new.id, status: payload.new.status });
+        if (payload.new && payload.new.id) {
+          mapDispatch({ 
+            type: 'SET_NODE_STATUS', 
+            id: payload.new.id, 
+            status: payload.new.status,
+            anhHuong: payload.new.anh_huong || payload.new.anhHuong
+          });
+        }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'edges_status' }, (payload) => {
         if (payload.new && payload.new.id) {
@@ -1353,7 +1371,7 @@ export default function App() {
       </header>
 
       <div className="dashboard-body">
-        <SummaryGrid data={data} mode={dashboardMode} edges={incidentMapState.edges} />
+        <SummaryGrid data={data} mode={dashboardMode} edges={incidentMapState.edges} nodes={incidentMapState.nodes} />
         <WeatherPanel 
           rows={data.weatherRows} 
           page={pages.weather} 
