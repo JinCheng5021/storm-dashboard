@@ -63,7 +63,7 @@ test("ánh xạ mức độ trước bão sang đúng ba trạng thái màu tuy�
   assert.equal(edgeStatusBeforeTyphoonFromLevel(""), null);
 });
 
-test("chỉ đổi màu tuyến theo trạng thái trong SC ngoại vi", () => {
+test("giữ màu tuyến theo phạm vi bão và đặt biểu tượng theo SC ngoại vi", () => {
   const edges = [
     { id: "edge_ab", name: "Tuyến A - B", status: "normal", statusBeforeTyphoon: "safe" },
     { id: "edge_cd", name: "Tuyến C - D", status: "normal", statusBeforeTyphoon: "risky" },
@@ -101,10 +101,16 @@ test("chỉ đổi màu tuyến theo trạng thái trong SC ngoại vi", () => {
   });
 
   assert.deepEqual(result.edges.map((edge) => edge.status), [
+    "normal",
+    "normal",
+    "normal",
+    "resolved"
+  ]);
+  assert.deepEqual(result.edges.map((edge) => edge.cableIncidentStatus), [
     "incident_external",
     "incident_external",
     "resolved",
-    "normal"
+    null
   ]);
   assert.deepEqual(result.nodes.map((node) => node.status), [
     "active",
@@ -126,7 +132,7 @@ test("chỉ đổi màu tuyến theo trạng thái trong SC ngoại vi", () => {
   assert.equal(nodeStatusFromIncident("Bị cô lập", "Chưa tiếp cận"), "isolated");
 });
 
-test("tự động áp dụng mức độ từ DS tuyến, trạm ảnh hưởng khi đang ở chế độ trước bão", () => {
+test("giữ trạng thái phạm vi bão đã tính sẵn khi ở chế độ trước bão", () => {
   const edges = [
     { id: "edge_ab", name: "Tuyến A - B", status: "normal", statusBeforeTyphoon: "unsafe" },
     { id: "edge_cd", name: "Tuyến C - D", status: "normal", statusBeforeTyphoon: "safe" },
@@ -155,11 +161,18 @@ test("tự động áp dụng mức độ từ DS tuyến, trạm ảnh hưởng
   });
 
   assert.deepEqual(result.edges.map((edge) => edge.statusBeforeTyphoon), [
-    "safe",
-    "risky",
     "unsafe",
+    "safe",
+    "safe",
+    "unsafe"
+  ]);
+  assert.deepEqual(result.edges.map((edge) => edge.status), [
+    "normal",
+    "normal",
+    "normal",
     "normal"
   ]);
+  assert.deepEqual(result.edges.map((edge) => edge.cableIncidentStatus), [null, null, null, null]);
   assert.deepEqual(result.nodes.map((node) => node.status), ["active", "active"]);
   assert.deepEqual(nodes.map((node) => node.status), ["power_out", "isolated"]);
 });
