@@ -311,8 +311,11 @@ function StormImpactTotalCard({ label, value, icon, accentStyle, href }: any) {
 const DAI_TRAM_LIST = ['TGO', 'MCU', 'GPU', 'BKE', 'BHA', 'TKE', 'DDG', 'KEP', 'TYN', 'NDH', 'BSN', 'THA', 'CGT', 'HMI', 'VINH', 'HPO', 'DLE', 'KAH', 'DHI', 'LTY', 'LTY2', 'DHA', 'LBO', 'HUE', 'PLC'];
 
 function isDaiTramStation(name: string) {
-  const clean = String(name || '').replace(/\(\s*MPOP\s*\)/gi, '').trim().toUpperCase();
-  return DAI_TRAM_LIST.includes(name) || DAI_TRAM_LIST.includes(clean);
+  const clean = String(name || '').trim().toUpperCase();
+  if (clean.includes('MPOP')) {
+    return false;
+  }
+  return DAI_TRAM_LIST.includes(clean);
 }
 
 function SummaryGrid({ data, mode, edges = [], nodes = [] }: any) {
@@ -917,7 +920,7 @@ export default function App() {
       const res = await fetch("/api/jtwc-sync", { method: 'POST' });
       const json = await res.json();
       if (json.success) {
-        alert("Đã cập nhật bão thành công!");
+        alert(json.message || "Đã cập nhật bão thành công!");
         fetchStorms();
       } else {
         alert("Lỗi đồng bộ: " + json.message);

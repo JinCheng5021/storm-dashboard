@@ -72,7 +72,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 
   const isNode = menu.targetType === 'node';
   const targetName = menu.targetId.replace(/^node_/, '');
-  const isDaiTram = isNode && DAI_TRAM.includes(targetName);
+  const cleanTargetName = targetName.trim().toUpperCase();
+  const isDaiTram = isNode && !cleanTargetName.includes('MPOP') && DAI_TRAM.includes(cleanTargetName);
 
   const NODE_OPTIONS: { value: NodeStatus; label: string; icon: string; cls: string }[] = [
     { value: 'active', label: 'Hoạt động', icon: isDaiTram ? '▲' : '⬟', cls: 'status-active' },

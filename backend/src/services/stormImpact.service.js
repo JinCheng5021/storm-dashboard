@@ -35,11 +35,16 @@ export async function recalculateStormImpact() {
           const propDesc = String(feature.properties?.description || '').toUpperCase();
           const combinedText = `${propName} ${propDesc}`;
 
-          // Loại bỏ hoàn toàn hình mờ Danger Swath / Forecast Cone, chỉ lấy các hình quạt bán kính gió thực tế
-          const isDangerSwath = combinedText.includes('SWATH') || combinedText.includes('DANGER') || combinedText.includes('CONE') || combinedText.includes('TRACK');
+          // Loại bỏ hoàn toàn hình mờ Danger Swath / Forecast Cone, chỉ lấy các vòng tròn bán kính gió thực tế
+          const isDangerSwath = feature.properties?.risk_level === 'cone' ||
+                                combinedText.includes('SWATH') || 
+                                combinedText.includes('DANGER') || 
+                                combinedText.includes('CONE') || 
+                                combinedText.includes('TRACK');
           if (isDangerSwath) continue;
 
           if (
+            feature.properties?.risk_level === 'direct' ||
             combinedText.includes('64 KT') ||
             combinedText.includes('50 KT') ||
             combinedText.includes('64KT') ||
@@ -49,6 +54,7 @@ export async function recalculateStormImpact() {
           ) {
             directPolygons.push(feature);
           } else if (
+            feature.properties?.risk_level === 'indirect' ||
             combinedText.includes('RADIUS OF 34') ||
             combinedText.includes('34 KT WINDS') ||
             combinedText.includes('34KT WINDS') ||

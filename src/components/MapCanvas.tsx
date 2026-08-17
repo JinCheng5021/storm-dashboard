@@ -227,8 +227,11 @@ const DAI_TRAM = ['TGO', 'MCU', 'GPU', 'BKE', 'BHA', 'TKE', 'DDG', 'KEP', 'TYN',
 const MANG_XONG = ['TTH (Treo)', 'TTH (Ngầm)', 'HNI (Treo)', 'HNI (Ngầm)', 'HLA'];
 
 function isDaiTramNode(name: string) {
-  const cleanName = String(name || '').replace(/\(\s*MPOP\s*\)/gi, '').trim().toUpperCase();
-  return DAI_TRAM.includes(name) || DAI_TRAM.includes(cleanName);
+  const cleanName = String(name || '').trim().toUpperCase();
+  if (cleanName.includes('MPOP')) {
+    return false;
+  }
+  return DAI_TRAM.includes(cleanName);
 }
 
 function isMangXongNode(name: string) {
@@ -390,6 +393,18 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
       loadScaledImage('icon-matdien', '/matdien.png', 32);
       loadScaledImage('icon-caution', '/caution-icon.svg', 32);
+      loadScaledImage('icon-typhoon', '/typhoon-icon.png', 48);
+
+      map.on('styleimagemissing', (e) => {
+        const id = e.id;
+        if (id === 'icon-typhoon') {
+          loadScaledImage('icon-typhoon', '/typhoon-icon.png', 48);
+        } else if (id === 'icon-matdien') {
+          loadScaledImage('icon-matdien', '/matdien.png', 32);
+        } else if (id === 'icon-caution') {
+          loadScaledImage('icon-caution', '/caution-icon.svg', 32);
+        }
+      });
 
       map.addImage('icon-empty', { width: 1, height: 1, data: new Uint8Array([0, 0, 0, 0]) });
       map.addImage('icon-triangle', createShapeImage('triangle', 32, '#000000'));
@@ -424,9 +439,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           'line-color': [
             'match',
             ['get', 'status'],
-            'unsafe', '#FF0000',
-            'incident_external', '#FF0000',
-            'danger_zone', '#FF0000',
+            'unsafe', '#ff596a',
+            'incident_external', '#ff596a',
+            'danger_zone', '#ff596a',
             'risky', '#FFD600',
             '#0066FF' // normal (default blue)
           ],
@@ -608,7 +623,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
           if (topFeature.layer.id === 'nodes-hitbox') {
             const { name, status } = topFeature.properties as { name: string; status: string };
-            const isDaiTram = DAI_TRAM.includes(name);
+            const isDaiTram = isDaiTramNode(name);
             const isMangXong = MANG_XONG.includes(name);
             const statusLabel = isMangXong
               ? '● Hoạt động'
@@ -766,8 +781,50 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           type: 'fill',
           source: sourceId,
           paint: {
-            'fill-color': '#F47C20', // orange
-            'fill-opacity': 0.15
+            'fill-color': [
+              'match',
+              ['get', 'risk_level'],
+              'direct', '#EF4444',
+              'indirect', '#F59E0B',
+              'cone', '#F472B6',
+              '#F59E0B'
+            ],
+            'fill-opacity': [
+              'match',
+              ['get', 'risk_level'],
+              'direct', 0.18,
+              'indirect', 0.12,
+              'cone', 0.15,
+              0.14
+            ]
+          },
+          filter: ['==', ['geometry-type'], 'Polygon']
+        }, 'node-labels');
+      }
+
+      const outlineLayerId = `storm-${stormId}-outline`;
+      if (!map.getLayer(outlineLayerId)) {
+        map.addLayer({
+          id: outlineLayerId,
+          type: 'line',
+          source: sourceId,
+          paint: {
+            'line-color': [
+              'match',
+              ['get', 'risk_level'],
+              'direct', '#DC2626',
+              'indirect', '#D97706',
+              'cone', '#F472B6',
+              '#D97706'
+            ],
+            'line-width': [
+              'match',
+              ['get', 'risk_level'],
+              'direct', 2,
+              'indirect', 1.5,
+              'cone', 1.5,
+              1.5
+            ]
           },
           filter: ['==', ['geometry-type'], 'Polygon']
         }, 'node-labels');
@@ -783,11 +840,69 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
             'line-cap': 'round'
           },
           paint: {
-            'line-color': '#EF4444', // red
-            'line-width': 2
+            'line-color': '#94A3B8', // Light gray
+            'line-width': 2.5,
+            'line-dasharray': [3, 2] // Dashed line for forecast track
           },
           filter: ['any', ['==', ['geometry-type'], 'LineString'], ['==', ['geometry-type'], 'MultiLineString']]
         }, 'node-labels');
+      }
+
+      const iconLayerId = `storm-${stormId}-center-icon`;
+      if (!map.getLayer(iconLayerId)) {
+        map.addLayer({
+          id: iconLayerId,
+          type: 'symbol',
+          source: sourceId,
+          layout: {
+            'icon-image': 'icon-typhoon',
+            'icon-size': [
+              'case',
+              ['==', ['get', 'is_current_center'], true], 0.85,
+              0.55
+            ],
+            'icon-allow-overlap': true,
+            'icon-ignore-placement': true
+          },
+          filter: ['all', ['==', ['geometry-type'], 'Point'], ['==', ['get', 'is_storm_center'], true]]
+        });
+      }
+
+      const labelLayerId = `storm-${stormId}-center-label`;
+      if (!map.getLayer(labelLayerId)) {
+        map.addLayer({
+          id: labelLayerId,
+          type: 'symbol',
+          source: sourceId,
+          layout: {
+            'text-field': ['get', 'label'],
+            'text-font': ['Roboto Regular'],
+            'text-size': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              4, 11,
+              8, 12,
+              12, 14
+            ],
+            'text-anchor': 'top',
+            'text-radial-offset': [
+              'case',
+              ['==', ['get', 'is_current_center'], true], 1.6,
+              1.2
+            ],
+            'text-allow-overlap': true,
+            'text-ignore-placement': true,
+            'text-max-width': 14
+          },
+          paint: {
+            'text-color': '#0F172A',
+            'text-halo-color': '#FFFFFF',
+            'text-halo-width': 2.5,
+            'text-opacity': 1
+          },
+          filter: ['all', ['==', ['geometry-type'], 'Point'], ['==', ['get', 'is_storm_center'], true]]
+        });
       }
     });
   }, [activeStormGeoJSONs, mapReady]);

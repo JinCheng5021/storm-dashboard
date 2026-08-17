@@ -3,6 +3,7 @@ import AdmZip from "adm-zip";
 import { DOMParser } from "@xmldom/xmldom";
 import * as toGeoJSON from "@tmcw/togeojson";
 import { parseJtwcText } from "../utils/jtwcParser.js";
+import { convertStormFansToCircles } from "../utils/stormGeometry.js";
 import { supabaseAdmin } from "../config/supabase.js";
 import { recalculateStormImpact } from "./stormImpact.service.js";
 
@@ -130,11 +131,11 @@ export async function syncJtwcStorms() {
           
           const zipEntries = zip.getEntries();
           const kmlEntry = zipEntries.find(entry => entry.entryName.toLowerCase().endsWith('.kml'));
-          
           if (kmlEntry) {
             const kmlString = kmlEntry.getData().toString('utf8');
             const kmlDom = new DOMParser().parseFromString(kmlString, "text/xml");
-            geojson = unwrapGeoJSON(toGeoJSON.kml(kmlDom));
+            const rawGeojson = unwrapGeoJSON(toGeoJSON.kml(kmlDom));
+            geojson = convertStormFansToCircles(rawGeojson);
           }
         } catch (e) {
           console.error(`Error converting KMZ for ${stormId}:`, e.message);
@@ -164,14 +165,26 @@ export async function syncJtwcStorms() {
       }
     }
 
-    // Đánh dấu các bão không còn trong RSS đợt này là inactive
+    // Đánh dấu các bão thật không còn trong RSS đợt này là inactive (giữ lại bão test/diễn tập test_*)
     if (activeStormIds.length > 0) {
       const { error: updateErr } = await supabaseAdmin
         .from('jtwc_storms')
         .update({ is_active: false })
-        .not('storm_id', 'in', `(${activeStormIds.join(',')})`);
+        .not('storm_id', 'in', `(${activeStormIds.join(',')})`)
+        .not('storm_id', 'like', 'test_%')
+        .not('storm_id', 'like', 'mock_%');
       if (updateErr) {
         console.error("Error updating inactive storms:", updateErr);
+      }
+    } else {
+      const { error: updateErr } = await supabaseAdmin
+        .from('jtwc_storms')
+        .update({ is_active: false })
+        .eq('is_active', true)
+        .not('storm_id', 'like', 'test_%')
+        .not('storm_id', 'like', 'mock_%');
+      if (updateErr) {
+        console.error("Error setting real storms inactive:", updateErr);
       }
     }
 

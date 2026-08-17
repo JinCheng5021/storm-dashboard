@@ -54,124 +54,12 @@ export async function exportMapImage(opts: ExportOptions): Promise<HTMLCanvasEle
           // Draw WebGL map canvas directly onto composite canvas
           ctx.drawImage(mapCanvas, 0, 0);
 
-          // ── Legend (bottom-right) ─────────────────────────────────
-          const edgeLegendItems = [
-            { color: '#FF0000', dash: false, label: 'Tuyến ảnh hưởng trực tiếp' },
-            { color: '#FFD600', dash: false, label: 'Tuyến ảnh hưởng gián tiếp' },
-            { color: '#0066FF', dash: false, label: 'Tuyến bình thường' },
-          ];
-
-          const legendItems: any[] = [
-            ...edgeLegendItems,
-            { node: '⬟', color: '#FF8C00', label: 'MPOP' },
-            { node: '▲', color: '#000000', label: 'Trạm bình thường' },
-            { img: matDienImg, label: 'Trạm mất điện' },
-            { img: cautionImg, label: 'Trạm cô lập' },
-            { img: fptImg, label: 'Đội FPT' },
-            { img: dcvImg, label: 'Đối tác ĐCV' },
-            { img: ffcImg, label: 'Đối tác FFC' },
-          ];
-
-          // ── CẤU HÌNH LEGEND (Thay đổi LEGEND_ZOOM để phóng to/thu nhỏ toàn bộ Legend) ──
-          const LEGEND_ZOOM = 1.0; // 1.0 = 100%, 1.2 = 120%, 0.8 = 80%
-
-          const LEGEND_CONFIG = {
-            width: 290,           // Chiều rộng khung chú giải
-            padding: 10,          // Lề trong khung
-            lineHeight: 28,       // Chiều cao mỗi dòng
-            titleFontSize: 13,    // Cỡ chữ tiêu đề "CHÚ GIẢI BẢN ĐỒ"
-            itemFontSize: 11,     // Cỡ chữ các mục chú giải
-            nodeFontSize: 12,     // Cỡ biểu tượng Trạm (⬟, ▲, ⚠️)
-            teamIconSize: 16,     // Kích thước icon Đội (FPT, ĐCV, FFC)
-            lineSymbolLength: 28, // Độ dài nét vẽ tuyến cáp
-            borderRadius: 10,     // Độ bo góc khung
-          };
+          // ── 1. Draw Team Markers ──────────────────────────────────
+          const TEAM_ICONS_MAP: Record<string, HTMLImageElement> = { FPT: fptImg, DCV: dcvImg, FFC: ffcImg };
 
           const container = map.getContainer();
           const pixelRatioX = w / container.clientWidth;
           const pixelRatioY = h / container.clientHeight;
-          const scale = Math.max(pixelRatioX, 1) * LEGEND_ZOOM;
-
-          const rows = Math.ceil(legendItems.length / 2);
-          const legendPad = LEGEND_CONFIG.padding * scale;
-          const legendLineH = LEGEND_CONFIG.lineHeight * scale;
-          const legendW = LEGEND_CONFIG.width * scale;
-          const legendH = legendPad * 2 + rows * legendLineH + 12 * scale;
-          const legendX = w - legendW - 16 * scale;
-          const legendY = h - legendH - 46 * scale;
-
-          // Legend background
-          ctx.save();
-          ctx.globalAlpha = 0.88;
-          ctx.fillStyle = '#56595eff';
-          roundRect(ctx, legendX, legendY, legendW, legendH, LEGEND_CONFIG.borderRadius * scale);
-          ctx.fill();
-          ctx.globalAlpha = 1;
-          ctx.strokeStyle = 'rgba(102, 98, 98, 0.21)';
-          ctx.lineWidth = 1 * scale;
-          roundRect(ctx, legendX, legendY, legendW, legendH, LEGEND_CONFIG.borderRadius * scale);
-          ctx.stroke();
-          ctx.restore();
-
-          // Legend title
-          ctx.save();
-          ctx.font = `600 ${Math.round(LEGEND_CONFIG.titleFontSize * scale)}px Inter, sans-serif`;
-          ctx.textBaseline = 'middle';
-          ctx.fillStyle = '#7C8BAA';
-          ctx.letterSpacing = '0.05em';
-          ctx.fillText('CHÚ GIẢI BẢN ĐỒ', legendX + legendPad, legendY + legendPad + 6 * scale);
-          ctx.restore();
-
-          // Divider
-          ctx.save();
-          ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-          ctx.lineWidth = 1 * scale;
-          ctx.beginPath();
-          ctx.moveTo(legendX + legendPad, legendY + legendPad + 18 * scale);
-          ctx.lineTo(legendX + legendW - legendPad, legendY + legendPad + 18 * scale);
-          ctx.stroke();
-          ctx.restore();
-
-          legendItems.forEach((item, i) => {
-            const col = i >= rows ? 1 : 0;
-            const row = i % rows;
-            const centerY = legendY + legendPad + 28 * scale + row * legendLineH + (legendLineH / 2);
-            const ix = legendX + legendPad + col * (legendW / 2);
-
-            ctx.save();
-            ctx.textBaseline = 'middle';
-            if (item.dash !== undefined) {
-              // Line symbol
-              ctx.strokeStyle = item.color;
-              ctx.lineWidth = (item.dash ? 2.5 : 2) * scale;
-              if (item.dash) ctx.setLineDash([5 * scale, 3 * scale]);
-              ctx.beginPath();
-              ctx.moveTo(ix, centerY);
-              ctx.lineTo(ix + LEGEND_CONFIG.lineSymbolLength * scale, centerY);
-              ctx.stroke();
-              ctx.setLineDash([]);
-            } else if (item.img) {
-              // Team icon
-              const iconDim = LEGEND_CONFIG.teamIconSize * scale;
-              ctx.drawImage(item.img, ix + 6 * scale, centerY - iconDim / 2, iconDim, iconDim);
-            } else {
-              // Node symbol
-              ctx.font = `${Math.round(LEGEND_CONFIG.nodeFontSize * scale)}px sans-serif`;
-              ctx.fillStyle = item.color;
-              ctx.fillText(item.node, ix + 6 * scale, centerY + 2 * scale);
-            }
-
-            ctx.font = `500 ${Math.round(LEGEND_CONFIG.itemFontSize * scale)}px Inter, sans-serif`;
-            ctx.fillStyle = '#C8D0E0';
-            ctx.fillText(item.label, ix + (LEGEND_CONFIG.lineSymbolLength + 8) * scale, centerY);
-            ctx.restore();
-          });
-
-          // ── Get current time for filename ─────────────────────────
-          const now = new Date();
-
-          // ── Draw Team Markers ─────────────────────────────────────
-          const TEAM_ICONS_MAP: Record<string, HTMLImageElement> = { FPT: fptImg, DCV: dcvImg, FFC: ffcImg };
 
           ctx.save();
           teams.forEach(team => {
@@ -251,12 +139,191 @@ export async function exportMapImage(opts: ExportOptions): Promise<HTMLCanvasEle
           });
           ctx.restore();
 
+          // ── 2. Legend (bottom-right - front-most layer) ───────────
+          const edgeLegendItems = [
+            { color: '#FF0000', dash: false, label: 'Tuyến ảnh hưởng\ntrực tiếp' },
+            { color: '#FFD600', dash: false, label: 'Tuyến ảnh hưởng\ngián tiếp' },
+            { color: '#0066FF', dash: false, label: 'Tuyến bình thường' },
+          ];
+
+          const incidentLegendItems = mode === 'trong_bao' ? [
+            { customIcon: 'incident_x', label: 'Đang có SC' },
+            { customIcon: 'incident_check', label: 'SC đã khắc phục' },
+          ] : [];
+
+          const legendItems: any[] = [
+            ...edgeLegendItems,
+            ...incidentLegendItems,
+            { node: '⬟', color: '#FF8C00', label: 'MPOP' },
+            { node: '▲', color: '#000000', label: 'Trạm bình thường' },
+            { img: matDienImg, label: 'Trạm mất điện' },
+            { img: cautionImg, label: 'Trạm cô lập' },
+            { img: fptImg, label: 'Đội FPT' },
+            { img: dcvImg, label: 'Đối tác ĐCV' },
+            { img: ffcImg, label: 'Đối tác FFC' },
+          ];
+
+          // ── CẤU HÌNH LEGEND (Thay đổi LEGEND_ZOOM để phóng to/thu nhỏ toàn bộ Legend) ──
+          const LEGEND_ZOOM = 0.8; // 1.0 = 100%, 1.2 = 120%, 0.8 = 80%
+
+          const LEGEND_CONFIG = {
+            width: 280,           // Chiều rộng khung chú giải (thu nhỏ gọn gàng)
+            paddingX: 10,         // Lề ngang trong khung
+            paddingTop: 10,       // Lề trên
+            paddingBottom: 12,    // Lề dưới
+            lineHeight: 27,       // Chiều cao mỗi dòng (khoảng cách giữa các dòng nhỏ lại)
+            titleFontSize: 12.5,  // Cỡ chữ tiêu đề "CHÚ GIẢI BẢN ĐỒ"
+            itemFontSize: 11,     // Cỡ chữ các mục chú giải
+            nodeFontSize: 12,     // Cỡ biểu tượng Trạm (⬟, ▲, ⚠️)
+            teamIconSize: 16,     // Kích thước icon Đội (FPT, ĐCV, FFC)
+            lineSymbolLength: 22, // Độ dài nét vẽ tuyến cáp
+            borderRadius: 8,      // Độ bo góc khung
+          };
+
+          const scale = Math.max(pixelRatioX, 1) * LEGEND_ZOOM;
+
+          const rows = Math.ceil(legendItems.length / 2);
+          const legendPadX = LEGEND_CONFIG.paddingX * scale;
+          const legendPadTop = LEGEND_CONFIG.paddingTop * scale;
+          const legendPadBottom = LEGEND_CONFIG.paddingBottom * scale;
+          const legendLineH = LEGEND_CONFIG.lineHeight * scale;
+          const legendW = LEGEND_CONFIG.width * scale;
+          const headerH = 22 * scale;
+          const legendH = legendPadTop + headerH + rows * legendLineH + legendPadBottom;
+          const legendX = w - legendW - 10 * scale; // Thu nhỏ khoảng cách với lề bên phải
+          const legendY = h - legendH - 10 * scale; // Thu nhỏ khoảng cách với lề đáy
+
+          // Legend background (Màu trắng đặc 100%, che phủ hoàn toàn bên dưới)
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.12)';
+          ctx.shadowBlur = 12 * scale;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 4 * scale;
+
+          ctx.fillStyle = '#FFFFFF';
+          roundRect(ctx, legendX, legendY, legendW, legendH, LEGEND_CONFIG.borderRadius * scale);
+          ctx.fill();
+
+          ctx.shadowColor = 'transparent';
+          ctx.strokeStyle = '#E2E8F0';
+          ctx.lineWidth = 1.5 * scale;
+          roundRect(ctx, legendX, legendY, legendW, legendH, LEGEND_CONFIG.borderRadius * scale);
+          ctx.stroke();
+          ctx.restore();
+
+          // Legend title
+          ctx.save();
+          ctx.font = `700 ${Math.round(LEGEND_CONFIG.titleFontSize * scale)}px Inter, sans-serif`;
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#0F172A';
+          ctx.letterSpacing = '0.04em';
+          ctx.fillText('CHÚ GIẢI BẢN ĐỒ', legendX + legendPadX, legendY + legendPadTop + 6 * scale);
+          ctx.restore();
+
+          // Divider
+          ctx.save();
+          ctx.strokeStyle = '#E2E8F0';
+          ctx.lineWidth = 1 * scale;
+          ctx.beginPath();
+          ctx.moveTo(legendX + legendPadX, legendY + legendPadTop + 16 * scale);
+          ctx.lineTo(legendX + legendW - legendPadX, legendY + legendPadTop + 16 * scale);
+          ctx.stroke();
+          ctx.restore();
+
+          legendItems.forEach((item, i) => {
+            const col = i >= rows ? 1 : 0;
+            const row = i % rows;
+            const colW = (legendW - legendPadX * 2) / 2;
+            const centerY = legendY + legendPadTop + headerH + row * legendLineH + (legendLineH / 2);
+            const ix = legendX + legendPadX + col * colW;
+
+            ctx.save();
+            ctx.textBaseline = 'middle';
+            if (item.dash !== undefined) {
+              // Line symbol
+              ctx.strokeStyle = item.color;
+              ctx.lineWidth = (item.dash ? 2.5 : 2.5) * scale;
+              if (item.dash) ctx.setLineDash([5 * scale, 3 * scale]);
+              ctx.beginPath();
+              ctx.moveTo(ix, centerY);
+              ctx.lineTo(ix + LEGEND_CONFIG.lineSymbolLength * scale, centerY);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            } else if (item.customIcon === 'incident_x') {
+              // Dấu X đỏ viền trắng
+              const cx = ix + (LEGEND_CONFIG.lineSymbolLength / 2) * scale;
+              const cy = centerY;
+              const r = 5 * scale;
+              const drawX = () => {
+                ctx.beginPath();
+                ctx.moveTo(cx - r, cy - r);
+                ctx.lineTo(cx + r, cy + r);
+                ctx.moveTo(cx + r, cy - r);
+                ctx.lineTo(cx - r, cy + r);
+                ctx.stroke();
+              };
+              ctx.lineCap = 'round';
+              ctx.lineJoin = 'round';
+              ctx.strokeStyle = '#FFFFFF';
+              ctx.lineWidth = 3.5 * scale;
+              drawX();
+              ctx.strokeStyle = '#FF0000';
+              ctx.lineWidth = 2 * scale;
+              drawX();
+            } else if (item.customIcon === 'incident_check') {
+              // Dấu V xanh viền trắng
+              const cx = ix + (LEGEND_CONFIG.lineSymbolLength / 2) * scale;
+              const cy = centerY;
+              const drawCheck = () => {
+                ctx.beginPath();
+                ctx.moveTo(cx - 5 * scale, cy + 0.5 * scale);
+                ctx.lineTo(cx - 1.5 * scale, cy + 4 * scale);
+                ctx.lineTo(cx + 5.5 * scale, cy - 4 * scale);
+                ctx.stroke();
+              };
+              ctx.lineCap = 'round';
+              ctx.lineJoin = 'round';
+              ctx.strokeStyle = '#FFFFFF';
+              ctx.lineWidth = 3.5 * scale;
+              drawCheck();
+              ctx.strokeStyle = '#00C853';
+              ctx.lineWidth = 2 * scale;
+              drawCheck();
+            } else if (item.img) {
+              // Team icon
+              const iconDim = LEGEND_CONFIG.teamIconSize * scale;
+              ctx.drawImage(item.img, ix + 3 * scale, centerY - iconDim / 2, iconDim, iconDim);
+            } else {
+              // Node symbol
+              ctx.font = `${Math.round(LEGEND_CONFIG.nodeFontSize * scale)}px sans-serif`;
+              ctx.fillStyle = item.color;
+              ctx.fillText(item.node, ix + 4 * scale, centerY + 1 * scale);
+            }
+
+            ctx.font = `500 ${Math.round(LEGEND_CONFIG.itemFontSize * scale)}px Inter, sans-serif`;
+            ctx.fillStyle = '#1E293B';
+            const textX = ix + (LEGEND_CONFIG.lineSymbolLength + 6) * scale;
+
+            const lines = item.label.split('\n');
+            if (lines.length > 1) {
+              const lineSpacing = 11 * scale;
+              const startTextY = centerY - ((lines.length - 1) * lineSpacing) / 2;
+              lines.forEach((lineText: string, lineIdx: number) => {
+                ctx.fillText(lineText, textX, startTextY + lineIdx * lineSpacing);
+              });
+            } else {
+              ctx.fillText(item.label, textX, centerY);
+            }
+            ctx.restore();
+          });
+
           // 3. Output canvas, URL, or trigger download
           if (opts.returnCanvas) {
             resolve(canvas);
           } else if (opts.returnUrl) {
             resolve(canvas.toDataURL('image/png'));
           } else {
+            const now = new Date();
             const dataURLOut = canvas.toDataURL('image/png');
             const a = document.createElement('a');
             a.href = dataURLOut;
