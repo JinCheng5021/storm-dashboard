@@ -109,7 +109,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-              Email công ty (@fpt.com)
+              Tên đăng nhập
             </label>
             <div style={{ position: 'relative' }}>
               <span className="material-symbols-outlined" style={{
