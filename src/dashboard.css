@@ -171,10 +171,10 @@
       height: 116px;
       display: grid;
       grid-template-columns:
-        minmax(0, 1.22fr)
-        minmax(0, 1.22fr)
-        minmax(0, 1.08fr)
-        minmax(0, 1.22fr)
+        minmax(0, 1.20fr)
+        minmax(0, 1.20fr)
+        minmax(0, 1.34fr)
+        minmax(0, 0.96fr)
         minmax(0, 0.77fr)
         minmax(0, 0.77fr);
       gap: 7px;
@@ -191,7 +191,7 @@
 
     .dashboard-mode-truoc_bao .summary-grid {
       height: 116px;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 0.75fr);
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 8px;
     }
 
@@ -713,7 +713,7 @@
       justify-content: center;
     }
 
-    .dashboard-mode-truoc_bao .summary-card .chip {
+    .summary-card .chip {
       max-width: none;
     }
 
@@ -1445,10 +1445,10 @@
         height: 110px;
         gap: 6px;
         grid-template-columns:
-          minmax(0, 1.22fr)
-          minmax(0, 1.22fr)
-          minmax(0, 1.08fr)
-          minmax(0, 1.22fr)
+          minmax(0, 1.20fr)
+          minmax(0, 1.20fr)
+          minmax(0, 1.34fr)
+          minmax(0, 0.96fr)
           minmax(0, 0.77fr)
           minmax(0, 0.77fr);
       }
@@ -1471,7 +1471,7 @@
       }
       .dashboard-mode-truoc_bao .summary-grid {
         height: 110px;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 0.75fr);
+        grid-template-columns: repeat(5, minmax(0, 1fr));
       }
     }
   
