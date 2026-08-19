@@ -191,7 +191,7 @@
 
     .dashboard-mode-truoc_bao .summary-grid {
       height: 116px;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 0.75fr);
       gap: 8px;
     }
 
@@ -711,6 +711,10 @@
 
     .dashboard-mode-truoc_bao .summary-card:not(.chart-card) {
       justify-content: center;
+    }
+
+    .dashboard-mode-truoc_bao .summary-card .chip {
+      max-width: none;
     }
 
     .dashboard-mode-truoc_bao .summary-card .equipment-summary {
@@ -1467,7 +1471,7 @@
       }
       .dashboard-mode-truoc_bao .summary-grid {
         height: 110px;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 0.75fr);
       }
     }
   

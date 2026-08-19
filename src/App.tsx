@@ -443,7 +443,7 @@ function SummaryGrid({ data, mode, edges = [], nodes = [] }: any) {
         <div className="summary-icon"><span className="material-symbols-outlined text-[20px]">groups</span></div>
         <div className="min-w-0 flex-1">
           <p className="summary-label">Nhân sự đối tác</p>
-          <div className="summary-value-row"><p className="summary-value">{totalPersonnel}</p><span className="chip chip-green">{deploymentCount} điểm đồn trú</span></div>
+          <div className="summary-value-row"><p className="summary-value">{totalPersonnel}</p><span className="chip chip-green">{deploymentCount} điểm đồn trú ảnh hưởng</span></div>
           <div className="equipment-summary"><span className="material-symbols-outlined">construction</span><span><strong>{deploymentCount}</strong> máy đo</span><span className="equipment-divider">|</span><span><strong>{deploymentCount}</strong> máy hàn</span></div>
         </div>
       </article>
@@ -773,7 +773,14 @@ function GuestNodePopup({ menu, nodes, incidents, onClose }: any) {
   const stationIncidents = incidents.filter((inc: any) => stationKey(inc.target) === nodeKey);
   const causes = Array.from(new Set(stationIncidents.map((inc: any) => inc.cause).filter(Boolean)));
   const times = stationIncidents.map((inc: any) => inc.processingTime).filter(Boolean);
+  const startTimes = Array.from(new Set(stationIncidents.map((inc: any) => inc.startedAt).filter(Boolean)));
   const acBackup = stationIncidents.find((inc: any) => inc.acBackup)?.acBackup || '-';
+
+  // Kiểm tra tình trạng: nếu có sự cố đang trong trạng thái "Đang xử lý"
+  const isProcessing = stationIncidents.some((inc: any) => {
+    const s = String(inc.status || '').toLowerCase().trim();
+    return s.includes('đang xử lý') || s.includes('dang xu ly');
+  });
 
   return (
     <div style={style} className="guest-incident-popup guest-node-popup">
@@ -793,9 +800,16 @@ function GuestNodePopup({ menu, nodes, incidents, onClose }: any) {
             <span style={{ color: '#94a3b8' }}>Nguyên nhân:</span>
             <b style={{ marginLeft: '4px', color: '#ffffff' }}>{causes.length > 0 ? causes.join(', ') : '-'}</b>
           </div>
-          <div style={{ marginBottom: '5px' }}>
-            <span style={{ color: '#94a3b8' }}>Tổng TG xử lý:</span> <b style={{ marginLeft: '4px', color: '#ffffff' }}>{sumTimes(times)}</b>
-          </div>
+          {isProcessing ? (
+            <div style={{ marginBottom: '5px' }}>
+              <span style={{ color: '#94a3b8' }}>Thời gian phát sinh:</span>
+              <b style={{ marginLeft: '4px', color: '#ffffff' }}>{startTimes.length > 0 ? startTimes.join(', ') : '-'}</b>
+            </div>
+          ) : (
+            <div style={{ marginBottom: '5px' }}>
+              <span style={{ color: '#94a3b8' }}>Tổng TG xử lý:</span> <b style={{ marginLeft: '4px', color: '#ffffff' }}>{sumTimes(times)}</b>
+            </div>
+          )}
           <div>
             <span style={{ color: '#94a3b8' }}>Năng lực backup:</span> <b style={{ marginLeft: '4px', color: '#ffffff' }}>{acBackup}</b>
           </div>
