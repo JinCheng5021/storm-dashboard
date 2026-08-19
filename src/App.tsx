@@ -11,6 +11,8 @@ import { numberedTaskName, tasksForDate } from "./taskUtils";
 import { incidentStatusBreakdown, summarizeRouteIncidents } from "./incidentUtils";
 import { canonicalRouteKey, deriveIncidentMapFeatures, stationKey, summarizeActiveStormImpact } from "./incidentMapStatus";
 import type { Team, TeamType, DashboardMode } from "./types";
+import { LoginPage } from "./components/LoginPage";
+import { ChangePasswordModal } from "./components/ChangePasswordModal";
 
 const PAGE_SIZE = {
   cable: 4,
@@ -478,7 +480,7 @@ function SummaryGrid({ data, mode, edges = [], nodes = [] }: any) {
   );
 }
 
-function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, toggleStormGeoJSON, session, onSyncStorms }: any) {
+function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, toggleStormGeoJSON, isAdmin, onSyncStorms }: any) {
   const current = pageItems(rows, page, PAGE_SIZE.weather);
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -496,8 +498,8 @@ function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, 
             <span className="material-symbols-outlined">thunderstorm</span>
             {mode === 'truoc_bao' ? 'Thông tin bão' : 'Thời tiết'}
           </h2>
-          {mode === 'truoc_bao' && session && (
-            <button onClick={handleSync} disabled={isSyncing} className="icon-btn" title="Đồng bộ bão mới nhất" style={{ background: 'transparent', padding: '4px' }}>
+          {mode === 'truoc_bao' && isAdmin && (
+            <button onClick={handleSync} disabled={isSyncing} className="icon-btn" title="Đồng bộ bão mới nhất (Admin)" style={{ background: 'transparent', padding: '4px' }}>
               <span className={`material-symbols-outlined ${isSyncing ? 'spin' : ''}`} style={{ fontSize: '20px', color: 'var(--fpt-blue)' }}>sync</span>
             </button>
           )}
@@ -944,24 +946,41 @@ export default function App() {
 
   // --- Auth State ---
   const [session, setSession] = useState<any>(null);
-  const [showLogin, setShowLogin] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
+  const [authLoading, setAuthLoading] = useState(true);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError('');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setLoginError(error.message);
-    else setShowLogin(false);
-  };
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [showUserMenu]);
+
+  const userRole = session?.user?.user_metadata?.role || session?.user?.app_metadata?.role || 'user';
+  const isAdmin = userRole === 'admin';
+  const userFullName = session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0] || '';
+  const userEmail = session?.user?.email || '';
 
   useEffect(() => {
     async function loadInitialMapData() {
@@ -1310,6 +1329,30 @@ export default function App() {
   };
 
 
+  if (authLoading) {
+    return (
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0F172A',
+        color: '#FFFFFF',
+        fontFamily: 'Inter, sans-serif'
+      }}>
+        <style>{`@keyframes spin-slow { 100% { transform: rotate(360deg); } }`}</style>
+        <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#0066FF', animation: 'spin-slow 1.5s linear infinite', marginBottom: '16px' }}>cyclone</span>
+        <div style={{ fontSize: '15px', fontWeight: 600, color: '#94A3B8' }}>Đang tải hệ thống tác chiến...</div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <LoginPage onLoginSuccess={() => setAuthLoading(false)} />;
+  }
+
   return (
     <main id="report-page" className={`dashboard-shell dashboard-mode-${dashboardMode}`} ref={reportRef}>
       {captureMode && (
@@ -1345,28 +1388,171 @@ export default function App() {
           </button>
           <button className="icon-btn" title="Tải lại dữ liệu" onClick={() => loadDashboard()}><span className="material-symbols-outlined text-[18px]">refresh</span></button>
 
-          {/* Nút Đăng nhập/Đăng xuất */}
-          <div style={{ position: 'relative' }}>
-            {session ? (
-              <button className="icon-btn" title="Đăng xuất" onClick={() => supabase.auth.signOut()} style={{ background: 'var(--fpt-green)', color: '#fff' }}>
-                <span className="material-symbols-outlined text-[18px]">logout</span>
-              </button>
-            ) : (
-              <button className="icon-btn" title="Đăng nhập Admin" onClick={() => setShowLogin(!showLogin)}>
-                <span className="material-symbols-outlined text-[18px]">lock</span>
-              </button>
-            )}
+          {/* User Profile Dropdown Button */}
+          <div style={{ position: 'relative', marginLeft: '4px' }} ref={userMenuRef}>
+            <button
+              className="icon-btn"
+              title="Tài khoản người dùng"
+              onClick={() => setShowUserMenu(prev => !prev)}
+              style={{
+                background: showUserMenu ? 'var(--fpt-blue)' : (isAdmin ? 'rgba(239, 68, 68, 0.12)' : 'rgba(0, 102, 255, 0.1)'),
+                color: showUserMenu ? '#FFFFFF' : (isAdmin ? '#DC2626' : '#0066FF'),
+                border: `1.5px solid ${isAdmin ? 'rgba(239, 68, 68, 0.3)' : 'rgba(0, 102, 255, 0.3)'}`,
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '36px',
+                height: '36px',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                {isAdmin ? 'admin_panel_settings' : 'account_circle'}
+              </span>
+            </button>
 
-            {/* Modal Đăng nhập */}
-            {showLogin && !session && (
-              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', padding: '16px', background: '#fff', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', zIndex: 100, width: '260px' }}>
-                <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 800 }}>Đăng nhập Admin</h3>
-                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }} required />
-                  <input type="password" placeholder="Mật khẩu" value={password} onChange={e => setPassword(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }} required />
-                  {loginError && <div style={{ color: 'red', fontSize: '11px' }}>{loginError}</div>}
-                  <button type="submit" className="btn btn-primary" style={{ padding: '8px', background: 'var(--fpt-blue)', color: '#fff', borderRadius: '6px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>Đăng nhập</button>
-                </form>
+            {/* User Dropdown Menu */}
+            {showUserMenu && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '8px',
+                width: '270px',
+                background: '#FFFFFF',
+                borderRadius: '14px',
+                boxShadow: '0 12px 32px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                zIndex: 9999,
+                overflow: 'hidden',
+                animation: 'fadeIn 0.15s ease-out'
+              }}>
+                {/* User Info Header */}
+                <div style={{
+                  padding: '16px 16px 14px 16px',
+                  background: '#F8FAFC',
+                  borderBottom: '1px solid #E2E8F0'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <div style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '50%',
+                      background: isAdmin ? 'linear-gradient(135deg, #EF4444, #DC2626)' : 'linear-gradient(135deg, #0066FF, #0044CC)',
+                      color: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '15px'
+                    }}>
+                      {(userFullName || userEmail || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontWeight: 700,
+                        fontSize: '14px',
+                        color: '#0F172A',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {userFullName || userEmail}
+                      </div>
+                      <div style={{
+                        fontSize: '12px',
+                        color: '#64748B',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {userEmail}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      background: isAdmin ? 'rgba(239, 68, 68, 0.12)' : 'rgba(0, 102, 255, 0.12)',
+                      color: isAdmin ? '#DC2626' : '#0066FF',
+                      textTransform: 'uppercase'
+                    }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>
+                        {isAdmin ? 'verified_user' : 'visibility'}
+                      </span>
+                      {isAdmin ? 'Quản trị viên (Admin)' : 'Người xem (User)'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions Menu */}
+                <div style={{ padding: '8px 6px' }}>
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      setShowChangePassword(true);
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 12px',
+                      border: 'none',
+                      background: 'transparent',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#334155',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'background 0.15s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#F1F5F9'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#0066FF' }}>key</span>
+                    <span>Đổi mật khẩu</span>
+                  </button>
+
+                  <div style={{ height: '1px', background: '#F1F5F9', margin: '4px 6px' }} />
+
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      supabase.auth.signOut();
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 12px',
+                      border: 'none',
+                      background: 'transparent',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#DC2626',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'background 0.15s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#FEF2F2'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#DC2626' }}>logout</span>
+                    <span>Đăng xuất</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -1383,7 +1569,7 @@ export default function App() {
           storms={storms}
           activeStormGeoJSONs={activeStormGeoJSONs}
           toggleStormGeoJSON={toggleStormGeoJSON}
-          session={session}
+          isAdmin={isAdmin}
           onSyncStorms={handleSyncStorms}
         />
         <section className="content-grid">
@@ -1416,7 +1602,7 @@ export default function App() {
                     }} style={{ padding: "4px 8px", background: "var(--color-warning)" }}>
                       <span className="material-symbols-outlined text-[15px]">photo_camera</span> Export
                     </button>
-                    {session && (
+                    {isAdmin && (
                       <button className="capture-button" onClick={handleAddTeam} style={{ padding: "4px 8px", background: "var(--fpt-green)" }}>
                         <span className="material-symbols-outlined text-[15px]">add</span> Thêm đội
                       </button>
@@ -1434,7 +1620,7 @@ export default function App() {
                 sidebarCollapsed={false}
                 showTeamNames={mapState.showTeamNames}
                 mode={dashboardMode}
-                isLoggedIn={Boolean(session)}
+                isLoggedIn={isAdmin}
                 activeStormGeoJSONs={activeStormGeoJSONs}
                 onToggleTeamNames={() => mapDispatch({ type: 'TOGGLE_TEAM_NAMES' })}
                 onContextMenu={(menu) => mapDispatch({ type: 'OPEN_CONTEXT', menu })}
@@ -1476,6 +1662,14 @@ export default function App() {
           </article>
         </section>
       </div>
+
+      <ChangePasswordModal
+        isOpen={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+        userEmail={userEmail}
+        userFullName={userFullName}
+        userRole={userRole}
+      />
     </main>
   );
 }

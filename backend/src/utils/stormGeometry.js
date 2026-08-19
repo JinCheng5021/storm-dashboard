@@ -8,7 +8,7 @@ import * as turf from "@turf/turf";
 export const FILTER_SPECIFIC_FORECAST_HOURS_ONLY = true;
 
 // Danh sách các mốc giờ dự báo được phép vẽ khi bật bộ lọc (0 là vị trí cảnh báo hiện tại)
-export const ALLOWED_FORECAST_HOURS = [0, 24, 48, 72, 96];
+export const ALLOWED_FORECAST_HOURS = [0, 24, 48, 72];
 
 /**
  * Chuyển đổi chuỗi thời gian UTC sang giờ Việt Nam (UTC+7) định dạng HH:mm DD/MM
