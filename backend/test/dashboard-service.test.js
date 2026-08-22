@@ -18,7 +18,8 @@ test("giữ nguyên cấu trúc dữ liệu dashboard khi các cột được s�
       ["STT", "Điểm đồn trú", "Đối tác", "Số lượng nhân sự", "Hiển thị dashboard", "", "STT", "Tên nhân sự", "Điện thoại", "E-mail", "Vai trò", "Nơi lưu trú", "Ghi chú", "", "Số đội ứng cứu", "3"],
       ["1", "Hải Phòng", "FFC", "4", "x", "", "1", "Nguyễn Văn A", "0900", "a@example.com", "VHMB", "Hải Phòng", "", "", "Xe bán tải", "1"],
       ["2", "Hà Nội", "FFC", "6", "", "", "2", "", "", "", "", "", "", "", "Máy đo", "2"],
-      ["", "", "", "", "", "", "3", "", "", "", "", "", "", "", "Máy hàn", "2"]
+      ["", "", "", "", "", "", "3", "", "", "", "", "", "", "", "Máy hàn", "2"],
+      ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "Xe công ty", "2"]
     ],
     "Thời tiết": [
       ["Tình hình thời tiết", "Kinh độ", "Địa phương", "TT", "Vĩ độ", "Hiển thị (dành cho dashboard)"],
@@ -40,7 +41,7 @@ test("giữ nguyên cấu trúc dữ liệu dashboard khi các cột được s�
   assert.equal(visibleDeployments[0].location, "Hải Phòng");
   assert.equal(result.data.operators[0].name, "Nguyễn Văn A");
   assert.equal(result.data.operators.length, 3);
-  assert.deepEqual(result.data.responseResources, { teams: 3, pickupTrucks: 1, measuringDevices: 2, weldingMachines: 2 });
+  assert.deepEqual(result.data.responseResources, { teams: 3, pickupTrucks: 1, companyVehicles: 2, measuringDevices: 2, weldingMachines: 2 });
   assert.equal(result.data.weatherRows[0].area, "Hải Phòng");
   assert.equal(result.data.weatherRows.length, 1);
   assert.equal("mobility" in result.data.weatherRows[0], false);

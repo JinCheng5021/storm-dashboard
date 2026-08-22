@@ -168,6 +168,7 @@ export function buildDashboardDataFromSheets(sheets) {
   const responseResources = {
     teams: metricValue(peopleRows, ["Số đội ứng cứu", "SL đội ứng cứu"]),
     pickupTrucks: metricValue(peopleRows, ["Xe bán tải", "Số xe bán tải"]),
+    companyVehicles: metricValue(peopleRows, ["Xe công ty", "Số xe công ty", "SL xe công ty"]),
     measuringDevices: metricValue(peopleRows, ["Máy đo", "Số máy đo"]),
     weldingMachines: metricValue(peopleRows, ["Máy hàn", "Số máy hàn"])
   };

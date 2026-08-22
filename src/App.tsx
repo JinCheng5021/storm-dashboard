@@ -11,6 +11,7 @@ import { numberedTaskName, tasksForDate } from "./taskUtils";
 import { incidentStatusBreakdown, summarizeRouteIncidents } from "./incidentUtils";
 import { canonicalRouteKey, deriveIncidentMapFeatures, stationKey, summarizeActiveStormImpact } from "./incidentMapStatus";
 import { stormDisplayName, visibleDashboardStorms } from "./stormDisplay";
+import { formatPmbEquipmentSummary } from "./resourceSummary";
 import type { Team, TeamType, DashboardMode } from "./types";
 import { LoginPage } from "./components/LoginPage";
 import { ChangePasswordModal } from "./components/ChangePasswordModal";
@@ -326,7 +327,7 @@ function SummaryGrid({ data, mode, edges = [], nodes = [] }: any) {
   const visibleDeployments = visibleDashboardDeployments(data.deployments);
   const totalPersonnel = visibleDeployments.reduce((sum: any, item: any) => sum + item.count, 0);
   const deploymentCount = visibleDeployments.length;
-  const resources = data.responseResources || { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 };
+  const resources = data.responseResources || { teams: 0, pickupTrucks: 0, companyVehicles: 0, measuringDevices: 0, weldingMachines: 0 };
   
   const routeInfoMap = new Map<string, any>();
   if (Array.isArray(data.routeInformation)) {
@@ -464,7 +465,7 @@ function SummaryGrid({ data, mode, edges = [], nodes = [] }: any) {
         <div className="summary-card-content">
           <p className="summary-label">Nhân sự PMB</p>
           <div className="summary-value-row"><p className="summary-value">{data.operators.length}</p><span className={`chip ${resources.teams ? "chip-blue" : "chip-gray"}`}>{resources.teams} đội ứng cứu</span></div>
-          <div className="equipment-summary pmb-equipment"><span className="material-symbols-outlined">local_shipping</span><span>{resources.pickupTrucks} xe bán tải + {resources.measuringDevices} máy đo + {resources.weldingMachines} máy hàn</span></div>
+          <div className="equipment-summary pmb-equipment"><span className="material-symbols-outlined">local_shipping</span><span>{formatPmbEquipmentSummary(resources)}</span></div>
         </div>
       </article>
       {mode === 'truoc_bao' && (
@@ -914,7 +915,7 @@ function GuestTeamPopup({ menu, teams, deployments, onClose }: any) {
 
 function EmptyData() {
   return {
-    cableIncidents: [], stationIncidents: [], incidents: [], affectedStations: [], affectedRoutes: [], stormImpactSummary: { popCount: 0, ftiContractCount: 0, customerCount: 0 }, routeInformation: [], deployments: [], operators: [], responseResources: { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 }, weatherRows: [], preStormTasks: [], inStormTasks: [], tasks: []
+    cableIncidents: [], stationIncidents: [], incidents: [], affectedStations: [], affectedRoutes: [], stormImpactSummary: { popCount: 0, ftiContractCount: 0, customerCount: 0 }, routeInformation: [], deployments: [], operators: [], responseResources: { teams: 0, pickupTrucks: 0, companyVehicles: 0, measuringDevices: 0, weldingMachines: 0 }, weatherRows: [], preStormTasks: [], inStormTasks: [], tasks: []
   };
 }
 
