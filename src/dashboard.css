@@ -171,10 +171,8 @@
       height: 116px;
       display: grid;
       grid-template-columns:
-        minmax(0, 1.22fr)
-        minmax(0, 1.22fr)
-        minmax(0, 1.38fr)
-        minmax(0, 1.28fr)
+        repeat(2, minmax(0, 1.38fr))
+        repeat(2, minmax(0, 1.22fr))
         repeat(3, minmax(0, 0.70fr));
       gap: 7px;
       overflow: hidden;
@@ -668,11 +666,11 @@
     }
     .weather-card .table-box th {
       height: 23px;
-      font-size: 8px;
+      font-size: 10px;
       padding: 0 3px;
       text-align: center;
       line-height: 1.15;
-      white-space: normal;
+      white-space: nowrap;
       overflow: visible;
       text-overflow: clip;
     }
@@ -698,13 +696,17 @@
 
     .weather-card .table-box td {
       height: 23px;
-      font-size: 8.5px;
+      font-size: 11px;
       padding: 2px 3px;
       text-align: center;
       line-height: 1.15;
-      white-space: normal;
+      white-space: nowrap;
       overflow: visible;
       text-overflow: clip;
+    }
+
+    .weather-card .card-title {
+      font-size: 15px;
     }
 
     .weather-card .table-box {
@@ -1506,10 +1508,8 @@
         height: 110px;
         gap: 6px;
         grid-template-columns:
-          minmax(0, 1.22fr)
-          minmax(0, 1.22fr)
-          minmax(0, 1.38fr)
-          minmax(0, 1.28fr)
+          repeat(2, minmax(0, 1.38fr))
+          repeat(2, minmax(0, 1.22fr))
           repeat(3, minmax(0, 0.70fr));
       }
       .summary-card { padding: 5px 8px; }

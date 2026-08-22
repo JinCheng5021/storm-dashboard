@@ -10,6 +10,7 @@ import { supabase } from "./lib/supabase";
 import { numberedTaskName, tasksForDate } from "./taskUtils";
 import { incidentStatusBreakdown, summarizeRouteIncidents } from "./incidentUtils";
 import { canonicalRouteKey, deriveIncidentMapFeatures, stationKey, summarizeActiveStormImpact } from "./incidentMapStatus";
+import { stormDisplayName, visibleDashboardStorms } from "./stormDisplay";
 import type { Team, TeamType, DashboardMode } from "./types";
 import { LoginPage } from "./components/LoginPage";
 import { ChangePasswordModal } from "./components/ChangePasswordModal";
@@ -507,6 +508,7 @@ function SummaryGrid({ data, mode, edges = [], nodes = [] }: any) {
 function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, toggleStormGeoJSON, isAdmin, onSyncStorms }: any) {
   const current = pageItems(rows, page, PAGE_SIZE.weather);
   const [isSyncing, setIsSyncing] = useState(false);
+  const displayedStorms = visibleDashboardStorms(storms);
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -539,10 +541,10 @@ function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, 
           </div>
         ) : mode === 'truoc_bao' ? (
           <div className="storm-list" style={{ padding: "0 16px 16px", maxHeight: "400px", overflowY: "auto" }}>
-            {(!storms || storms.length === 0) ? (
+            {displayedStorms.length === 0 ? (
               <div className="empty-state py-8">Hiện không có bão hoặc áp thấp nhiệt đới trên Biển Đông.</div>
             ) : (
-              storms.map((storm: any) => {
+              displayedStorms.map((storm: any) => {
                 const isActive = !!activeStormGeoJSONs?.[storm.storm_id];
                 const meta = storm.metadata;
 
@@ -550,7 +552,7 @@ function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, 
                   <div key={storm.storm_id} className="storm-item" style={{ marginBottom: "24px", borderBottom: "1px solid #eee", paddingBottom: "16px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
                       <h4 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "#333", flex: 1, paddingRight: "8px", display: "flex", alignItems: "center", gap: "8px" }}>
-                        {storm.name || storm.storm_id?.toUpperCase()}
+                        {stormDisplayName(storm)}
                         {storm.geojson && (
                           <button 
                             title={isActive ? "Tắt bản đồ" : "Bật bản đồ"}
