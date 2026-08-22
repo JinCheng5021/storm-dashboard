@@ -109,7 +109,8 @@ export function buildDashboardDataFromSheets(sheets) {
         length: get("length"),
         impact: get("routeImpact"),
         pops: get("pops"),
-        ftiCustomers: get("ftiCustomers"),
+        ftiContracts: get("ftiContracts"),
+        customers: get("customers"),
         availability: get("availability"),
         incidentFrequency: get("incidentFrequency"),
         riskLevel: get("riskLevel")
@@ -118,8 +119,9 @@ export function buildDashboardDataFromSheets(sheets) {
 
   const stormImpactSummary = affectedRoutes.reduce((summary, route) => ({
     popCount: summary.popCount + numberValue(route.pops),
-    ftiCustomerCount: summary.ftiCustomerCount + numberValue(route.ftiCustomers)
-  }), { popCount: 0, ftiCustomerCount: 0 });
+    ftiContractCount: summary.ftiContractCount + numberValue(route.ftiContracts),
+    customerCount: summary.customerCount + numberValue(route.customers)
+  }), { popCount: 0, ftiContractCount: 0, customerCount: 0 });
 
   const routeInformation = affectedRoutes.map((route) => ({
       route: route.route,
@@ -182,7 +184,6 @@ export function buildDashboardDataFromSheets(sheets) {
         lat: get("lat"),
         long: get("long"),
         weather: get("weather"),
-        mobility: get("mobility"),
         visible: get("visible")
       };
     });

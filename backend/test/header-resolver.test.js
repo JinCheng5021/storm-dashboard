@@ -4,20 +4,19 @@ import { createHeaderResolver } from "../src/lib/header-resolver.js";
 import { SheetSchemaError } from "../src/errors/sheet-schema.error.js";
 import { SHEET_SCHEMAS } from "../src/config/sheets.config.js";
 
-test("đọc đúng dữ liệu khi thứ tự cột thời tiết thay đổi", () => {
+test("đọc đúng dữ liệu khi thứ tự cột thời tiết thay đổi và không có cột di chuyển", () => {
   const rows = [
-    ["Khả năng di chuyển", "Thời tiết", "Long", "Khu vực", "STT", "Lat", "Hiển thị dashboard"],
-    ["Bình thường", "Mưa nhỏ", "106.6", "Hải Phòng", "1", "20.8", "x"]
+    ["Thời tiết", "Long", "Khu vực", "STT", "Lat", "Hiển thị dashboard"],
+    ["Mưa nhỏ", "106.6", "Hải Phòng", "1", "20.8", "x"]
   ];
   const resolver = createHeaderResolver("Thời tiết", rows, SHEET_SCHEMAS["Thời tiết"]);
   const dataRow = rows[resolver.dataStartIndex];
 
   assert.equal(resolver.get(dataRow, "area"), "Hải Phòng");
   assert.equal(resolver.get(dataRow, "weather"), "Mưa nhỏ");
-  assert.equal(resolver.get(dataRow, "mobility"), "Bình thường");
 });
 
-test("chấp nhận alias tiêu đề đã cấu hình", () => {
+test("chấp nhận alias tiêu đề đã cấu hình và bỏ qua cột di chuyển nếu vẫn còn", () => {
   const rows = [
     ["TT", "Địa phương", "Vĩ độ", "Kinh độ", "Tình hình thời tiết", "Di chuyển", "Hiển thị"],
     ["1", "Hà Nội", "21", "105", "Có mây", "Bình thường", "x"]
@@ -37,7 +36,7 @@ test("phân biệt hai cột STT trùng nhau theo lần xuất hiện", () => {
 });
 
 test("báo lỗi rõ ràng khi tên cột bắt buộc bị gõ sai", () => {
-  const rows = [["STT", "Khu vực", "Lat", "Long", "Thời tiế", "Khả năng di chuyển", "Hiển thị"]];
+  const rows = [["STT", "Khu vực", "Lat", "Long", "Thời tiế", "Hiển thị"]];
 
   assert.throws(
     () => createHeaderResolver("Thời tiết", rows, SHEET_SCHEMAS["Thời tiết"]),

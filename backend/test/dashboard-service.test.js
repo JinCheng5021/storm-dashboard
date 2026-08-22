@@ -13,7 +13,7 @@ test("giữ nguyên cấu trúc dữ liệu dashboard khi các cột được s�
       ["Trạng thái", "Mã sự cố", "Chi nhánh", "Tên trạm", "Trục", "Thời gian phát sinh", "Ngày", "Nguyên nhân"],
       ["Hoàn thành", "SC02", "QNH", "MCI", "DBB", "13/07/2026 10:00", "13/07/2026", "Mất điện"]
     ],
-    "DS tuyến, trạm ảnh hưởng": [["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài tuyến", "Ảnh hưởng tuyến cáp", "SL KHG FTI", "Mức độ"]],
+    "DS tuyến, trạm ảnh hưởng": [["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài tuyến", "Ảnh hưởng tuyến cáp", "SL HĐ FTI", "SL khách hàng", "Mức độ"]],
     "Nhân sự": [
       ["STT", "Điểm đồn trú", "Đối tác", "Số lượng nhân sự", "Hiển thị dashboard", "", "STT", "Tên nhân sự", "Điện thoại", "E-mail", "Vai trò", "Nơi lưu trú", "Ghi chú", "", "Số đội ứng cứu", "3"],
       ["1", "Hải Phòng", "FFC", "4", "x", "", "1", "Nguyễn Văn A", "0900", "a@example.com", "VHMB", "Hải Phòng", "", "", "Xe bán tải", "1"],
@@ -21,9 +21,9 @@ test("giữ nguyên cấu trúc dữ liệu dashboard khi các cột được s�
       ["", "", "", "", "", "", "3", "", "", "", "", "", "", "", "Máy hàn", "2"]
     ],
     "Thời tiết": [
-      ["Di chuyển", "Tình hình thời tiết", "Kinh độ", "Địa phương", "TT", "Vĩ độ", "Hiển thị (dành cho dashboard)"],
-      ["Bình thường", "Có mây", "106", "Hải Phòng", "1", "20", "x"],
-      ["Bình thường", "Có mây", "105", "Hà Nội", "2", "21", ""]
+      ["Tình hình thời tiết", "Kinh độ", "Địa phương", "TT", "Vĩ độ", "Hiển thị (dành cho dashboard)"],
+      ["Có mây", "106", "Hải Phòng", "1", "20", "x"],
+      ["Có mây", "105", "Hà Nội", "2", "21", ""]
     ],
     "Công việc": [["", "", ""], ["1", "đo kiểm", "i"]]
   };
@@ -43,6 +43,7 @@ test("giữ nguyên cấu trúc dữ liệu dashboard khi các cột được s�
   assert.deepEqual(result.data.responseResources, { teams: 3, pickupTrucks: 1, measuringDevices: 2, weldingMachines: 2 });
   assert.equal(result.data.weatherRows[0].area, "Hải Phòng");
   assert.equal(result.data.weatherRows.length, 1);
+  assert.equal("mobility" in result.data.weatherRows[0], false);
   assert.equal(result.data.preStormTasks[0].name, "đo kiểm");
   assert.equal(result.data.inStormTasks.length, 0);
   assert.match(result.warnings[0], /Công việc/);
@@ -52,9 +53,9 @@ test("tách độc lập bảng công việc Trước bão và Trong bão, khôn
   const baseSheets = {
     "SC ngoại vi": [["Ngày", "Mã SC", "Mạch", "Tuyến", "TG phát sinh", "Khu vực", "Nguyên nhân", "Tình trạng"]],
     "SC đài trạm": [["Ngày", "Mã SC", "Mạch", "Trạm", "TG phát sinh", "Chi nhánh", "Nguyên nhân", "Tình trạng"]],
-    "DS tuyến, trạm ảnh hưởng": [["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài tuyến", "Ảnh hưởng tuyến cáp", "SL KHG FTI", "Mức độ"]],
+    "DS tuyến, trạm ảnh hưởng": [["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài tuyến", "Ảnh hưởng tuyến cáp", "SL HĐ FTI", "SL khách hàng", "Mức độ"]],
     "Nhân sự": [["STT", "Đồn trú", "Đối tác", "SL nhân sự tại đồn trú", "Hiển thị", "", "STT", "Họ và tên", "Số điện thoại", "Email", "Chức vụ", "Vị trí lưu trú"]],
-    "Thời tiết": [["STT", "Khu vực", "Lat", "Long", "Thời tiết", "Khả năng di chuyển", "Hiển thị (dành cho dashboard)"]],
+    "Thời tiết": [["STT", "Khu vực", "Lat", "Long", "Thời tiết", "Hiển thị (dành cho dashboard)"]],
     "Công việc": [
       ["TRƯỚC BÃO", "", "", "", "", "TRONG BÃO", "", ""],
       ["STT", "Nội dung công việc", "Trạng thái", "", "", "Ngày", "Nội dung công việc", "Trạng thái"],
@@ -89,11 +90,11 @@ test("lấy toàn bộ thông tin tuyến từ tab DS tuyến, trạm ảnh hư�
     "SC ngoại vi": [["Ngày", "Mã SC", "Mạch", "Tuyến", "TG phát sinh", "Khu vực", "Nguyên nhân", "Tình trạng"]],
     "SC đài trạm": [["Ngày", "Mã SC", "Mạch", "Trạm", "TG phát sinh", "Chi nhánh", "Nguyên nhân", "Tình trạng"]],
     "DS tuyến, trạm ảnh hưởng": [
-      ["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài", "Ảnh hưởng tuyến cáp", "SL POP ảnh hưởng", "SL KHG FTI", "Độ khả dụng", "Tần suất SC/100km", "Mức độ"],
-      ["", "", "", "", "", "", "", "", "", "", "1", "DBB", "THA - CGT 48FO", "93.2", "Trực tiếp", "3", "2", "56%", "2.15", "Có nguy cơ"]
+      ["TT", "Trạm", "Tọa độ", "Khoảng cách", "Vùng ảnh hưởng", "Kế hoạch nhân sự", "Nhân sự chi nhánh", "Điện thoại", "Ghi chú", "", "TT", "Mạch", "Tuyến", "Chiều dài", "Ảnh hưởng tuyến cáp", "SL POP ảnh hưởng", "SL HĐ FTI", "SL khách hàng", "Độ khả dụng", "Tần suất SC/100km", "Mức độ"],
+      ["", "", "", "", "", "", "", "", "", "", "1", "DBB", "THA - CGT 48FO", "93.2", "Trực tiếp", "3", "2", "4325", "56%", "2.15", "Có nguy cơ"]
     ],
     "Nhân sự": [["STT", "Đồn trú", "Đối tác", "SL nhân sự tại đồn trú", "Hiển thị", "", "STT", "Họ và tên", "Số điện thoại", "Email", "Chức vụ", "Vị trí lưu trú"]],
-    "Thời tiết": [["STT", "Khu vực", "Lat", "Long", "Thời tiết", "Khả năng di chuyển", "Hiển thị (dành cho dashboard)"]],
+    "Thời tiết": [["STT", "Khu vực", "Lat", "Long", "Thời tiết", "Hiển thị (dành cho dashboard)"]],
     "Công việc": [
       ["TRƯỚC BÃO", "", "", "", "", "TRONG BÃO", "", ""],
       ["STT", "Nội dung công việc", "Trạng thái", "", "", "Ngày", "Nội dung công việc", "Trạng thái"]
@@ -111,7 +112,10 @@ test("lấy toàn bộ thông tin tuyến từ tab DS tuyến, trạm ảnh hư�
   }]);
   assert.deepEqual(result.data.stormImpactSummary, {
     popCount: 3,
-    ftiCustomerCount: 2
+    ftiContractCount: 2,
+    customerCount: 4325
   });
+  assert.equal(result.data.affectedRoutes[0].ftiContracts, "2");
+  assert.equal(result.data.affectedRoutes[0].customers, "4325");
   assert.equal(result.data.affectedRoutes[0].riskLevel, "Có nguy cơ");
 });

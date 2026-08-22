@@ -76,7 +76,8 @@ export function summarizeActiveStormImpact({ affectedRoutes = [], cableIncidents
     const popCount = incidentNumberValue(route.pops);
     const impact = normalizeIncidentText(route.impact);
     summary.popCount += popCount;
-    summary.ftiCustomerCount += incidentNumberValue(route.ftiCustomers);
+    summary.ftiContractCount += incidentNumberValue(route.ftiContracts);
+    summary.customerCount += incidentNumberValue(route.customers);
     if (impact.includes("truc tiep")) summary.directPopCount += popCount;
     if (impact.includes("gian tiep")) summary.indirectPopCount += popCount;
     return summary;
@@ -84,7 +85,8 @@ export function summarizeActiveStormImpact({ affectedRoutes = [], cableIncidents
     popCount: 0,
     directPopCount: 0,
     indirectPopCount: 0,
-    ftiCustomerCount: 0
+    ftiContractCount: 0,
+    customerCount: 0
   });
 }
 

@@ -25,14 +25,16 @@ export function summarizeActiveStormImpact(input: {
     route?: unknown;
     impact?: unknown;
     pops?: unknown;
-    ftiCustomers?: unknown;
+    ftiContracts?: unknown;
+    customers?: unknown;
   }>;
   cableIncidents?: Array<{ target?: unknown; status?: unknown }>;
 }): {
   popCount: number;
   directPopCount: number;
   indirectPopCount: number;
-  ftiCustomerCount: number;
+  ftiContractCount: number;
+  customerCount: number;
 };
 export function edgeStatusBeforeTyphoonFromLevel(
   value: unknown

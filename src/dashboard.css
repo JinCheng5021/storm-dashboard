@@ -171,12 +171,11 @@
       height: 116px;
       display: grid;
       grid-template-columns:
-        minmax(0, 1.20fr)
-        minmax(0, 1.20fr)
-        minmax(0, 1.34fr)
-        minmax(0, 0.96fr)
-        minmax(0, 0.77fr)
-        minmax(0, 0.77fr);
+        minmax(0, 1.22fr)
+        minmax(0, 1.22fr)
+        minmax(0, 1.38fr)
+        minmax(0, 1.28fr)
+        repeat(3, minmax(0, 0.70fr));
       gap: 7px;
       overflow: hidden;
     }
@@ -191,7 +190,10 @@
 
     .dashboard-mode-truoc_bao .summary-grid {
       height: 116px;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns:
+        repeat(3, minmax(0, 1.15fr))
+        repeat(2, minmax(0, 1.15fr))
+        minmax(0, 0.75fr);
       gap: 8px;
     }
 
@@ -210,6 +212,12 @@
       border: 1px solid var(--line);
       box-shadow: 0 8px 24px rgba(23, 50, 77, 0.055);
       overflow: hidden;
+    }
+
+    .summary-card-content {
+      flex: 1 1 0;
+      min-width: 0;
+      max-width: 100%;
     }
 
     .summary-card.chart-card {
@@ -325,10 +333,10 @@
     }
 
     .pie-legend-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+      gap: 4px;
       white-space: nowrap;
     }
 
@@ -345,7 +353,7 @@
       align-items: baseline;
       justify-content: flex-end;
       gap: 4px;
-      min-width: 55px;
+      min-width: 0;
     }
 
     .pie-legend-value strong {
@@ -375,8 +383,65 @@
     }
 
     .staff-mini-card .summary-value-row {
-      justify-content: space-between;
+      justify-content: flex-start;
+      flex-wrap: wrap;
       gap: 8px;
+    }
+
+    .staff-partner-card .summary-value-row {
+      flex-wrap: nowrap;
+      gap: 5px;
+    }
+
+    .staff-mini-card .summary-label {
+      padding-right: 18px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      line-height: 1.2;
+    }
+
+    .staff-mini-card .chip {
+      width: max-content;
+      max-width: 100%;
+      height: auto;
+      min-height: 22px;
+      padding-top: 4px;
+      padding-bottom: 4px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      line-height: 1.15;
+    }
+
+    .staff-partner-card .chip {
+      flex: 0 1 auto;
+      width: auto;
+      max-width: none;
+      height: 22px;
+      min-height: 22px;
+      padding: 0 6px;
+      font-size: 9px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .staff-mini-card .equipment-summary {
+      max-width: 100%;
+      min-width: 0;
+      margin-top: 5px;
+      flex-wrap: wrap;
+      row-gap: 3px;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      line-height: 1.2;
+    }
+
+    .staff-mini-card .equipment-summary.pmb-equipment > span:last-child {
+      flex: 1 1 120px;
+      min-width: 0;
+      white-space: normal;
     }
 
     .equipment-summary {
@@ -473,7 +538,7 @@
       justify-content: center;
     }
 
-    .dashboard-mode-trong_bao .storm-impact-total-card .summary-label {
+    .storm-impact-total-card .summary-label {
       min-height: 22px;
       padding-right: 18px;
       display: flex;
@@ -515,7 +580,7 @@
     }
 
     .dashboard-mode-trong_bao .pie-legend-value {
-      min-width: 43px;
+      min-width: 0;
       gap: 3px;
     }
 
@@ -624,15 +689,11 @@
     }
 
     .weather-card .table-box .weather-area-column {
-      width: 27%;
-    }
-
-    .weather-card .table-box .weather-condition-column {
       width: 34%;
     }
 
-    .weather-card .table-box .weather-mobility-column {
-      width: 27%;
+    .weather-card .table-box .weather-condition-column {
+      width: 54%;
     }
 
     .weather-card .table-box td {
@@ -713,14 +774,14 @@
       justify-content: center;
     }
 
-    .summary-card .chip {
+    .summary-card:not(.staff-mini-card) .chip {
       max-width: none;
     }
 
-    .dashboard-mode-truoc_bao .summary-card .equipment-summary {
+    .dashboard-mode-truoc_bao .staff-mini-card .equipment-summary {
       max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      overflow: visible;
+      text-overflow: clip;
     }
 
     .image-slot {
@@ -1445,12 +1506,11 @@
         height: 110px;
         gap: 6px;
         grid-template-columns:
-          minmax(0, 1.20fr)
-          minmax(0, 1.20fr)
-          minmax(0, 1.34fr)
-          minmax(0, 0.96fr)
-          minmax(0, 0.77fr)
-          minmax(0, 0.77fr);
+          minmax(0, 1.22fr)
+          minmax(0, 1.22fr)
+          minmax(0, 1.38fr)
+          minmax(0, 1.28fr)
+          repeat(3, minmax(0, 0.70fr));
       }
       .summary-card { padding: 5px 8px; }
       .summary-icon { width: 26px; height: 26px; flex-basis: 26px; }
@@ -1471,7 +1531,10 @@
       }
       .dashboard-mode-truoc_bao .summary-grid {
         height: 110px;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns:
+          repeat(3, minmax(0, 1.15fr))
+          repeat(2, minmax(0, 1.15fr))
+          minmax(0, 0.75fr);
       }
     }
   

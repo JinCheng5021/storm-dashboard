@@ -29,7 +29,8 @@ const ACCENT_STYLE: any = {
   green: { "--accent": "var(--fpt-green)", "--accent-rgb": "109, 179, 63" },
   red: { "--accent": "var(--danger)", "--accent-rgb": "239, 68, 68" },
   purple: { "--accent": "#7c3aed", "--accent-rgb": "124, 58, 237" },
-  teal: { "--accent": "#0f9f8f", "--accent-rgb": "15, 159, 143" }
+  teal: { "--accent": "#0f9f8f", "--accent-rgb": "15, 159, 143" },
+  cyan: { "--accent": "#0284c7", "--accent-rgb": "2, 132, 199" }
 };
 
 function chipClass(status) {
@@ -302,7 +303,7 @@ function StormImpactTotalCard({ label, value, icon, accentStyle, href }: any) {
         <span className="material-symbols-outlined">open_in_new</span>
       </a>
       <div className="summary-icon"><span className="material-symbols-outlined text-[20px]">{icon}</span></div>
-      <div className="min-w-0 flex-1">
+      <div className="summary-card-content">
         <p className="summary-label">{label}</p>
         <div className="summary-value-row"><p className="summary-value">{value}</p></div>
       </div>
@@ -334,11 +335,14 @@ function SummaryGrid({ data, mode, edges = [], nodes = [] }: any) {
   }
 
   const affectedRoutePopMap = new Map<string, number>();
+  const affectedRouteCustomerMap = new Map<string, number>();
   if (Array.isArray(data.affectedRoutes)) {
     data.affectedRoutes.forEach((route: any) => {
       const key = canonicalRouteKey(route.route);
       const pop = parseInt(route.pops, 10) || 0;
+      const customers = parseInt(route.customers, 10) || 0;
       affectedRoutePopMap.set(key, pop);
+      affectedRouteCustomerMap.set(key, customers);
     });
   }
 
@@ -348,6 +352,7 @@ function SummaryGrid({ data, mode, edges = [], nodes = [] }: any) {
   let indirectLength = 0;
   let directPopCount = 0;
   let indirectPopCount = 0;
+  let preStormCustomerCount = 0;
 
   if (Array.isArray(edges)) {
     edges.forEach((edge: any) => {
@@ -369,15 +374,18 @@ function SummaryGrid({ data, mode, edges = [], nodes = [] }: any) {
         }
 
         const popCount = affectedRoutePopMap.get(edgeKey) || 0;
+        const customerCount = affectedRouteCustomerMap.get(edgeKey) || 0;
 
         if (isDirect) {
           directRouteCount++;
           directLength += len;
           directPopCount += popCount;
+          preStormCustomerCount += customerCount;
         } else if (isIndirect) {
           indirectRouteCount++;
           indirectLength += len;
           indirectPopCount += popCount;
+          preStormCustomerCount += customerCount;
         }
       }
     });
@@ -436,28 +444,37 @@ function SummaryGrid({ data, mode, edges = [], nodes = [] }: any) {
           <IncidentChart type="cable" incidents={data.cableIncidents} href={`${SHEET_BASE_URL}2025084488`} />
         </>
       )}
-      <article className="summary-card" style={ACCENT_STYLE.green}>
+      <article className="summary-card staff-mini-card staff-partner-card" style={ACCENT_STYLE.green}>
         <a href={`${SHEET_BASE_URL}0`} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
           <span className="material-symbols-outlined">open_in_new</span>
         </a>
         <div className="summary-icon"><span className="material-symbols-outlined text-[20px]">groups</span></div>
-        <div className="min-w-0 flex-1">
+        <div className="summary-card-content">
           <p className="summary-label">Nhân sự đối tác</p>
           <div className="summary-value-row"><p className="summary-value">{totalPersonnel}</p><span className="chip chip-green">{deploymentCount} điểm đồn trú ảnh hưởng</span></div>
           <div className="equipment-summary"><span className="material-symbols-outlined">construction</span><span><strong>{deploymentCount}</strong> máy đo</span><span className="equipment-divider">|</span><span><strong>{deploymentCount}</strong> máy hàn</span></div>
         </div>
       </article>
-      <article className="summary-card" style={ACCENT_STYLE.blue}>
+      <article className="summary-card staff-mini-card" style={ACCENT_STYLE.blue}>
         <a href={`${SHEET_BASE_URL}0`} target="_blank" rel="noreferrer" className="sheet-link" title="Mở file Google Sheet">
           <span className="material-symbols-outlined">open_in_new</span>
         </a>
         <div className="summary-icon"><span className="material-symbols-outlined text-[20px]">support_agent</span></div>
-        <div className="min-w-0 flex-1">
+        <div className="summary-card-content">
           <p className="summary-label">Nhân sự PMB</p>
           <div className="summary-value-row"><p className="summary-value">{data.operators.length}</p><span className={`chip ${resources.teams ? "chip-blue" : "chip-gray"}`}>{resources.teams} đội ứng cứu</span></div>
           <div className="equipment-summary pmb-equipment"><span className="material-symbols-outlined">local_shipping</span><span>{resources.pickupTrucks} xe bán tải + {resources.measuringDevices} máy đo + {resources.weldingMachines} máy hàn</span></div>
         </div>
       </article>
+      {mode === 'truoc_bao' && (
+        <StormImpactTotalCard
+          label="SL KHG có nguy cơ"
+          value={preStormCustomerCount}
+          icon="groups"
+          accentStyle={ACCENT_STYLE.cyan}
+          href={`${SHEET_BASE_URL}763532233`}
+        />
+      )}
       {mode === 'trong_bao' && (
         <>
           <StormImpactTotalCard
@@ -468,10 +485,17 @@ function SummaryGrid({ data, mode, edges = [], nodes = [] }: any) {
             href={`${SHEET_BASE_URL}763532233`}
           />
           <StormImpactTotalCard
-            label="SL KHG FTI đang ảnh hưởng"
-            value={activeStormImpact.ftiCustomerCount}
+            label="SL HĐ FTI đang ảnh hưởng"
+            value={activeStormImpact.ftiContractCount}
             icon="groups"
             accentStyle={ACCENT_STYLE.teal}
+            href={`${SHEET_BASE_URL}763532233`}
+          />
+          <StormImpactTotalCard
+            label="SL KHG đang ảnh hưởng"
+            value={activeStormImpact.customerCount}
+            icon="group"
+            accentStyle={ACCENT_STYLE.cyan}
             href={`${SHEET_BASE_URL}763532233`}
           />
         </>
@@ -557,16 +581,15 @@ function WeatherPanel({ rows, page, setPage, mode, storms, activeStormGeoJSONs, 
           </div>
         ) : (
           <table>
-            <thead><tr><th className="weather-stt-column">STT</th><th className="weather-area-column">Khu vực</th><th className="weather-condition-column">Thời tiết</th><th className="weather-mobility-column">Di chuyển</th></tr></thead>
+            <thead><tr><th className="weather-stt-column">STT</th><th className="weather-area-column">Khu vực</th><th className="weather-condition-column">Thời tiết</th></tr></thead>
             <tbody>
               {!rows.length ? (
-                <tr><td colSpan={4}><div className="empty-state">Chưa có dữ liệu trong tab Thời tiết.</div></td></tr>
+                <tr><td colSpan={3}><div className="empty-state">Chưa có dữ liệu trong tab Thời tiết.</div></td></tr>
               ) : current.rows.map((row: any, index: number) => (
-                <tr key={`${row.stt}-${current.start + index}`} title={[row.area, row.weather, row.mobility].filter(Boolean).join(" | ")}>
+                <tr key={`${row.stt}-${current.start + index}`} title={[row.area, row.weather].filter(Boolean).join(" | ")}>
                   <td className="strong weather-stt-column">{String(current.start + index + 1)}</td>
                   <td>{row.area || "-"}</td>
                   <td>{weatherIcon(row.weather)} {row.weather || "-"}</td>
-                  <td><StatusChip status={row.mobility || "Chưa cập nhật"} /></td>
                 </tr>
               ))}
             </tbody>
@@ -889,7 +912,7 @@ function GuestTeamPopup({ menu, teams, deployments, onClose }: any) {
 
 function EmptyData() {
   return {
-    cableIncidents: [], stationIncidents: [], incidents: [], affectedStations: [], affectedRoutes: [], stormImpactSummary: { popCount: 0, ftiCustomerCount: 0 }, routeInformation: [], deployments: [], operators: [], responseResources: { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 }, weatherRows: [], preStormTasks: [], inStormTasks: [], tasks: []
+    cableIncidents: [], stationIncidents: [], incidents: [], affectedStations: [], affectedRoutes: [], stormImpactSummary: { popCount: 0, ftiContractCount: 0, customerCount: 0 }, routeInformation: [], deployments: [], operators: [], responseResources: { teams: 0, pickupTrucks: 0, measuringDevices: 0, weldingMachines: 0 }, weatherRows: [], preStormTasks: [], inStormTasks: [], tasks: []
   };
 }
 

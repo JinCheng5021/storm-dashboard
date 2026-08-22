@@ -65,7 +65,8 @@ export const SHEET_SCHEMAS = {
       length: column(["Chiều dài", "Chiều dài tuyến"]),
       routeImpact: column(["Ảnh hưởng tuyến cáp", "Ảnh hưởng"]),
       pops: column(["SL POP ảnh hưởng", "Số POP ảnh hưởng"], { required: false }),
-      ftiCustomers: column(["SL KHG FTI", "SL KHG FTI ảnh hưởng", "Số KHG FTI"]),
+      ftiContracts: column(["SL HĐ FTI", "SL KHG FTI", "SL KHG FTI ảnh hưởng", "Số KHG FTI"]),
+      customers: column(["SL khách hàng", "Số lượng khách hàng"]),
       availability: column(["Độ khả dụng", "ĐKD"], { required: false }),
       incidentFrequency: column(["Tần suất SC/100km", "Tần suất SC"], { required: false }),
       riskLevel: column(["Mức độ", "Đánh giá"])
@@ -95,7 +96,6 @@ export const SHEET_SCHEMAS = {
       lat: column(["Lat", "Vĩ độ", "Latitude"]),
       long: column(["Long", "Kinh độ", "Longitude"]),
       weather: column(["Thời tiết", "Tình hình thời tiết"]),
-      mobility: column(["Khả năng di chuyển", "Di chuyển", "Tình trạng di chuyển"]),
       visible: column(["Hiển thị (dành cho dashboard)", "Hiển thị dashboard", "Hiển thị"])
     }
   },

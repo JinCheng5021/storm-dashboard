@@ -17,12 +17,12 @@ test("quy trạng thái sự cố đang xử lý về màu đỏ", () => {
   assert.equal(edgeStatusFromIncident(""), null);
 });
 
-test("chỉ cộng POP và KHG FTI của tuyến đang màu đỏ", () => {
+test("chỉ cộng POP, HĐ FTI và khách hàng của tuyến đang màu đỏ", () => {
   const summary = summarizeActiveStormImpact({
     affectedRoutes: [
-      { route: "A - B", impact: "Trực tiếp", pops: "3", ftiCustomers: "2" },
-      { route: "C - D", impact: "Gián tiếp", pops: "4", ftiCustomers: "5" },
-      { route: "E - F", impact: "Trực tiếp", pops: "8", ftiCustomers: "9" }
+      { route: "A - B", impact: "Trực tiếp", pops: "3", ftiContracts: "2", customers: "20" },
+      { route: "C - D", impact: "Gián tiếp", pops: "4", ftiContracts: "5", customers: "50" },
+      { route: "E - F", impact: "Trực tiếp", pops: "8", ftiContracts: "9", customers: "90" }
     ],
     cableIncidents: [
       { target: "B - A 48FO", status: "Chưa tiếp cận" },
@@ -36,16 +36,18 @@ test("chỉ cộng POP và KHG FTI của tuyến đang màu đỏ", () => {
     popCount: 7,
     directPopCount: 3,
     indirectPopCount: 4,
-    ftiCustomerCount: 7
+    ftiContractCount: 7,
+    customerCount: 70
   });
   assert.deepEqual(summarizeActiveStormImpact({
-    affectedRoutes: [{ route: "A - B", impact: "Trực tiếp", pops: "3", ftiCustomers: "2" }],
+    affectedRoutes: [{ route: "A - B", impact: "Trực tiếp", pops: "3", ftiContracts: "2", customers: "20" }],
     cableIncidents: [{ target: "A - B", status: "Hoàn thành" }]
   }), {
     popCount: 0,
     directPopCount: 0,
     indirectPopCount: 0,
-    ftiCustomerCount: 0
+    ftiContractCount: 0,
+    customerCount: 0
   });
 });
 
